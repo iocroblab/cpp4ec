@@ -48,7 +48,7 @@ SoemMaster::~SoemMaster()
     reset();
     //must clean memory and delete tasks
     rt_task_delete (&task);
-//     delete[] ecPort;
+    delete[] ecPort;
 }
 
 bool SoemMaster::preconfigure()
@@ -67,7 +67,7 @@ bool SoemMaster::preconfigure()
       //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
       if (ec_config_init(FALSE) > 0)
       {
-	ec_config_map(&m_IOmap);
+	//ec_config_map(&m_IOmap);
 	
 	cout << ec_slavecount << " slaves found and configured."
                     << endl;
@@ -79,7 +79,7 @@ bool SoemMaster::preconfigure()
 	{
 	  return false;
 	} else {
-	  std::cout << "Reached operational" << std::endl;
+	  std::cout << "Reached pre-operational" << std::endl;
 	}
 	for (int i = 1; i <= ec_slavecount; i++)
 	{
@@ -90,7 +90,7 @@ bool SoemMaster::preconfigure()
 	    cout << "Created driver for " << ec_slave[i].name
                       << ", with address " << ec_slave[i].configadr<< endl;
 	    //Adding driver's services to master component
-	    cout << "Put configured parameters in the slaves."<< endl;
+	    cout << "Put configuration parameters in the slaves."<< endl;
 	    if (!driver->configure())
 	      return false;
 	    
@@ -123,7 +123,7 @@ bool SoemMaster::preconfigure()
         cout << "Could not initialize master on " << ethPort.c_str() << endl;
         return false;
     }
-
+    cout<<"Master preconfigured!!!"<<endl;
     return true;
 }
 
@@ -144,16 +144,16 @@ bool SoemMaster::configure()
     return false;
     
   } else {
-    std::cout << "Reached operational" << std::endl;
+    std::cout << "Reached safe-operational" << std::endl;
     
   }
-  
-  cout << "Request operational state for all slaves" << endl;
-  ec_slave[0].state = EC_STATE_OPERATIONAL;
   // send one valid process data to make outputs in slaves happy
   
   ec_send_processdata();
   ec_receive_processdata(EC_TIMEOUTRET);
+    
+  cout << "Request operational state for all slaves" << endl;
+  success = switchState(EC_STATE_OPERATIONAL);
   if (!success) 
   {
     return false;
@@ -162,7 +162,8 @@ bool SoemMaster::configure()
     std::cout << "Reached operational" << std::endl;
     
   }
-            
+  cout<<"Master configured!!!"<<endl;
+  usleep(1000000);          
 
   return true;    
 }
@@ -170,41 +171,50 @@ bool SoemMaster::configure()
 
 bool SoemMaster::start()
 {
+    cout<<"Starts sending ..."<<endl;
     //Starts a preiodic tasck that sends frames to slaves
     rt_task_set_periodic (&task, TM_NOW, cycletime);
     rt_task_start (&task, &ethercatLoop, NULL);
     
-//     // Assegurem que els servos estan shutted down
+     // Assegurem que els servos estan shutted down
 //     for(int i=0;i<m_drivers.size();i++)
 //       m_drivers[i]->writeControlWord(CW_SHUTDOWN);
 //     usleep (100000);
-//     
-//     // Switch servos ON
+     
+     // Switch servos ON
 //     for(int i=0;i<m_drivers.size();i++)
 //       m_drivers[i]->writeControlWord(CW_SWITCH_ON);
 //     usleep (100000);
-//     
-//     // Enable movement
+     
+     // Enable movement
 //     for(int i=0;i<m_drivers.size();i++)
 //       m_drivers[i]->writeControlWord(CW_ENABLE_OP);
 //     usleep (100000);
-//     
+     
 //     cout << "Motors should be ON" << endl;
+
+    cout<<"Master started!!!"<<endl;
+    
     return true;//if all is ok
 }
 
-// bool SoemMaster::setVelocity (std::vector <int32_t>&vel)
-// {
-//   if(vel.size()!=3)
+bool SoemMaster::setVelocity (std::vector <int32_t>&vel)
+{
+  cout<<"S'ha d'implementar setVelocity"<<endl;
+  cout<<"El drivers emprats son: "<<endl;
+  for(int i=0;i<m_drivers.size();i++)
+       cout<<"Have to print 9 for SGDV :"<<m_drivers[i]->getState()<<endl;
+  
+     //   if(vel.size()!=3)
 //   {
 //     cout<<"Vector velocity dimension has to be 3"<<endl;
 //     return false;
 //   }
 //   for(int i=0;i<m_drivers.size();i++)
-//     m_drivers[i]->writeVelocity(vel[i]);
+//     ((*SoemSGDV) m_drivers[i])->writeVelocity(vel[i]);
 //   
 //   return true;
-// }
+}
 // bool SoemMaster::getVelocity (std::vector <int32_t>&vel)
 // {
 //   vel.resize(3);
@@ -275,10 +285,10 @@ bool SoemMaster::switchState (int state)
     //check if all slave reached the desired state
     if (ec_slave[0].state == state)
       {
-	cout << "Operational state reached for all slaves."<< endl;
+	cout << "Desided state reached for all slaves."<< endl;
 	reachState = true;
       }else{
-	cout << "Not all slaves reached operational state."<< endl;
+	cout << "Not all slaves reached desired state."<< endl;
 	 //If not all slaves operational find out which one
 	for (int i = 1; i <= ec_slavecount; i++)
 	{
