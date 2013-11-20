@@ -41,12 +41,15 @@ SoemMaster::SoemMaster() : ethPort ("rteth0")
     rt_print_auto_init (1);
     rt_task_shadow (&program, "soem-master", 20, T_JOINABLE);    
     rt_task_create (&task, "Send PDO", 8192, 99, 0);	// Create the realtime task, but don't start it yet
+    rt_mutex_create (&mutex, "Mutex");
 }
 
 SoemMaster::~SoemMaster()
 {	
-    reset();
+    
     //must clean memory and delete tasks
+    reset();
+    rt_mutex_delete(&mutex);
     rt_task_delete (&task);
     delete[] ecPort;
 }

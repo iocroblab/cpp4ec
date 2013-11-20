@@ -14,7 +14,6 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
     useDC (true), SYNC0TIME (1000000), SHIFT (125000), 
     SHIFTMASTER (1000000), PDOerrorsTolerance (9)
 {
-    rt_mutex_create (&mutex, "Mutex");
   
    parameter temp;
    //setting parameters 
@@ -187,7 +186,6 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
 
 SoemSGDV::~SoemSGDV()
 {
-  rt_mutex_delete(&mutex);
 }
 
 
