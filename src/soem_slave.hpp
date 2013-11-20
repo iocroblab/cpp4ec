@@ -34,7 +34,7 @@ public:
 
     const std::string& getName() const;
     
-//     virtual void update()=0;
+    virtual void update()=0;
     virtual bool configure();
 
     virtual bool requestState( uint16_t state);

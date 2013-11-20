@@ -74,7 +74,7 @@ public:
     ~SoemSGDV();
     
     bool configure();
-//      void update();
+    void update();
     
     bool writeControlWord (uint16_t controlWord);
     bool readStatusWord (uint16_t statusWord);

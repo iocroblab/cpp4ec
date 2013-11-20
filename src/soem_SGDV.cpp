@@ -215,6 +215,10 @@ bool SoemSGDV::configure()
     return true;
 }
 
+void SoemSGDV::update()
+{
+}
+
 bool SoemSGDV::writeControlWord (uint16_t controlWord)
 {
     //switch the motor state
