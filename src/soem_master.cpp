@@ -46,7 +46,6 @@ SoemMaster::SoemMaster() : ethPort ("rteth0")
 
 SoemMaster::~SoemMaster()
 {	
-    reset();
     //must clean memory and delete tasks
     rt_task_delete (&task);
     rt_mutex_delete(&mutex);
