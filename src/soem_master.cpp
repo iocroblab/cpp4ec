@@ -13,8 +13,7 @@
 
 //Thread loop
 #include "servos_rt.h"
-
-
+#include "soem_SGDV.hpp"
 
 
 
@@ -32,6 +31,7 @@ SoemMaster::SoemMaster() : ethPort ("rteth0")
     Pdec = 150; 	// deacceleration: the same
     Pqdec = 50000;	// quick deacceleration: the same
     
+    
     //reset del iomap memory
     for (size_t i = 0; i < 4096; i++)
         m_IOmap[i] = 0;
@@ -46,11 +46,10 @@ SoemMaster::SoemMaster() : ethPort ("rteth0")
 
 SoemMaster::~SoemMaster()
 {	
-    
-    //must clean memory and delete tasks
     reset();
-    rt_mutex_delete(&mutex);
+    //must clean memory and delete tasks
     rt_task_delete (&task);
+    rt_mutex_delete(&mutex);
     delete[] ecPort;
 }
 
@@ -151,12 +150,13 @@ bool SoemMaster::configure()
     
   }
   // send one valid process data to make outputs in slaves happy
-  
   ec_send_processdata();
   ec_receive_processdata(EC_TIMEOUTRET);
-    
+        
   cout << "Request operational state for all slaves" << endl;
   success = switchState(EC_STATE_OPERATIONAL);
+  
+  
   if (!success) 
   {
     return false;
@@ -166,7 +166,6 @@ bool SoemMaster::configure()
     
   }
   cout<<"Master configured!!!"<<endl;
-  usleep(1000000);          
 
   return true;    
 }
@@ -174,25 +173,29 @@ bool SoemMaster::configure()
 
 bool SoemMaster::start()
 {
-    cout<<"Starts sending ..."<<endl;
     //Starts a preiodic tasck that sends frames to slaves
     rt_task_set_periodic (&task, TM_NOW, cycletime);
     rt_task_start (&task, &ethercatLoop, NULL);
+    while (EcatError)
+    {
+      cout << ec_elist2string() << endl;        
+    }
+    cout<<"Switching on motors..."<<endl;
     
      // Assegurem que els servos estan shutted down
-//     for(int i=0;i<m_drivers.size();i++)
-//       m_drivers[i]->writeControlWord(CW_SHUTDOWN);
-//     usleep (100000);
+     for (int i = 0 ; i < m_drivers.size() ; i++)
+      ((SoemSGDV*) m_drivers[i]) -> writeControlWord(CW_SHUTDOWN);
+     usleep (100000);
      
      // Switch servos ON
-//     for(int i=0;i<m_drivers.size();i++)
-//       m_drivers[i]->writeControlWord(CW_SWITCH_ON);
-//     usleep (100000);
+     for(int i=0;i<m_drivers.size();i++)
+      ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_SWITCH_ON);
+     usleep (100000);
      
      // Enable movement
-//     for(int i=0;i<m_drivers.size();i++)
-//       m_drivers[i]->writeControlWord(CW_ENABLE_OP);
-//     usleep (100000);
+     for(int i=0;i<m_drivers.size();i++)
+       ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_ENABLE_OP);
+     usleep (100000);
      
 //     cout << "Motors should be ON" << endl;
 
@@ -203,20 +206,16 @@ bool SoemMaster::start()
 
 bool SoemMaster::setVelocity (std::vector <int32_t>&vel)
 {
-  cout<<"S'ha d'implementar setVelocity"<<endl;
-  cout<<"El drivers emprats son: "<<endl;
-  for(int i=0;i<m_drivers.size();i++)
-       cout<<"Have to print 9 for SGDV :"<<m_drivers[i]->getState()<<endl;
   
-     //   if(vel.size()!=3)
-//   {
-//     cout<<"Vector velocity dimension has to be 3"<<endl;
-//     return false;
-//   }
-//   for(int i=0;i<m_drivers.size();i++)
-//     ((*SoemSGDV) m_drivers[i])->writeVelocity(vel[i]);
-//   
-//   return true;
+  if(vel.size()!=3)
+   {
+     cout<<"Vector velocity dimension has to be 3"<<endl;
+     return false;
+   }
+   for(int i=0;i<m_drivers.size();i++)
+     ((SoemSGDV*) m_drivers[i])->writeVelocity(vel[i]);
+   
+   return true;
 }
 // bool SoemMaster::getVelocity (std::vector <int32_t>&vel)
 // {
@@ -229,18 +228,19 @@ bool SoemMaster::setVelocity (std::vector <int32_t>&vel)
 
 bool SoemMaster::stop()
 {
-//   //desactivating motors and ending ethercatLoop
-//   for(int i=0;i<m_drivers.size();i++)
-//     m_drivers[i]->writeControlWord(CW_SHUTDOWN);
-//   usleep (100000);
-//   
-//   for(int i=0;i<m_drivers.size();i++)
-//     m_drivers[i]->writeControlWord(CW_SHUTDOWN);
-//   usleep (100000);
+   //desactivating motors and ending ethercatLoop
+   for(int i=0;i<m_drivers.size();i++)
+     ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
+   usleep (100000);
+   
+   for(int i=0;i<m_drivers.size();i++)
+     ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
+   usleep (100000);
 
   // Aturem la tasca periòdica
+
   rt_task_suspend (&task);
-  
+  cout<<"Master stoped!"<<endl;
   return true;
 }
 
@@ -262,13 +262,19 @@ bool SoemMaster::getPosition (std::vector <int32_t>&pos)
 bool SoemMaster::reset()
 {
     bool success;
+    cout<<"Reseting...."<<endl;
+    success = switchState (EC_STATE_SAFE_OP);
+    success = switchState (EC_STATE_PRE_OP);
     success = switchState (EC_STATE_INIT);
-    if (!success) {
-        return false;
-    }
+    
     for (unsigned int i = 0; i < m_drivers.size(); i++)
-      delete m_drivers[i];
-    ec_close();
+          delete m_drivers[i];
+//    ec_close();      
+    cout<<"Should be reseted!"<<endl;
+    if (!success) {
+         cout<<"Not achieved Init state reseting"<<endl;
+        return false;
+    }     
     return true;
 }
 
@@ -279,6 +285,7 @@ bool SoemMaster::reset()
 bool SoemMaster::switchState (int state)
 {
     bool reachState;
+    cout<<"Desired state: "<<state<<endl;
     //switch the state of state machine
     /* Request the desired state for all slaves */
     ec_slave[0].state = state;

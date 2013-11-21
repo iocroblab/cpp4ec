@@ -12,7 +12,7 @@
 #include <native/timer.h>
 #include <rtdk.h>
 
-#include "servos_rt.h"
+//#include "servos_rt.h"
 extern "C"
 {
 #include <soem/ethercattype.h>
@@ -25,25 +25,6 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
-//ControlWord defines
-#define CW_QUICK_STOP           0x02
-#define CW_SHUTDOWN             0x06
-#define CW_SWITCH_ON            0x07
-#define CW_ENABLE_OP            0x0F
-#define CW_DIASABLE_OP          0x07
-#define CW_DISABLE_VOLTAGE      0x00
-#define CW_FAULT_RESET          0x80
-//Only for the position mode
-#define CW_START_POSITIONING    0x1F
-//StatusWord defines
-#define SW_NOT_READY_SWICH_ON   0x00
-#define SW_SWITCH_ON_DISABLED   0x40
-#define SW_READY_SWITCH_ON      0x21
-#define SW_SWITCHED_ON          0x233
-#define SW_OPERATION_ENABLED    0x237
-#define SW_QUICK_STOP_ACTIVE    0x07
-#define SW_FAULT                0x08
-#define SW_FAULT_RACTION_ACTIVE 0x0F
 //Mask for StatusWord comparison
 #define SW_NOT_READY_SWICH_ON_MASK 0x4F
 #define SW_SWITCH_ON_DISABLED_MASK 0x4F
@@ -80,7 +61,7 @@ public:
     bool readStatusWord (uint16_t statusWord);
     bool writeVelocity (int32_t velocity);
     bool readVelocity (int32_t velocity);
-
+    
 private:
 
     //Variables used for the properties

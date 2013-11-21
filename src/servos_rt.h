@@ -18,7 +18,8 @@ namespace servos
 
    static void ethercatLoop(void *unused);
     
-   static RT_MUTEX mutex;
+   extern RT_MUTEX mutex;
+   RT_MUTEX mutex;
    static RT_TASK task;
    static RT_TASK program;
       

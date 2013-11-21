@@ -4,17 +4,22 @@
 #include "soem_driver_factory.h"
 
 
-
 using namespace std;
 
 
 namespace servos
 {
+extern RT_MUTEX mutex;
+
+
 SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
     useDC (true), SYNC0TIME (1000000), SHIFT (125000), 
     SHIFTMASTER (1000000), PDOerrorsTolerance (9)
 {
-  
+//   mlockall (MCL_CURRENT | MCL_FUTURE);
+//   RT_TASK component;
+//   rt_task_shadow (&component, "soem_SGDV", 19, T_JOINABLE);        
+   // rt_mutex_create (&mutex, "Mutex");
    parameter temp;
    //setting parameters 
    temp.description = "Modes of Operation";
@@ -186,6 +191,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
 
 SoemSGDV::~SoemSGDV()
 {
+  //rt_mutex_delete(&mutex);
 }
 
 
@@ -213,10 +219,6 @@ bool SoemSGDV::configure()
 //     }
     std::cout << getName() << " configured !" <<std::endl;
     return true;
-}
-
-void SoemSGDV::update()
-{
 }
 
 bool SoemSGDV::writeControlWord (uint16_t controlWord)
@@ -255,6 +257,9 @@ bool SoemSGDV::readVelocity (int32_t velocity)
     return true;//if all is ok
 }
 
+void SoemSGDV::update()
+{
+}
 
 namespace {
 servos::SoemDriver* createSoemSGDV(ec_slavet* mem_loc) {

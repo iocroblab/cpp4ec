@@ -4,6 +4,7 @@
 #include "soem_slave.hpp"
 #include "soem_driver_factory.h"
 
+
 #include <vector>
 #include <string>
 #include <sstream>
