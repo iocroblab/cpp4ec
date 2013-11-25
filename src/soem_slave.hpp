@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <sstream>
+
 #include "soem_slave_config.hpp"
 
 extern "C"
@@ -17,13 +18,15 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
-template<class T>
-inline std::string to_string(const T& t, std::ios_base & (*f)(std::ios_base&))
-{
-    std::stringstream ss;
-    ss << f << t;
-    return ss.str();
-};
+
+
+// template<class T>
+// inline std::string to_string(const T& t, std::ios_base & (*f)(std::ios_base&))
+// {
+//     std::stringstream ss;
+//     ss << f << t;
+//     return ss.str();
+// };
 
 namespace servos
 {
@@ -37,9 +40,9 @@ public:
     virtual void update()=0;
     virtual bool configure();
 
-    virtual bool requestState( uint16_t state);
-    virtual bool checkState( uint16_t state);
-    virtual uint16_t getState();
+    virtual bool requestState( ec_state state);
+    virtual bool checkState( ec_state state);
+    virtual ec_state getState();
 
 protected:
     SoemDriver(ec_slavet* mem_loc);

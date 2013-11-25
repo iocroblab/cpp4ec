@@ -46,124 +46,111 @@ SoemMaster::SoemMaster() : ethPort ("rteth0")
 
 SoemMaster::~SoemMaster()
 {	
+//    reset();
     //must clean memory and delete tasks
     rt_task_delete (&task);
     rt_mutex_delete(&mutex);
     delete[] ecPort;
 }
 
-bool SoemMaster::preconfigure()
+bool SoemMaster::preconfigure() throw(MasterError)
 {
-    bool success;
-    int32_t wkc, expectedWKC;
-    int size = ethPort.size();
-    ecPort = new char[size];
-    strcpy (ecPort, ethPort.c_str());
+  bool success;
+  int32_t wkc, expectedWKC;
+  int size = ethPort.size();
+  ecPort = new char[size];
+  strcpy (ecPort, ethPort.c_str());
+  
+  // initialise SOEM, bind socket to ifname
+  if (ec_init(ecPort) > 0)
+  {
     
-    // initialise SOEM, bind socket to ifname
-    if (ec_init(ecPort) > 0)
-    {
-      cout << "ec_init on " << ethPort << " succeeded." << endl;
+    cout << "ec_init on " << ethPort << " succeeded." << endl;
+    
+    //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
+    if (ec_config_init(FALSE) > 0)
+    {      
+      cout << ec_slavecount << " slaves found and configured."<< endl;
+      cout << "Request pre-operational state for all slaves"<< endl;
       
-      //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
-      if (ec_config_init(FALSE) > 0)
+      //
+      success = switchState (EC_STATE_PRE_OP);
+      if (!success)
+	throw( MasterError (MasterError::FAIL_SWITCHING_STATE_PRE_OP));
+      
+      for (int i = 1; i <= ec_slavecount; i++)
       {
-	//ec_config_map(&m_IOmap);
-	
-	cout << ec_slavecount << " slaves found and configured."
-                    << endl;
-            cout << "Request pre-operational state for all slaves"
-                    << endl;
-	
-	success = switchState (EC_STATE_PRE_OP);
-	if (!success) 
+	SoemDriver* driver = SoemDriverFactory::Instance().createDriver(&ec_slave[i]);
+	if (driver)
 	{
-	  return false;
-	} else {
-	  std::cout << "Reached pre-operational" << std::endl;
-	}
-	for (int i = 1; i <= ec_slavecount; i++)
-	{
-	  SoemDriver* driver = SoemDriverFactory::Instance().createDriver(&ec_slave[i]);
-	  if (driver)
-          {
-	    m_drivers.push_back(driver);
-	    cout << "Created driver for " << ec_slave[i].name
-                      << ", with address " << ec_slave[i].configadr<< endl;
-	    //Adding driver's services to master component
-	    cout << "Put configuration parameters in the slaves."<< endl;
-	    if (!driver->configure())
-	      return false;
-	    
-	  }else{
-	    cout << "Could not create driver for "<< ec_slave[i].name << endl;
-	    
+	  m_drivers.push_back(driver);
+	  cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< endl;
+	  //Adding driver's services to master component
+	  cout << "Put configuration parameters in the slaves."<< endl;
+	  try
+	  {
+	    driver->configure();
+	  }
+	  catch (MasterError& e)
+	  {
+	    cout<<e.what()<<endl;
+	    return false;
 	  }
 	  
+	}else{
+	  cout << "Could not create driver for "<< ec_slave[i].name << endl;
+	  throw( MasterError (MasterError::FAIL_CREATING_DRIVER));
 	}
-	//Configure distributed clock
-        //ec_configdc();
-        //Read the state of all slaves
-
-            //ec_readstate();
-
-      }else{
 	
-            cout << "Configuration of slaves failed!!!" << endl;
-            return false;
-        }
-        while (EcatError)
-            {
-                cout << ec_elist2string() << endl;
-            }
-        
-        return true;
+      }
+      //Configure distributed clock
+      //ec_configdc();
+      //Read the state of all slaves
+      //ec_readstate();
+      
+    }else{
+      cout << "Configuration of slaves failed!!!" << endl;
+      if(EcatError)
+	throw(MasterError(MasterError::ECAT_ERROR));
+      return false;
+      
     }
-    else
-    {
-        cout << "Could not initialize master on " << ethPort.c_str() << endl;
-        return false;
-    }
-    cout<<"Master preconfigured!!!"<<endl;
-    return true;
+    if(EcatError)
+      throw(MasterError(MasterError::ECAT_ERROR));
+    
+  }else{
+    cout << "Could not initialize master on " << ethPort.c_str() << endl;
+    return false;
+    
+  }
+  cout<<"Master preconfigured!!!"<<endl;
+  return true;
 }
 
 
-bool SoemMaster::configure()
+bool SoemMaster::configure() throw(MasterError)
 {
   bool success;
   ec_config_map(&m_IOmap);
-  while (EcatError)
-  {
-    cout << ec_elist2string() << endl;
-    
-  }
+  if(EcatError)
+    throw(MasterError(MasterError::ECAT_ERROR));
+  
   cout << "Request safe-operational state for all slaves" << endl;
   success = switchState (EC_STATE_SAFE_OP);
   if (!success) 
-  {
-    return false;
-    
-  } else {
-    std::cout << "Reached safe-operational" << std::endl;
-    
-  }
+    throw(MasterError(MasterError::FAIL_SWITCHING_STATE_SAFE_OP));
+  
   // send one valid process data to make outputs in slaves happy
   ec_send_processdata();
   ec_receive_processdata(EC_TIMEOUTRET);
+  if(EcatError)
+    throw(MasterError(MasterError::ECAT_ERROR));
         
   cout << "Request operational state for all slaves" << endl;
-  success = switchState(EC_STATE_OPERATIONAL);
-  
-  
+  success = switchState(EC_STATE_OPERATIONAL);  
   if (!success) 
-  {
-    return false;
-    
-  } else {
-    std::cout << "Reached operational" << std::endl;
-    
-  }
+      throw(MasterError(MasterError::FAIL_SWITCHING_STATE_OPERATIONAL));
+  
   cout<<"Master configured!!!"<<endl;
 
   return true;    
@@ -175,11 +162,7 @@ bool SoemMaster::start()
     //Starts a preiodic tasck that sends frames to slaves
     rt_task_set_periodic (&task, TM_NOW, cycletime);
     rt_task_start (&task, &ethercatLoop, NULL);
-    while (EcatError)
-    {
-      cout << ec_elist2string() << endl;        
-    }
-    cout<<"Switching on motors..."<<endl;
+    
     
      // Assegurem que els servos estan shutted down
      for (int i = 0 ; i < m_drivers.size() ; i++)
@@ -195,12 +178,10 @@ bool SoemMaster::start()
      for(int i=0;i<m_drivers.size();i++)
        ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_ENABLE_OP);
      usleep (100000);
-     
-//     cout << "Motors should be ON" << endl;
 
     cout<<"Master started!!!"<<endl;
     
-    return true;//if all is ok
+    return true;
 }
 
 bool SoemMaster::setVelocity (std::vector <int32_t>&vel)
@@ -258,34 +239,28 @@ bool SoemMaster::getPosition (std::vector <int32_t>&pos)
 }
 
 
-bool SoemMaster::reset()
+bool SoemMaster::reset() throw(MasterError)
 {
     bool success;
     cout<<"Reseting...."<<endl;
-    success = switchState (EC_STATE_SAFE_OP);
-    success = switchState (EC_STATE_PRE_OP);
     success = switchState (EC_STATE_INIT);
+    if (!success) 
+      throw(MasterError(MasterError::FAIL_SWITCHING_STATE_INIT));
     
     for (unsigned int i = 0; i < m_drivers.size(); i++)
           delete m_drivers[i];
-//    ec_close();      
+    ec_close();      
     cout<<"Should be reseted!"<<endl;
-    if (!success) {
-         cout<<"Not achieved Init state reseting"<<endl;
-        return false;
-    }     
+  
     return true;
 }
 
-//--internal functions(private)--
+//Private functions
 
-// This will be the main communication loop to be executed in a realtime separate thread
-
-bool SoemMaster::switchState (int state)
+//switch the state of state machine
+bool SoemMaster::switchState (ec_state state)
 {
-    bool reachState;
-    cout<<"Desired state: "<<state<<endl;
-    //switch the state of state machine
+    bool reachState=false;
     /* Request the desired state for all slaves */
     ec_slave[0].state = state;
     ec_writestate (0);
@@ -293,28 +268,9 @@ bool SoemMaster::switchState (int state)
     ec_statecheck (0, state,  EC_TIMEOUTSTATE * 4);
     //check if all slave reached the desired state
     if (ec_slave[0].state == state)
-      {
-	cout << "Desided state reached for all slaves."<< endl;
-	reachState = true;
-      }else{
-	cout << "Not all slaves reached desired state."<< endl;
-	 //If not all slaves operational find out which one
-	for (int i = 1; i <= ec_slavecount; i++)
-	{
-	  if (ec_slave[i].state != state)
-	  {
-	    cout << "Slave " << i 
-		       << " State= " << to_string(ec_slave[i].state, std::hex) 
-		       << " StatusCode=" << ec_slave[i].ALstatuscode << " : "
-		       << ec_ALstatuscode2string(ec_slave[i].ALstatuscode) 
-		       << endl;
-	    
-	  }
-	  
-	}
-	reachState = false;
-      }
-      
+    {
+      reachState = true;
+    }      
     return reachState;
 }
 

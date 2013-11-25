@@ -4,22 +4,25 @@
 #include "soem_driver_factory.h"
 
 
+//Xenomai
+#include <native/task.h>
+#include <native/mutex.h>
+#include <native/timer.h>
+#include <rtdk.h>
+
+
 using namespace std;
 
 
 namespace servos
 {
+  
 extern RT_MUTEX mutex;
-
 
 SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
     useDC (true), SYNC0TIME (1000000), SHIFT (125000), 
     SHIFTMASTER (1000000), PDOerrorsTolerance (9)
 {
-//   mlockall (MCL_CURRENT | MCL_FUTURE);
-//   RT_TASK component;
-//   rt_task_shadow (&component, "soem_SGDV", 19, T_JOINABLE);        
-   // rt_mutex_create (&mutex, "Mutex");
    parameter temp;
    //setting parameters 
    temp.description = "Modes of Operation";
@@ -191,20 +194,16 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
 
 SoemSGDV::~SoemSGDV()
 {
-  //rt_mutex_delete(&mutex);
 }
 
-
-
-bool SoemSGDV::configure()
+bool SoemSGDV::configure() throw(SGDVError)
 {
     for (unsigned int i = 0; i < m_params.size(); i++) 
     {
-      while (EcatError)
-	cout << ec_elist2string() << endl;
-      
       ec_SDOwrite(m_slave_nr, m_params[i].index, m_params[i].subindex, FALSE, 
-		  m_params[i].size,&(m_params[i].param),EC_TIMEOUTRXM);      
+		  m_params[i].size,&(m_params[i].param),EC_TIMEOUTRXM);
+      if(EcatError)
+	throw(SGDVError(SGDVError::ECAT_ERROR));   
       
     }
 
@@ -262,7 +261,8 @@ void SoemSGDV::update()
 }
 
 namespace {
-servos::SoemDriver* createSoemSGDV(ec_slavet* mem_loc) {
+servos::SoemDriver* createSoemSGDV(ec_slavet* mem_loc) 
+{
 	return new SoemSGDV(mem_loc);
 }
 

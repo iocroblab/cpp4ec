@@ -4,7 +4,6 @@
 #include "soem_slave.hpp"
 #include "soem_driver_factory.h"
 
-
 #include <vector>
 #include <string>
 #include <sstream>
@@ -14,28 +13,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-
-//ControlWord defines
-#define CW_QUICK_STOP           0x02
-#define CW_SHUTDOWN             0x06
-#define CW_SWITCH_ON            0x07
-#define CW_ENABLE_OP            0x0F
-#define CW_DIASABLE_OP          0x07
-#define CW_DISABLE_VOLTAGE      0x00
-#define CW_FAULT_RESET          0x80
-//Only for control position mode
-#define CW_START_POSITIONING    0x1F
-//StatusWord defines
-#define SW_NOT_READY_SWICH_ON   0x00
-#define SW_SWITCH_ON_DISABLED   0x40
-#define SW_READY_SWITCH_ON      0x31
-#define SW_SWITCHED_ON          0x33
-#define SW_OPERATION_ENABLED    0x37
-#define SW_QUICK_STOP_ACTIVE    0x07
-#define SW_FAULT                0x08
-#define SW_FAULT_RACTION_ACTIVE 0x0F
-#define SW_HIGH_MASK            0x00FF
-#define SW_LOW_MASK             0xFF00
+#include "errors/master_error.hpp"
 
 #define NSEC_PER_SEC 1000000000
 
@@ -64,7 +42,7 @@ namespace servos
 
 class SoemMaster
 {
-    friend class Platform;
+
 
 public:
     /**
@@ -72,6 +50,7 @@ public:
      * 
      */ 
     SoemMaster();
+    
     /**
      *  \brief Destructor
      */
@@ -83,7 +62,7 @@ public:
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
      * 
      */
-    bool preconfigure();
+    bool preconfigure() throw(MasterError);
     
     /**
      *  \brief Configuration
@@ -91,39 +70,46 @@ public:
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
      * 
      */
-    bool configure();
+    bool configure() throw(MasterError);
+    
     /**
      *  \brief Starts comunication 
      * 
      * The realtime task for comunication starts sendding PDOs and the mottor are switched on.
      */
     bool start(); 
-     /**
+    
+    /**
      *  \brief Stops communication 
      * 
      * The realtime task for comunication is stopped and the mottors are shutted down.
      */
     bool stop();
+    
     /**
      *  \brief Resets configuration
      * 
      * The EtherCAT State Machine is taken to the initial state.
      */
-    bool reset();
+    bool reset() throw(MasterError);
+    
     /**
      *  \brief Sets Position
      */
     bool setPosition (std::vector <int32_t>&pos);
+    
     /**
      *  \brief Gets Position
      */
     bool getPosition (std::vector <int32_t>&pos);
+    
     /**
      *  \brief Sets Velocity
      * 
      * Writes on the PDO the desired velocity for each motor in milidegrees/second.
      */
     bool setVelocity (std::vector <int32_t>&vel);
+    
     /**
      *  \brief Gets Velocity
      * 
@@ -171,16 +157,13 @@ private:
     
     std::vector<SoemDriver*> m_drivers;
 
-
     //internal functions
     // This will be the main communication loop to be executed in a realtime separate thread
     //static void ethercatLoop(void *unused);
-    bool switchState (int state); //switch the state of state machine--returns true if the state is reached
+    bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
     int motor_control (uint16_t controlWord); //switch the motor state
     bool motion_setting (void); //configures operationMode and SDO paramenters
     int PDOmapping (void); //configures the PDO mapping
-
-
 
 };
 
