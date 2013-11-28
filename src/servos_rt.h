@@ -13,7 +13,7 @@ extern "C"
 #include <soem/nicdrv.h>
 }
 
-namespace ec4c++
+namespace ec4cpp
 {
 
    static void ethercatLoop(void *unused);

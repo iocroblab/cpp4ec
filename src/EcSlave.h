@@ -49,7 +49,7 @@ typedef struct
 } parameter;
 
 
-namespace servos
+namespace ec4cpp
 {
 class EcSlave
 {

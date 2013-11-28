@@ -3,7 +3,7 @@
 
 #include "EcSlave.h"
 #include "EcError.h"
-
+#include "EcErrorSGDV.h"
 extern "C"
 {
 #include <soem/ethercattype.h>
@@ -52,7 +52,7 @@ enum
 
 
 
-namespace ec4c++
+namespace ec4cpp
 {
 class EcSlaveSGDV: public EcSlave
 {
@@ -60,7 +60,7 @@ public:
     EcSlaveSGDV (ec_slavet* mem_loc);
     ~EcSlaveSGDV();
 
-    bool configure() throw(SGDVError);
+    bool configure() throw(EcErrorSGDV);
     void update();
 
     bool writeControlWord (uint16_t controlWord);

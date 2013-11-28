@@ -37,7 +37,7 @@ struct slaveDCspec {
 
 
 
-namespace ec4c++
+namespace ec4cpp
 {
 
 class EcMaster
@@ -155,7 +155,7 @@ private:
     uint32_t Pdec; 	// Profile Decceleration
     uint32_t Pqdec;	// Profile Quick Decceleration
 
-    std::vector<SoemDriver*> m_drivers;
+    std::vector<EcSlave*> m_drivers;
 
     //internal functions
     // This will be the main communication loop to be executed in a realtime separate thread

@@ -18,7 +18,7 @@
 
 using namespace std;
 
-namespace ec4c++
+namespace ec4cpp
 {
 
 EcMaster::EcMaster() : ethPort ("rteth0")
@@ -52,7 +52,7 @@ EcMaster::~EcMaster()
    delete[] ecPort;
 }
 
-bool EcMaster::preconfigure() throw(MasterError)
+bool EcMaster::preconfigure() throw(EcError)
 {
 bool success;
 int32_t wkc, expectedWKC;
@@ -75,11 +75,11 @@ if (ec_init(ecPort) > 0)
       //
       success = switchState (EC_STATE_PRE_OP);
       if (!success)
-   throw( MasterError (MasterError::FAIL_SWITCHING_STATE_PRE_OP));
+   throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
 
       for (int i = 1; i <= ec_slavecount; i++)
       {
-   SoemDriver* driver = SoemDriverFactory::Instance().createDriver(&ec_slave[i]);
+   EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
    if (driver)
    {
    m_drivers.push_back(driver);
@@ -90,7 +90,7 @@ if (ec_init(ecPort) > 0)
    {
       driver->configure();
    }
-   catch (MasterError& e)
+   catch (EcError& e)
    {
       cout<<e.what()<<endl;
       return false;
@@ -98,7 +98,7 @@ if (ec_init(ecPort) > 0)
 
    }else{
    cout << "Could not create driver for "<< ec_slave[i].name << endl;
-   throw( MasterError (MasterError::FAIL_CREATING_DRIVER));
+   throw( EcError (EcError::FAIL_CREATING_DRIVER));
    }
 
       }
@@ -110,12 +110,12 @@ if (ec_init(ecPort) > 0)
    }else{
       cout << "Configuration of slaves failed!!!" << endl;
       if(EcatError)
-   throw(MasterError(MasterError::ECAT_ERROR));
+   throw(EcError(EcError::ECAT_ERROR));
       return false;
 
    }
    if(EcatError)
-      throw(MasterError(MasterError::ECAT_ERROR));
+      throw(EcError(EcError::ECAT_ERROR));
 
 }else{
    cout << "Could not initialize master on " << ethPort.c_str() << endl;
@@ -127,28 +127,28 @@ return true;
 }
 
 
-bool EcMaster::configure() throw(MasterError)
+bool EcMaster::configure() throw(EcError)
 {
 bool success;
 ec_config_map(&m_IOmap);
 if(EcatError)
-   throw(MasterError(MasterError::ECAT_ERROR));
+   throw(EcError(EcError::ECAT_ERROR));
 
 cout << "Request safe-operational state for all slaves" << endl;
 success = switchState (EC_STATE_SAFE_OP);
 if (!success)
-   throw(MasterError(MasterError::FAIL_SWITCHING_STATE_SAFE_OP));
+   throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
 
 // send one valid process data to make outputs in slaves happy
 ec_send_processdata();
 ec_receive_processdata(EC_TIMEOUTRET);
 if(EcatError)
-   throw(MasterError(MasterError::ECAT_ERROR));
+   throw(EcError(EcError::ECAT_ERROR));
 
 cout << "Request operational state for all slaves" << endl;
 success = switchState(EC_STATE_OPERATIONAL);
 if (!success)
-      throw(MasterError(MasterError::FAIL_SWITCHING_STATE_OPERATIONAL));
+      throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
 
 cout<<"Master configured!!!"<<endl;
 
@@ -165,17 +165,17 @@ bool EcMaster::start()
 
    // Assegurem que els servos estan shutted down
    for (int i = 0 ; i < m_drivers.size() ; i++)
-      ((SoemSGDV*) m_drivers[i]) -> writeControlWord(CW_SHUTDOWN);
+      ((EcSlaveSGDV*) m_drivers[i]) -> writeControlWord(CW_SHUTDOWN);
    usleep (100000);
 
    // Switch servos ON
    for(int i=0;i<m_drivers.size();i++)
-      ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_SWITCH_ON);
+      ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_SWITCH_ON);
    usleep (100000);
 
    // Enable movement
    for(int i=0;i<m_drivers.size();i++)
-      ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_ENABLE_OP);
+      ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_ENABLE_OP);
    usleep (100000);
 
    cout<<"Master started!!!"<<endl;
@@ -192,7 +192,7 @@ if(vel.size()!=3)
    return false;
    }
    for(int i=0;i<m_drivers.size();i++)
-   ((SoemSGDV*) m_drivers[i])->writeVelocity(vel[i]);
+   ((EcSlaveSGDV*) m_drivers[i])->writeVelocity(vel[i]);
 
    return true;
 }
@@ -209,11 +209,11 @@ bool EcMaster::stop()
 {
    //desactivating motors and ending ethercatLoop
    for(int i=0;i<m_drivers.size();i++)
-   ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
+   ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
    usleep (100000);
 
    for(int i=0;i<m_drivers.size();i++)
-   ((SoemSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
+   ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
    usleep (100000);
 
 // Aturem la tasca periòdica
@@ -238,13 +238,13 @@ bool EcMaster::getPosition (std::vector <int32_t>&pos)
 }
 
 
-bool EcMaster::reset() throw(MasterError)
+bool EcMaster::reset() throw(EcError)
 {
    bool success;
    cout<<"Reseting...."<<endl;
    success = switchState (EC_STATE_INIT);
    if (!success)
-      throw(MasterError(MasterError::FAIL_SWITCHING_STATE_INIT));
+      throw(EcError(EcError::FAIL_SWITCHING_STATE_INIT));
 
    for (unsigned int i = 0; i < m_drivers.size(); i++)
          delete m_drivers[i];

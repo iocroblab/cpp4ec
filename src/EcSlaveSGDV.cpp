@@ -14,12 +14,12 @@
 using namespace std;
 
 
-namespace ec4c++
+namespace ec4cpp
 {
 
 extern RT_MUTEX mutex;
 
-EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
+EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     useDC (true), SYNC0TIME (1000000), SHIFT (125000),
     SHIFTMASTER (1000000), PDOerrorsTolerance (9)
 {
@@ -261,7 +261,7 @@ void EcSlaveSGDV::update()
 }
 
 namespace {
-ec4c++::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)
+ec4cpp::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)
 {
 	return new EcSlaveSGDV(mem_loc);
 }
