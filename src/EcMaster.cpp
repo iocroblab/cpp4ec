@@ -1,4 +1,4 @@
-#include "soem_master.hpp"
+#include "EcMaster.h"
 
 #include <sys/mman.h>
 #include <iostream>
@@ -13,15 +13,15 @@
 
 //Thread loop
 #include "servos_rt.h"
-#include "soem_SGDV.hpp"
+#include "EcSlaveSGDV.h"
 
 
 using namespace std;
 
-namespace servos
+namespace ec4c++
 {
 
-SoemMaster::SoemMaster() : ethPort ("rteth0")
+EcMaster::EcMaster() : ethPort ("rteth0")
 {
    cycletime = 1000000;//The cycletime of the updateHook. The time beween each PDO reading and writing.
    opMode = 3;		//Initialising necessary parameters of OpMode 3
@@ -43,7 +43,7 @@ SoemMaster::SoemMaster() : ethPort ("rteth0")
    rt_mutex_create (&mutex, "Mutex");
 }
 
-SoemMaster::~SoemMaster()
+EcMaster::~EcMaster()
 {
 //    reset();
    //must clean memory and delete tasks
@@ -52,7 +52,7 @@ SoemMaster::~SoemMaster()
    delete[] ecPort;
 }
 
-bool SoemMaster::preconfigure() throw(MasterError)
+bool EcMaster::preconfigure() throw(MasterError)
 {
 bool success;
 int32_t wkc, expectedWKC;
@@ -127,7 +127,7 @@ return true;
 }
 
 
-bool SoemMaster::configure() throw(MasterError)
+bool EcMaster::configure() throw(MasterError)
 {
 bool success;
 ec_config_map(&m_IOmap);
@@ -156,7 +156,7 @@ return true;
 }
 
 
-bool SoemMaster::start()
+bool EcMaster::start()
 {
    //Starts a preiodic tasck that sends frames to slaves
    rt_task_set_periodic (&task, TM_NOW, cycletime);
@@ -183,7 +183,7 @@ bool SoemMaster::start()
    return true;
 }
 
-bool SoemMaster::setVelocity (std::vector <int32_t>&vel)
+bool EcMaster::setVelocity (std::vector <int32_t>&vel)
 {
 
 if(vel.size()!=3)
@@ -196,7 +196,7 @@ if(vel.size()!=3)
 
    return true;
 }
-// bool SoemMaster::getVelocity (std::vector <int32_t>&vel)
+// bool EcMaster::getVelocity (std::vector <int32_t>&vel)
 // {
 //   vel.resize(3);
 //   for(int i=0;i<m_drivers.size();i++)
@@ -205,7 +205,7 @@ if(vel.size()!=3)
 //   return true;
 // }
 
-bool SoemMaster::stop()
+bool EcMaster::stop()
 {
    //desactivating motors and ending ethercatLoop
    for(int i=0;i<m_drivers.size();i++)
@@ -225,20 +225,20 @@ return true;
 
 
 
-bool SoemMaster::setPosition (std::vector <int32_t>&pos)
+bool EcMaster::setPosition (std::vector <int32_t>&pos)
 {
    return true;//if all is ok
 }
 
 
 
-bool SoemMaster::getPosition (std::vector <int32_t>&pos)
+bool EcMaster::getPosition (std::vector <int32_t>&pos)
 {
    return true;//if all is ok
 }
 
 
-bool SoemMaster::reset() throw(MasterError)
+bool EcMaster::reset() throw(MasterError)
 {
    bool success;
    cout<<"Reseting...."<<endl;
@@ -257,7 +257,7 @@ bool SoemMaster::reset() throw(MasterError)
 //Private functions
 
 //switch the state of state machine
-bool SoemMaster::switchState (ec_state state)
+bool EcMaster::switchState (ec_state state)
 {
    bool reachState=false;
    /* Request the desired state for all slaves */

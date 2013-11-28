@@ -25,43 +25,43 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef SOEM_DRIVER_FACTORY_H
-#define SOEM_DRIVER_FACTORY_H
+#ifndef ECSLAVEFACTORY_H
+#define ECSLAVEFACTORY_H
 
 #include <map>
 #include <string>
-#include "soem_slave.hpp"
+#include "EcSlave.h"
 
-namespace servos
+namespace ec4cpp
 {
 
-class SoemDriverFactory
+class EcSlaveFactory
 {
 public:
-    static SoemDriverFactory& Instance()
+    static EcSlaveFactory& Instance()
     {
-        static SoemDriverFactory soem_driver_factory;
+        static EcSlaveFactory soem_driver_factory;
         return soem_driver_factory;
     }
 
-    typedef SoemDriver* (*CreateDriverCallBack)(ec_slavet*);
+    typedef EcSlave* (*CreateDriverCallBack)(ec_slavet*);
 
     bool registerDriver(std::string name, CreateDriverCallBack createFn);
 
-    SoemDriver* createDriver(ec_slavet* mem_loc);
+    EcSlave* createDriver(ec_slavet* mem_loc);
     void displayAvailableDrivers();
 
 private:
     typedef std::map<std::string, CreateDriverCallBack> FactoryMap;
     FactoryMap m_factory_map;
 
-    SoemDriverFactory()
+    EcSlaveFactory()
     {
     }
     ;
-    SoemDriverFactory(const SoemDriverFactory&);
-    SoemDriverFactory& operator=(const SoemDriverFactory&);
-    ~SoemDriverFactory()
+    EcSlaveFactory(const EcSlaveFactory&);
+    EcSlaveFactory& operator=(const EcSlaveFactory&);
+    ~EcSlaveFactory()
     {
     }
     ;

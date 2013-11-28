@@ -1,10 +1,10 @@
-#ifndef SOEM_SLAVE_HPP
-#define SOEM_SLAVE_HPP
+#ifndef ECSLAVE_H
+#define ECSLAVE_H
 
 #include <iostream>
 #include <sstream>
-
-#include "soem_slave_config.hpp"
+#include "EcError.h"
+//#include "soem_slave_config.hpp"
 
 extern "C"
 {
@@ -28,15 +28,36 @@ extern "C"
 //     return ss.str();
 // };
 
+#include <stdint.h>
+
+// //Mask for StatusWord comparison
+// #define SW_NOT_READY_SWICH_ON_MASK 0x4F
+// #define SW_SWITCH_ON_DISABLED_MASK 0x4F
+// #define SW_READY_SWITCH_ON_MASK    0x6F
+// #define SW_SWITCHED_ON_MASK        0x27F
+// #define SW_OPERATION_ENABLED_MASK  0x27F
+
+
+typedef struct
+{
+   uint16_t   index;
+   uint8_t    subindex;
+   uint8_t    size;
+   int      param;
+   std::string   name;
+   std::string   description;
+} parameter;
+
+
 namespace servos
 {
-class SoemDriver
+class EcSlave
 {
 public:
-    virtual ~SoemDriver();
+    virtual ~EcSlave();
 
     const std::string& getName() const;
-    
+
     virtual void update()=0;
     virtual bool configure();
 
@@ -45,7 +66,7 @@ public:
     virtual ec_state getState();
 
 protected:
-    SoemDriver(ec_slavet* mem_loc);
+    EcSlave(ec_slavet* mem_loc);
 
     ec_slavet* m_datap;
     std::string m_name;

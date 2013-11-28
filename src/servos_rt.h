@@ -13,17 +13,17 @@ extern "C"
 #include <soem/nicdrv.h>
 }
 
-namespace servos
+namespace ec4c++
 {
 
    static void ethercatLoop(void *unused);
-    
+
    extern RT_MUTEX mutex;
    RT_MUTEX mutex;
    static RT_TASK task;
    static RT_TASK program;
-      
-   ///realtime functions   
+
+   ///realtime functions
    inline void ethercatLoop(void *unused)
     {
       int nRet;
@@ -34,7 +34,7 @@ namespace servos
          nRet=ec_receive_processdata(EC_TIMEOUTRET);
          rt_mutex_release(&mutex);
          rt_task_wait_period(NULL);
-      }      
+      }
     }
 };
 #endif //SERVOS_RT_H

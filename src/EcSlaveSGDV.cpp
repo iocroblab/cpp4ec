@@ -1,7 +1,7 @@
-#include "soem_SGDV.hpp"
+#include "EcSlaveSGDV.h"
 
 #include <sys/mman.h>
-#include "soem_driver_factory.h"
+#include "EcSlaveSGDV.h"
 
 
 //Xenomai
@@ -14,17 +14,17 @@
 using namespace std;
 
 
-namespace servos
+namespace ec4c++
 {
-  
+
 extern RT_MUTEX mutex;
 
-SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
-    useDC (true), SYNC0TIME (1000000), SHIFT (125000), 
+EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
+    useDC (true), SYNC0TIME (1000000), SHIFT (125000),
     SHIFTMASTER (1000000), PDOerrorsTolerance (9)
 {
    parameter temp;
-   //setting parameters 
+   //setting parameters
    temp.description = "Modes of Operation";
    temp.index = 0x6060;
    temp.subindex = 0x00;
@@ -32,7 +32,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 3;
    m_params.push_back(temp);
-   
+
    temp.description = "Max. Profile velocity";
    temp.index = 0x607F;
    temp.subindex = 0x00;
@@ -40,7 +40,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 4;
    temp.param = 2000;
    m_params.push_back(temp);
-   
+
    temp.description = "Profile acceleration";
    temp.index = 0x6083;
    temp.subindex = 0x00;
@@ -48,7 +48,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 4;
    temp.param = 150;
    m_params.push_back(temp);
-   
+
    //PDO mapping
    //RxPDO
    //uint32_t ControlWord = 0x60400010;
@@ -64,8 +64,8 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    //uint32_t TorqueActual=0x60770010;
    //uint32_t ErrorActual=0x60F40020;
    //uint32_t ModeActual = 0x60610008
-   
-   //1.Disable the assignment of the Sync manager and PDO   
+
+   //1.Disable the assignment of the Sync manager and PDO
    temp.description = "Disable";
    temp.index = 0x1C12;
    temp.subindex = 0x00;
@@ -73,7 +73,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 0;
    m_params.push_back(temp);
-   
+
    temp.description = "Disable";
    temp.index = 0x1C13;
    temp.subindex = 0x00;
@@ -81,8 +81,8 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 0;
    m_params.push_back(temp);
-   
-   //2.Set all the mapping entry in PDO mapping objects   
+
+   //2.Set all the mapping entry in PDO mapping objects
    temp.description = "Receive PDO Mapping";
    temp.index = 0x1602;
    temp.subindex = 0x00;
@@ -90,7 +90,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 0;
    m_params.push_back(temp);
-   
+
    temp.description = "Receive PDO Mapping";
    temp.index = 0x1602;
    temp.subindex = 0x01;
@@ -98,7 +98,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 4;
    temp.param = 0x60400010;
    m_params.push_back(temp);
-   
+
    temp.description = "Receive PDO Mapping";
    temp.index = 0x1602;
    temp.subindex = 0x02;
@@ -106,7 +106,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 4;
    temp.param = 0x60FF0020;
    m_params.push_back(temp);
-   
+
    temp.description = "Transmit PDO Mapping";
    temp.index = 0x1A02;
    temp.subindex = 0x00;
@@ -114,7 +114,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 0;
    m_params.push_back(temp);
-   
+
    temp.description = "Transmit PDO Mapping";
    temp.index = 0x1A02;
    temp.subindex = 0x01;
@@ -122,7 +122,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 4;
    temp.param = 0x60410010;
    m_params.push_back(temp);
-   
+
    temp.description = "Transmit PDO Mapping";
    temp.index = 0x1A02;
    temp.subindex = 0x01;
@@ -130,7 +130,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 4;
    temp.param = 0x60640020;
    m_params.push_back(temp);
-   
+
    temp.description = "Transmit PDO Mapping";
    temp.index = 0x1A02;
    temp.subindex = 0x02;
@@ -138,8 +138,8 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 4;
    temp.param = 0x606C0020;
    m_params.push_back(temp);
-   
-   //3.Set the number of mapping entries in PDO mapping objects 
+
+   //3.Set the number of mapping entries in PDO mapping objects
    temp.description = "Receive PDO Mapping";
    temp.index = 0x1602;
    temp.subindex = 0x00;
@@ -147,7 +147,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 2;
    m_params.push_back(temp);
-   
+
    temp.description = "Transmit PDO Mapping";
    temp.index = 0x1A02;
    temp.subindex = 0x00;
@@ -155,8 +155,8 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 3;
    m_params.push_back(temp);
-   
-   //4.Set the assignment of the Sync manager and PDO    
+
+   //4.Set the assignment of the Sync manager and PDO
    temp.description = "Assing";
    temp.index = 0x1C12;
    temp.subindex = 0x01;
@@ -164,7 +164,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 2;
    temp.param = 0x1602;
    m_params.push_back(temp);
-   
+
    temp.description = "Assing";
    temp.index = 0x1C13;
    temp.subindex = 0x01;
@@ -172,7 +172,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 2;
    temp.param = 0x1A02;
    m_params.push_back(temp);
-   
+
    //5.Enable the assignment of the Sync manager and PDO.
    temp.description = "Enable";
    temp.index = 0x1C12;
@@ -181,7 +181,7 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
    temp.size = 1;
    temp.param = 1;
    m_params.push_back(temp);
-   
+
    temp.description = "Enable";
    temp.index = 0x1C13;
    temp.subindex = 0x00;
@@ -192,19 +192,19 @@ SoemSGDV::SoemSGDV (ec_slavet* mem_loc) : SoemDriver (mem_loc),
 
 }
 
-SoemSGDV::~SoemSGDV()
+EcSlaveSGDV::~EcSlaveSGDV()
 {
 }
 
-bool SoemSGDV::configure() throw(SGDVError)
+bool EcSlaveSGDV::configure() throw(SGDVError)
 {
-    for (unsigned int i = 0; i < m_params.size(); i++) 
+    for (unsigned int i = 0; i < m_params.size(); i++)
     {
-      ec_SDOwrite(m_slave_nr, m_params[i].index, m_params[i].subindex, FALSE, 
+      ec_SDOwrite(m_slave_nr, m_params[i].index, m_params[i].subindex, FALSE,
 		  m_params[i].size,&(m_params[i].param),EC_TIMEOUTRXM);
       if(EcatError)
-	throw(SGDVError(SGDVError::ECAT_ERROR));   
-      
+	throw(SGDVError(SGDVError::ECAT_ERROR));
+
     }
 
 //     if (useDC) {
@@ -220,7 +220,7 @@ bool SoemSGDV::configure() throw(SGDVError)
     return true;
 }
 
-bool SoemSGDV::writeControlWord (uint16_t controlWord)
+bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
@@ -228,7 +228,7 @@ bool SoemSGDV::writeControlWord (uint16_t controlWord)
     rt_mutex_release (&mutex);
 }
 
-bool SoemSGDV::readStatusWord (uint16_t statusWord)
+bool EcSlaveSGDV::readStatusWord (uint16_t statusWord)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
@@ -236,7 +236,7 @@ bool SoemSGDV::readStatusWord (uint16_t statusWord)
     rt_mutex_release (&mutex);
 }
 
-bool SoemSGDV::writeVelocity (int32_t velocity)
+bool EcSlaveSGDV::writeVelocity (int32_t velocity)
 {
 
     rt_mutex_acquire (&mutex, TM_INFINITE);
@@ -246,7 +246,7 @@ bool SoemSGDV::writeVelocity (int32_t velocity)
     return true;//if all is ok
 }
 
-bool SoemSGDV::readVelocity (int32_t velocity)
+bool EcSlaveSGDV::readVelocity (int32_t velocity)
 {
 
     rt_mutex_acquire (&mutex, TM_INFINITE);
@@ -256,17 +256,17 @@ bool SoemSGDV::readVelocity (int32_t velocity)
     return true;//if all is ok
 }
 
-void SoemSGDV::update()
+void EcSlaveSGDV::update()
 {
 }
 
 namespace {
-servos::SoemDriver* createSoemSGDV(ec_slavet* mem_loc) 
+ec4c++::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)
 {
-	return new SoemSGDV(mem_loc);
+	return new EcSlaveSGDV(mem_loc);
 }
 
-const bool registered0 = servos::SoemDriverFactory::Instance().registerDriver("? M:00000539 I:02200001", createSoemSGDV);
+const bool registered0 = ec4c++::EcSlaveFactory::Instance().registerDriver("? M:00000539 I:02200001", createEcSlaveSGDV);
 
 }
 }

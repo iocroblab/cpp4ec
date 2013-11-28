@@ -1,8 +1,8 @@
-em4cpp
+ec4c++
 ------
 
 
-Ethercat Master for C++.
+EtherCat for C++.
 
 The main objective of this library is to encapsulate the soem [1] library
 in a class to use in a C++ program. The library is inspired in the philosofy

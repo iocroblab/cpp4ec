@@ -1,8 +1,8 @@
-#ifndef SOEM_MASTER_H
-#define SOEM_MASTER_H
+#ifndef ECMASTER_H
+#define ECMASTER_H
 
-#include "soem_slave.hpp"
-#include "soem_driver_factory.h"
+#include "EcSlave.h"
+#include "EcSlaveFactory.h"
 
 #include <vector>
 #include <string>
@@ -13,7 +13,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#include "errors/master_error.hpp"
+#include "EcError.h"
 
 #define NSEC_PER_SEC 1000000000
 
@@ -37,96 +37,96 @@ struct slaveDCspec {
 
 
 
-namespace servos
+namespace ec4c++
 {
 
-class SoemMaster
+class EcMaster
 {
 
 
 public:
     /**
      * \brief Constructor
-     * 
-     */ 
-    SoemMaster();
-    
+     *
+     */
+    EcMaster();
+
     /**
      *  \brief Destructor
      */
-    ~SoemMaster();
-    
+    ~EcMaster();
+
     /**
      *  \brief preConfiguration
-     * 
+     *
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
-     * 
+     *
      */
-    bool preconfigure() throw(MasterError);
-    
+    bool preconfigure() throw(EcError);
+
     /**
      *  \brief Configuration
-     * 
+     *
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
-     * 
+     *
      */
-    bool configure() throw(MasterError);
-    
+    bool configure() throw(EcError);
+
     /**
-     *  \brief Starts comunication 
-     * 
+     *  \brief Starts comunication
+     *
      * The realtime task for comunication starts sendding PDOs and the mottor are switched on.
      */
-    bool start(); 
-    
+    bool start();
+
     /**
-     *  \brief Stops communication 
-     * 
+     *  \brief Stops communication
+     *
      * The realtime task for comunication is stopped and the mottors are shutted down.
      */
     bool stop();
-    
+
     /**
      *  \brief Resets configuration
-     * 
+     *
      * The EtherCAT State Machine is taken to the initial state.
      */
-    bool reset() throw(MasterError);
-    
+    bool reset() throw(EcError);
+
     /**
      *  \brief Sets Position
      */
     bool setPosition (std::vector <int32_t>&pos);
-    
+
     /**
      *  \brief Gets Position
      */
     bool getPosition (std::vector <int32_t>&pos);
-    
+
     /**
      *  \brief Sets Velocity
-     * 
+     *
      * Writes on the PDO the desired velocity for each motor in milidegrees/second.
      */
     bool setVelocity (std::vector <int32_t>&vel);
-    
+
     /**
      *  \brief Gets Velocity
-     * 
+     *
      * Reads on the PDO the velocity of each motor in milidegrees/second.
      */
     bool getVelocity (std::vector <int32_t>&vel);
-    
+
 
      /**
      *  \brief Sets master parameters
-     * 
+     *
      * Configures the master parameters to work propertly
      * \param _cycletime set the period of the realtime task (PDO comunication)
      * \param _maxPvel is the maximum velocity that a motor can reach in milidegrees/second
      * \param _Pacc is the acceleration that motors apply to reach the desired velocity (useful for Operational Mode 3)
      * \param _Pdec is the deceleration that motors apply to reach the desired velocity (useful for Operational Mode 3)
-     * 
+     *
      */
     inline void setParameters (int _cycletime, int8_t _opMode,
                                uint32_t _maxPvel,
@@ -142,7 +142,7 @@ public:
 private:
      /**
      *  \brief Protected block
-     * 
+     *
      * This block contains the private attributes and methods
      */
     std::string ethPort;
@@ -154,7 +154,7 @@ private:
     uint32_t Pacc;  	// Profile acceleration
     uint32_t Pdec; 	// Profile Decceleration
     uint32_t Pqdec;	// Profile Quick Decceleration
-    
+
     std::vector<SoemDriver*> m_drivers;
 
     //internal functions

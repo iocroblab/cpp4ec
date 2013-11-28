@@ -38,19 +38,19 @@ extern "C"
 #include <soem/nicdrv.h>
 }
 
-#include "soem_driver_factory.h"
+#include "EcSlaveFactory.h"
 
-namespace servos
+namespace ec4c++
 {
-bool SoemDriverFactory::registerDriver(std::string name,
+bool EcSlaveFactory::registerDriver(std::string name,
         CreateDriverCallBack create_fn)
 {
-  
+
     std::cout << "Registering driver for " << name << std::endl;
     return m_factory_map.insert(FactoryMap::value_type(name, create_fn)).second;
 }
 
-SoemDriver* SoemDriverFactory::createDriver(ec_slavet* mem_loc)
+EcSlave* EcSlaveFactory::createDriver(ec_slavet* mem_loc)
 {
     FactoryMap::const_iterator it = m_factory_map.find(std::string(
             mem_loc->name));
@@ -61,9 +61,9 @@ SoemDriver* SoemDriverFactory::createDriver(ec_slavet* mem_loc)
     return (it->second)(mem_loc);
 }
 
-void SoemDriverFactory::displayAvailableDrivers()
+void EcSlaveFactory::displayAvailableDrivers()
 {
- 
+
     std::cout << "Following SOEM drivers are registered: \n"<< std::endl;
     for (FactoryMap::const_iterator it = m_factory_map.begin(); it
             != m_factory_map.end(); ++it)
