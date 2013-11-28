@@ -7,7 +7,7 @@
 class EcErrorSGDV: public EcError
 {
 public:
-   inline EcErrorSGDV( Ec4CppErrorCode errorcode):EcError( error)
+   inline EcErrorSGDV( Ec4CppErrorCode errorcode):EcError( errorcode)
   {
   }
 };

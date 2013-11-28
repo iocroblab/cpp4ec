@@ -2,7 +2,7 @@
 
 #include <sys/mman.h>
 #include "EcSlaveSGDV.h"
-
+#include "EcSlaveFactory.h"
 
 //Xenomai
 #include <native/task.h>
@@ -196,14 +196,14 @@ EcSlaveSGDV::~EcSlaveSGDV()
 {
 }
 
-bool EcSlaveSGDV::configure() throw(SGDVError)
+bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 {
     for (unsigned int i = 0; i < m_params.size(); i++)
     {
       ec_SDOwrite(m_slave_nr, m_params[i].index, m_params[i].subindex, FALSE,
 		  m_params[i].size,&(m_params[i].param),EC_TIMEOUTRXM);
       if(EcatError)
-	throw(SGDVError(SGDVError::ECAT_ERROR));
+	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR));
 
     }
 
@@ -266,7 +266,7 @@ ec4cpp::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)
 	return new EcSlaveSGDV(mem_loc);
 }
 
-const bool registered0 = ec4c++::EcSlaveFactory::Instance().registerDriver("? M:00000539 I:02200001", createEcSlaveSGDV);
+const bool registered0 = ec4cpp::EcSlaveFactory::Instance().registerDriver("? M:00000539 I:02200001", createEcSlaveSGDV);
 
 }
 }

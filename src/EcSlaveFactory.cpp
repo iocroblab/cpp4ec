@@ -40,7 +40,7 @@ extern "C"
 
 #include "EcSlaveFactory.h"
 
-namespace ec4c++
+namespace ec4cpp
 {
 bool EcSlaveFactory::registerDriver(std::string name,
         CreateDriverCallBack create_fn)
