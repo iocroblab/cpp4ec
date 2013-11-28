@@ -31,7 +31,7 @@ typedef struct
 } parameter;
 
 //ControlWord commands SGDV
-enum 
+enum
 {
  CW_QUICK_STOP         =  0x02,
  CW_SHUTDOWN           =  0x06,
@@ -45,7 +45,7 @@ enum
 };
 
 //StatusWord values SGDV
-enum 
+enum
 {
   SW_NOT_READY_SWICH_ON   =   0x00,
   SW_SWITCH_ON_DISABLED   =   0x40,
@@ -58,5 +58,5 @@ enum
   SW_HIGH_MASK            = 0x00FF,
   SW_LOW_MASK             = 0xFF00,
 };
-	  
+
 #endif

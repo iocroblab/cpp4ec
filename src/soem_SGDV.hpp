@@ -7,11 +7,11 @@
 extern "C"
 {
 #include <soem/ethercattype.h>
-#include <soem/nicdrv.h>
 #include <soem/ethercatbase.h>
 #include <soem/ethercatmain.h>
 #include <soem/ethercatconfig.h>
 #include <soem/ethercatdc.h>
+#include <soem/nicdrv.h>
 #include <soem/ethercatcoe.h>
 #include <soem/ethercatprint.h>
 }

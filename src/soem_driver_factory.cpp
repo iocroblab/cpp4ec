@@ -35,6 +35,7 @@ extern "C"
 #include <soem/ethercatdc.h>
 #include <soem/ethercatcoe.h>
 #include <soem/ethercatprint.h>
+#include <soem/nicdrv.h>
 }
 
 #include "soem_driver_factory.h"
