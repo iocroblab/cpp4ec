@@ -1,5 +1,5 @@
 #########################################################################
-# CMakeLists.txt file for building  ec4c++ with CMake                      #
+# CMakeLists.txt file for building  ec4cpp with CMake                      #
 #                                                                       #
 # Copyright (c) 2013 Leopold Palomo-Avellaneda <leo@alaxarxa.net>       #
 #                                                                       #
@@ -19,14 +19,14 @@
 
 cmake_minimum_required (VERSION 2.6)
 
-project(EC4C++)
+project(EC4CPP)
 
 # BMM version. Defined here but not exported to header files, because it's already defined there
-set( EC4C++_VERSION 0.0.1 )
-string( REGEX MATCHALL "[0-9]+" EC4C++_VERSIONS ${EC4C++_VERSION} )
-LIST( GET EC4C++_VERSIONS 0 EC4C++_VERSION_MAJOR)
-LIST( GET EC4C++_VERSIONS 1 EC4C++_VERSION_MINOR)
-LIST( GET EC4C++_VERSIONS 2 EC4C++_VERSION_PATCH)
+set( EC4CPP_VERSION 0.0.1 )
+string( REGEX MATCHALL "[0-9]+" EC4CPP_VERSIONS ${EC4CPP_VERSION} )
+LIST( GET EC4CPP_VERSIONS 0 EC4CPP_VERSION_MAJOR)
+LIST( GET EC4CPP_VERSIONS 1 EC4CPP_VERSION_MINOR)
+LIST( GET EC4CPP_VERSIONS 2 EC4CPP_VERSION_PATCH)
 
 # Some example programs use "libpthread"
 # http://stackoverflow.com/questions/1620918/cmake-and-libpthread
@@ -71,16 +71,17 @@ if(ENABLE_RT)
    message("Found soemrt (soem with realtime patch) and its libs : ${SOEMRT_LIBRARIES}" )
    message("--> with LDFLAGS : ${SOEMRT_LDFLAGS}" )
 
-   list(APPEND EC4C++_CFLAGS ${SOEMRT_CFLAGS})
-   list(APPEND EC4C++_CFLAGS ${XENO_NATIVE_CFLAGS})
-   message("The complete ec4c++ CFLAGS : ${EC4C++_CFLAGS}" )
+   list(APPEND EC4CPP_CFLAGS ${SOEMRT_CFLAGS})
+   list(APPEND EC4CPP_CFLAGS ${XENO_NATIVE_CFLAGS})
+   message("The complete ec4cpp CFLAGS : ${EC4CPP_CFLAGS}" )
 
-   list(APPEND EC4C++_LDFLAGS ${SOEMRT_LDFLAGS})
-   list(APPEND EC4C++_LDFLAGS ${XENO_NATIVE_LDFLAGS})
-   message("The complete ec4c++ LFLAGS : ${EC4C++_LDFLAGS}" )
+   list(APPEND EC4CPP_LDFLAGS ${SOEMRT_LDFLAGS})
+   list(APPEND EC4CPP_LDFLAGS ${XENO_NATIVE_LDFLAGS})
+   message("The complete ec4cpp LFLAGS : ${EC4CPP_LDFLAGS}" )
 
 else(ENABLE_RT)
    message (FATAL_ERROR, "This package by now needs Xenomai RTOS")
 endif(ENABLE_RT)
 
 add_subdirectory(src)
+add_subdirectory(tests)
