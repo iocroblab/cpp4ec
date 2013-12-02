@@ -22,7 +22,7 @@ extern "C"
 using namespace std;
 
 //ControlWord commands SGDV
-enum
+typedef enum
 {
    CW_QUICK_STOP         =  0x02,
    CW_SHUTDOWN           =  0x06,
@@ -33,10 +33,10 @@ enum
    CW_FAULT_RESET        =  0x80,
    //Only for control position mode
    CW_START_POSITIONING  =  0x1F,
-};
+}EcControlWord;
 
 //StatusWord values SGDV
-enum
+typedef enum
 {
    SW_NOT_READY_SWICH_ON   =   0x00,
    SW_SWITCH_ON_DISABLED   =   0x40,
@@ -48,7 +48,7 @@ enum
    SW_FAULT_RACTION_ACTIVE =   0x0F,
    SW_HIGH_MASK            = 0x00FF,
    SW_LOW_MASK             = 0xFF00,
-};
+}EcStatusWord;
 
 
 
@@ -63,8 +63,8 @@ public:
     bool configure() throw(EcErrorSGDV);
     void update();
 
-    bool writeControlWord (uint16_t controlWord);
-    bool readStatusWord (uint16_t statusWord);
+    bool writeControlWord (EcControlWord controlWord);
+    bool readStatusWord (EcStatusWord statusWord);
     bool writeVelocity (int32_t velocity);
     bool readVelocity (int32_t velocity);
 
