@@ -16,7 +16,6 @@
 #include "EcSlaveSGDV.h"
 
 
-using namespace std;
 
 namespace ec4cpp
 {
@@ -64,13 +63,13 @@ strcpy (ecPort, ethPort.c_str());
 if (ec_init(ecPort) > 0)
 {
 
-   cout << "ec_init on " << ethPort << " succeeded." << endl;
+   std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
 
    //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
    if (ec_config_init(FALSE) > 0)
    {
-      cout << ec_slavecount << " slaves found and configured."<< endl;
-      cout << "Request pre-operational state for all slaves"<< endl;
+      std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
+      std::cout << "Request pre-operational state for all slaves"<< std::endl;
 
       //
       success = switchState (EC_STATE_PRE_OP);
@@ -83,21 +82,21 @@ if (ec_init(ecPort) > 0)
    if (driver)
    {
    m_drivers.push_back(driver);
-   cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< endl;
+   std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
    //Adding driver's services to master component
-   cout << "Put configuration parameters in the slaves."<< endl;
+   std::cout << "Put configuration parameters in the slaves."<< std::endl;
    try
    {
       driver->configure();
    }
    catch (EcError& e)
    {
-      cout<<e.what()<<endl;
+      std::cout<<e.what()<<std::endl;
       return false;
    }
 
    }else{
-   cout << "Could not create driver for "<< ec_slave[i].name << endl;
+   std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
    throw( EcError (EcError::FAIL_CREATING_DRIVER));
    }
 
@@ -108,7 +107,7 @@ if (ec_init(ecPort) > 0)
       //ec_readstate();
 
    }else{
-      cout << "Configuration of slaves failed!!!" << endl;
+      std::cout << "Configuration of slaves failed!!!" << std::endl;
       if(EcatError)
    throw(EcError(EcError::ECAT_ERROR));
       return false;
@@ -118,11 +117,11 @@ if (ec_init(ecPort) > 0)
       throw(EcError(EcError::ECAT_ERROR));
 
 }else{
-   cout << "Could not initialize master on " << ethPort.c_str() << endl;
+   std::cout << "Could not initialize master on " << ethPort.c_str() << std::endl;
    return false;
 
 }
-cout<<"Master preconfigured!!!"<<endl;
+std::cout<<"Master preconfigured!!!"<<std::endl;
 return true;
 }
 
@@ -134,7 +133,7 @@ ec_config_map(&m_IOmap);
 if(EcatError)
    throw(EcError(EcError::ECAT_ERROR));
 
-cout << "Request safe-operational state for all slaves" << endl;
+std::cout << "Request safe-operational state for all slaves" << std::endl;
 success = switchState (EC_STATE_SAFE_OP);
 if (!success)
    throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
@@ -145,12 +144,12 @@ ec_receive_processdata(EC_TIMEOUTRET);
 if(EcatError)
    throw(EcError(EcError::ECAT_ERROR));
 
-cout << "Request operational state for all slaves" << endl;
+std::cout << "Request operational state for all slaves" << std::endl;
 success = switchState(EC_STATE_OPERATIONAL);
 if (!success)
       throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
 
-cout<<"Master configured!!!"<<endl;
+std::cout<<"Master configured!!!"<<std::endl;
 
 return true;
 }
@@ -178,7 +177,7 @@ bool EcMaster::start()
       ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_ENABLE_OP);
    usleep (100000);
 
-   cout<<"Master started!!!"<<endl;
+   std::cout<<"Master started!!!"<<std::endl;
 
    return true;
 }
@@ -188,7 +187,7 @@ bool EcMaster::setVelocity (std::vector <int32_t>&vel)
 
 if(vel.size()!=3)
    {
-   cout<<"Vector velocity dimension has to be 3"<<endl;
+   std::cout<<"Vector velocity dimension has to be 3"<<std::endl;
    return false;
    }
    for(int i=0;i<m_drivers.size();i++)
@@ -219,7 +218,7 @@ bool EcMaster::stop()
 // Aturem la tasca periòdica
 
 rt_task_suspend (&task);
-cout<<"Master stoped!"<<endl;
+std::cout<<"Master stoped!"<<std::endl;
 return true;
 }
 
@@ -241,7 +240,7 @@ bool EcMaster::getPosition (std::vector <int32_t>&pos)
 bool EcMaster::reset() throw(EcError)
 {
    bool success;
-   cout<<"Reseting...."<<endl;
+   
    success = switchState (EC_STATE_INIT);
    if (!success)
       throw(EcError(EcError::FAIL_SWITCHING_STATE_INIT));
@@ -249,7 +248,8 @@ bool EcMaster::reset() throw(EcError)
    for (unsigned int i = 0; i < m_drivers.size(); i++)
          delete m_drivers[i];
    ec_close();
-   cout<<"Should be reseted!"<<endl;
+   
+   std::cout<<"Master reseted!"<<std::endl;
 
    return true;
 }

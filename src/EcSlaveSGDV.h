@@ -19,7 +19,7 @@ extern "C"
 #include <vector>
 #include <iostream>
 
-using namespace std;
+
 
 //ControlWord commands SGDV
 enum
@@ -77,7 +77,7 @@ private:
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
 
-    vector <parameter> m_params;
+    std::vector <parameter> m_params;
 
 };
 }

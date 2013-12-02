@@ -11,7 +11,6 @@
 #include <rtdk.h>
 
 
-using namespace std;
 
 
 namespace ec4cpp

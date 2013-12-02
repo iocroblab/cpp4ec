@@ -12,7 +12,7 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
-using namespace std;
+
 
 EcError::EcError(Ec4CppErrorCode errorcode) throw ():m_errorcode(errorcode)
 {
@@ -35,11 +35,11 @@ const char* EcError::what() const throw()
        {
 	 if (ec_slave[i].state != state)
 	 {
-	  cout << "Slave " << i
+	  std::cout << "Slave " << i
 	       << " State= " << to_string(ec_slave[i].state, std::hex)
 	       << " StatusCode=" << ec_slave[i].ALstatuscode
 	       << " : " << ec_ALstatuscode2string(ec_slave[i].ALstatuscode)
-	       << endl;
+	       << std::endl;
 	 }
        }
        return std::string("Fail switching init state.").c_str();
@@ -51,11 +51,11 @@ const char* EcError::what() const throw()
        {
 	 if (ec_slave[i].state != state)
 	 {
-	  cout << "Slave " << i
+	  std::cout << "Slave " << i
 	       << " State= " << to_string(ec_slave[i].state, std::hex)
 	       << " StatusCode=" << ec_slave[i].ALstatuscode
 	       << " : " << ec_ALstatuscode2string(ec_slave[i].ALstatuscode)
-	       << endl;
+	       << std::endl;
 	 }
        }
        return std::string("Fail switching pre-op state.").c_str();
@@ -67,11 +67,11 @@ const char* EcError::what() const throw()
        {
 	 if (ec_slave[i].state != state)
 	 {
-	  cout << "Slave " << i
+	  std::cout << "Slave " << i
 	       << " State= " << to_string(ec_slave[i].state, std::hex)
 	       << " StatusCode=" << ec_slave[i].ALstatuscode
 	       << " : " << ec_ALstatuscode2string(ec_slave[i].ALstatuscode)
-	       << endl;
+	       << std::endl;
 	 }
        }
        return std::string("Fail switching safe-op state.").c_str();
@@ -83,11 +83,11 @@ const char* EcError::what() const throw()
        {
 	 if (ec_slave[i].state != state)
 	 {
-	  cout << "Slave " << i
+	  std::cout << "Slave " << i
 	       << " State= " << to_string(ec_slave[i].state, std::hex)
 	       << " StatusCode=" << ec_slave[i].ALstatuscode
 	       << " : " << ec_ALstatuscode2string(ec_slave[i].ALstatuscode)
-	       << endl;
+	       << std::endl;
 	 }
        }
        return std::string("Fail switching operational state.").c_str();
