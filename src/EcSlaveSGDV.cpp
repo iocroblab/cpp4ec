@@ -219,7 +219,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     return true;
 }
 
-bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
+bool EcSlaveSGDV::writeControlWord (EcControlWord controlWord)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
@@ -227,7 +227,7 @@ bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
     rt_mutex_release (&mutex);
 }
 
-bool EcSlaveSGDV::readStatusWord (uint16_t statusWord)
+bool EcSlaveSGDV::readStatusWord (EcStatusWord statusWord)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
