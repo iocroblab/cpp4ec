@@ -20,16 +20,8 @@
 namespace ec4cpp
 {
 
-EcMaster::EcMaster() : ethPort ("rteth0")
+EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
 {
-   cycletime = 1000000;//The cycletime of the updateHook. The time beween each PDO reading and writing.
-   opMode = 3;		//Initialising necessary parameters of OpMode 3
-   maxPvel = 20000;	// Max. rotational speed is 200 degrees/second
-   Pacc = 150;  	// acceleration of 1 degree/sec²
-   Pdec = 150; 	// deacceleration: the same
-   Pqdec = 50000;	// quick deacceleration: the same
-
-
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
@@ -53,112 +45,104 @@ EcMaster::~EcMaster()
 
 bool EcMaster::preconfigure() throw(EcError)
 {
-bool success;
-int32_t wkc, expectedWKC;
-int size = ethPort.size();
-ecPort = new char[size];
-strcpy (ecPort, ethPort.c_str());
+  bool success;
+  int size = ethPort.size();
+  ecPort = new char[size];
+  strcpy (ecPort, ethPort.c_str());
 
-// initialise SOEM, bind socket to ifname
-if (ec_init(ecPort) > 0)
-{
+  // initialise SOEM, bind socket to ifname
+  if (ec_init(ecPort) > 0)
+  {
 
-   std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
+    std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
 
-   //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
-   if (ec_config_init(FALSE) > 0)
-   {
-      std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
-      std::cout << "Request pre-operational state for all slaves"<< std::endl;
+    //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
+    if (ec_config_init(FALSE) > 0)
+    {
+	std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
+	std::cout << "Request pre-operational state for all slaves"<< std::endl;
 
-      //
-      success = switchState (EC_STATE_PRE_OP);
-      if (!success)
-   throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
+	//
+	success = switchState (EC_STATE_PRE_OP);
+	if (!success)
+	  throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
 
-      for (int i = 1; i <= ec_slavecount; i++)
-      {
-   EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
-   if (driver)
-   {
-   m_drivers.push_back(driver);
-   std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
-   //Adding driver's services to master component
-   std::cout << "Put configuration parameters in the slaves."<< std::endl;
-   try
-   {
-      driver->configure();
-   }
-   catch (EcError& e)
-   {
-      std::cout<<e.what()<<std::endl;
-      return false;
-   }
+	for (int i = 1; i <= ec_slavecount; i++)
+	{
+	  EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
+	  if (driver)
+	  {
+	    m_drivers.push_back(driver);
+	    std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
+	    //Adding driver's services to master component
+	    std::cout << "Put configuration parameters in the slaves."<< std::endl;
+	    driver->configure();
+	    
+	  }else{
+	    std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
+	    throw( EcError (EcError::FAIL_CREATING_DRIVER));
+	  }
 
-   }else{
-   std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
-   throw( EcError (EcError::FAIL_CREATING_DRIVER));
-   }
+	}
+	//Configure distributed clock
+	//ec_configdc();
+	//Read the state of all slaves
+	//ec_readstate();
 
-      }
-      //Configure distributed clock
-      //ec_configdc();
-      //Read the state of all slaves
-      //ec_readstate();
+    }else{
+	std::cout << "Configuration of slaves failed!!!" << std::endl;
+	if(EcatError)
+    throw(EcError(EcError::ECAT_ERROR));
+	return false;
 
-   }else{
-      std::cout << "Configuration of slaves failed!!!" << std::endl;
-      if(EcatError)
-   throw(EcError(EcError::ECAT_ERROR));
-      return false;
+    }
+    if(EcatError)
+	throw(EcError(EcError::ECAT_ERROR));
 
-   }
-   if(EcatError)
-      throw(EcError(EcError::ECAT_ERROR));
+  }else{
+    std::cout << "Could not initialize master on " << ethPort.c_str() << std::endl;
+    return false;
 
-}else{
-   std::cout << "Could not initialize master on " << ethPort.c_str() << std::endl;
-   return false;
-
-}
-std::cout<<"Master preconfigured!!!"<<std::endl;
-return true;
+  }
+  std::cout<<"Master preconfigured!!!"<<std::endl;
+  return true;
 }
 
 
 bool EcMaster::configure() throw(EcError)
 {
-bool success;
-ec_config_map(&m_IOmap);
-if(EcatError)
-   throw(EcError(EcError::ECAT_ERROR));
+  bool success;
+  int32_t wkc, expectedWKC;
+  ec_config_map(&m_IOmap);
+  if(EcatError)
+    throw(EcError(EcError::ECAT_ERROR));
 
-std::cout << "Request safe-operational state for all slaves" << std::endl;
-success = switchState (EC_STATE_SAFE_OP);
-if (!success)
-   throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
+  std::cout << "Request safe-operational state for all slaves" << std::endl;
+  success = switchState (EC_STATE_SAFE_OP);
+  if (!success)
+    throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
 
-// send one valid process data to make outputs in slaves happy
-ec_send_processdata();
-ec_receive_processdata(EC_TIMEOUTRET);
-if(EcatError)
-   throw(EcError(EcError::ECAT_ERROR));
+  // send one valid process data to make outputs in slaves happy
+  ec_send_processdata();
+  ec_receive_processdata(EC_TIMEOUTRET);
+  if(EcatError)
+    throw(EcError(EcError::ECAT_ERROR));
 
-std::cout << "Request operational state for all slaves" << std::endl;
-success = switchState(EC_STATE_OPERATIONAL);
-if (!success)
-      throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
+  std::cout << "Request operational state for all slaves" << std::endl;
+  success = switchState(EC_STATE_OPERATIONAL);
+  if (!success)
+	throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
 
-std::cout<<"Master configured!!!"<<std::endl;
+  std::cout<<"Master configured!!!"<<std::endl;
 
-return true;
+  return true;
 }
 
 
 bool EcMaster::start()
 {
    //Starts a preiodic tasck that sends frames to slaves
-   rt_task_set_periodic (&task, TM_NOW, cycletime);
+   rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
    rt_task_start (&task, &ethercatLoop, NULL);
 
 

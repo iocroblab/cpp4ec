@@ -49,7 +49,7 @@ public:
      * \brief Constructor
      *
      */
-    EcMaster();
+    EcMaster(int cycleTime = 1000000);
 
     /**
      *  \brief Destructor
@@ -118,26 +118,7 @@ public:
     bool getVelocity (std::vector <int32_t>&vel);
 
 
-     /**
-     *  \brief Sets master parameters
-     *
-     * Configures the master parameters to work propertly
-     * \param _cycletime set the period of the realtime task (PDO comunication)
-     * \param _maxPvel is the maximum velocity that a motor can reach in milidegrees/second
-     * \param _Pacc is the acceleration that motors apply to reach the desired velocity (useful for Operational Mode 3)
-     * \param _Pdec is the deceleration that motors apply to reach the desired velocity (useful for Operational Mode 3)
-     *
-     */
-    inline void setParameters (int _cycletime, int8_t _opMode,
-                               uint32_t _maxPvel,
-                               uint32_t _Pacc,
-                               uint32_t _Pdec) {
-        cycletime = _cycletime;
-        maxPvel = _maxPvel;
-        Pacc = _Pacc;
-        Pdec = _Pdec;
-        opMode = _opMode;
-    }
+
 
 private:
      /**
@@ -148,22 +129,10 @@ private:
     std::string ethPort;
     char * ecPort;
     char m_IOmap[4096];
-    int cycletime;	//the periodicity of ethercatLoop ("PDOs period")
-    int8_t opMode;	//operationMode in which motors are controled
-    uint32_t maxPvel;	// Maximum Profile Velocity
-    uint32_t Pacc;  	// Profile acceleration
-    uint32_t Pdec; 	// Profile Decceleration
-    uint32_t Pqdec;	// Profile Quick Decceleration
-
+    int m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
     std::vector<EcSlave*> m_drivers;
 
-    //internal functions
-    // This will be the main communication loop to be executed in a realtime separate thread
-    //static void ethercatLoop(void *unused);
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
-    int motor_control (uint16_t controlWord); //switch the motor state
-    bool motion_setting (void); //configures operationMode and SDO paramenters
-    int PDOmapping (void); //configures the PDO mapping
 
 };
 
