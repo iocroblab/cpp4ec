@@ -35,7 +35,15 @@ struct slaveDCspec {
 //     return ss.str();
 // };
 
+//slave info variables
+// ec_ODlistt ODlist;
+// ec_OElistt OElist;
+// boolean printSDO = FALSE;
+// boolean printMAP = FALSE;
+// char usdo[128];
+// char hstr[1024];
 
+void slaveinfo();
 
 namespace ec4cpp
 {
