@@ -4,6 +4,18 @@
 #include "EcSlave.h"
 #include "EcSlaveFactory.h"
 
+extern "C"
+{
+#include <soem/ethercattype.h>
+#include <soem/ethercatbase.h>
+#include <soem/ethercatmain.h>
+#include <soem/ethercatconfig.h>
+#include <soem/ethercatdc.h>
+#include <soem/ethercatcoe.h>
+#include <soem/ethercatprint.h>
+#include <soem/nicdrv.h>
+}
+
 #include <vector>
 #include <string>
 #include <sstream>
@@ -35,15 +47,8 @@ struct slaveDCspec {
 //     return ss.str();
 // };
 
-//slave info variables
-// ec_ODlistt ODlist;
-// ec_OElistt OElist;
-// boolean printSDO = FALSE;
-// boolean printMAP = FALSE;
-// char usdo[128];
-// char hstr[1024];
 
-void slaveinfo();
+
 
 namespace ec4cpp
 {
@@ -124,6 +129,7 @@ public:
      * Reads on the PDO the velocity of each motor in milidegrees/second.
      */
     bool getVelocity (std::vector <int32_t>&vel);
+    
 
 
 
@@ -139,8 +145,17 @@ private:
     char m_IOmap[4096];
     int m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
     std::vector<EcSlave*> m_drivers;
-
+    ec_ODlistt ODlist;
+    ec_OElistt OElist;
+    FILE * pFile;
+    
+    void slaveInfo();
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
+    int si_PDOassign(uint16 slave, uint16 PDOassign, int mapoffset, int bitoffset);
+    int si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset);
+    int si_map_sdo(int slave);
+    int si_map_sii(int slave);
+    void si_sdo(int cnt);
 
 };
 
