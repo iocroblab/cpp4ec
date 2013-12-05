@@ -31,39 +31,68 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    temp.size = 1;
    temp.param = 3;
    m_params.push_back(temp);
+   
+   //Position parameter (mode = 1)
+   temp.description = "Min Position Limit";
+   temp.index = 0x607D;
+   temp.subindex = 0x01;
+   temp.name = "MinPos";
+   temp.size = 4;
+   temp.param = -80000; 
+   m_params.push_back(temp);
 
+   temp.description = "Max Position Limit";
+   temp.index = 0x607D;
+   temp.subindex = 0x02;
+   temp.name = "MaxPos";
+   temp.size = 4;
+   temp.param = 80000;  
+   m_params.push_back(temp);
+
+   temp.description = "Profile velocity";
+   temp.index = 0x6081;
+   temp.subindex = 0x00;
+   temp.name = "Pvel"; 
+   temp.size = 4;
+   temp.param = 150000;
+   m_params.push_back(temp);
+
+   //Velocity Parameters (mode = 3,9)
+   
    temp.description = "Max. Profile velocity";
    temp.index = 0x607F;
    temp.subindex = 0x00;
    temp.name = "maxPvel";
    temp.size = 4;
-   temp.param = 2000;
+   temp.param = 150000;
    m_params.push_back(temp);
 
    temp.description = "Profile acceleration";
    temp.index = 0x6083;
    temp.subindex = 0x00;
-   temp.name = "Pacc";
+   temp.name = "Pacc";  
    temp.size = 4;
    temp.param = 150;
    m_params.push_back(temp);
 
-   //PDO mapping
-   //RxPDO
-   //uint32_t ControlWord = 0x60400010;
-   //uint32_t TargetPosition=0x607A0020;
-   //uint32_t TargetVelovity = 0x60FF0020;
-   //uint32_t TargetToque=0x60710010;
-   //uint32_t MaxTorque=0x60720010;
-   //uint32_t ModeOperation=0x60600008;
-   //TxPDO
-   //uint32_t StatusWord = 0x60410010;
-   //uint32_t PositionActual = 0x60640020;
-   //uint32_t VelocityActual = 0x606C0020;
-   //uint32_t TorqueActual=0x60770010;
-   //uint32_t ErrorActual=0x60F40020;
-   //uint32_t ModeActual = 0x60610008
+   //Torque parameters (mode = 4)
+   temp.description = "Max Torque";
+   temp.index = 0x6072;
+   temp.subindex = 0x00;
+   temp.name = "MaxTorq";
+   temp.size = 2;
+   temp.param = 400;
+   m_params.push_back(temp);
 
+   temp.description = "Slope Torque";
+   temp.index = 0x6087;
+   temp.subindex = 0x00;
+   temp.name = "STorq"; 
+   temp.size = 4;
+   temp.param = 100;
+   m_params.push_back(temp);
+
+   /*-----PDO Mapping-----*/
    //1.Disable the assignment of the Sync manager and PDO
    temp.description = "Disable";
    temp.index = 0x1C12;
@@ -82,8 +111,8 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.push_back(temp);
 
    //2.Set all the mapping entry in PDO mapping objects
-   temp.description = "Receive PDO Mapping";
-   temp.index = 0x1602;
+     temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
    temp.subindex = 0x00;
    temp.name = "Number of objects";
    temp.size = 1;
@@ -91,7 +120,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.push_back(temp);
 
    temp.description = "Receive PDO Mapping";
-   temp.index = 0x1602;
+   temp.index = 0x1600;
    temp.subindex = 0x01;
    temp.name = "Control Word ";
    temp.size = 4;
@@ -99,15 +128,47 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.push_back(temp);
 
    temp.description = "Receive PDO Mapping";
-   temp.index = 0x1602;
+   temp.index = 0x1600;
    temp.subindex = 0x02;
+   temp.name = "Target Position ";
+   temp.size = 4;
+   temp.param = 0x607A0020;
+   m_params.push_back(temp);
+
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
+   temp.subindex = 0x03;
    temp.name = "Target Velovity ";
    temp.size = 4;
    temp.param = 0x60FF0020;
    m_params.push_back(temp);
 
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600; 
+   temp.subindex = 0x04;
+   temp.name = "Target Torque ";
+   temp.size = 4; 
+   temp.param = 0x60710010;
+   m_params.push_back(temp);
+
+/*   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600; 
+   temp.subindex = 0x05;
+   temp.name = "Max Torque ";
+   temp.size = 4; 
+   temp.param = 0x60720010;
+   m_params.push_back(temp);
+*/                     
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600; 
+   temp.subindex = 0x05;
+   temp.name = "Mode of Operation ";
+   temp.size = 4; 
+   temp.param = 0x60600008;
+   m_params.push_back(temp);
+
    temp.description = "Transmit PDO Mapping";
-   temp.index = 0x1A02;
+   temp.index = 0x1A00;
    temp.subindex = 0x00;
    temp.name = "Number of objects";
    temp.size = 1;
@@ -115,7 +176,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.push_back(temp);
 
    temp.description = "Transmit PDO Mapping";
-   temp.index = 0x1A02;
+   temp.index = 0x1A00;
    temp.subindex = 0x01;
    temp.name = "Status Word";
    temp.size = 4;
@@ -123,7 +184,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.push_back(temp);
 
    temp.description = "Transmit PDO Mapping";
-   temp.index = 0x1A02;
+   temp.index = 0x1A00;
    temp.subindex = 0x01;
    temp.name = "Position Actual Value";
    temp.size = 4;
@@ -131,28 +192,53 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.push_back(temp);
 
    temp.description = "Transmit PDO Mapping";
-   temp.index = 0x1A02;
+   temp.index = 0x1A00;
    temp.subindex = 0x02;
    temp.name = "Velocity Actual Value";
    temp.size = 4;
    temp.param = 0x606C0020;
    m_params.push_back(temp);
 
-   //3.Set the number of mapping entries in PDO mapping objects
-   temp.description = "Receive PDO Mapping";
-   temp.index = 0x1602;
-   temp.subindex = 0x00;
-   temp.name = "Number of objects";
-   temp.size = 1;
-   temp.param = 2;
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00; 
+   temp.subindex = 0x04;
+   temp.name = "Torque Actual Value";
+   temp.size = 4; 
+   temp.param = 0x60770010;
    m_params.push_back(temp);
 
    temp.description = "Transmit PDO Mapping";
-   temp.index = 0x1A02;
+   temp.index = 0x1A00; 
+   temp.subindex = 0x05;
+   temp.name = "Error Code";
+   temp.size = 4; 
+   temp.param = 0x603F0010;
+   m_params.push_back(temp);
+                            
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00; 
+   temp.subindex = 0x06;
+   temp.name = "Mode of Operation Display";
+   temp.size = 4; 
+   temp.param = 0x60610008;
+   m_params.push_back(temp);
+
+
+   //3.Set the number of mapping entries in PDO mapping objects
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
    temp.subindex = 0x00;
    temp.name = "Number of objects";
    temp.size = 1;
-   temp.param = 3;
+   temp.param = 5;
+   m_params.push_back(temp);
+
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00;
+   temp.subindex = 0x00;
+   temp.name = "Number of objects";
+   temp.size = 1;
+   temp.param = 6;
    m_params.push_back(temp);
 
    //4.Set the assignment of the Sync manager and PDO
@@ -161,7 +247,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    temp.subindex = 0x01;
    temp.name = "Sync Manager PDO Assignment";
    temp.size = 2;
-   temp.param = 0x1602;
+   temp.param = 0x1600;
    m_params.push_back(temp);
 
    temp.description = "Assing";
@@ -169,7 +255,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    temp.subindex = 0x01;
    temp.name = "Sync Manager PDO Assignment";
    temp.size = 2;
-   temp.param = 0x1A02;
+   temp.param = 0x1A00;
    m_params.push_back(temp);
 
    //5.Enable the assignment of the Sync manager and PDO.
