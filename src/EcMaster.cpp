@@ -57,6 +57,7 @@ bool EcMaster::preconfigure() throw(EcError)
   int size = ethPort.size();
   ecPort = new char[size];
   strcpy (ecPort, ethPort.c_str());
+  
 
   // initialise SOEM, bind socket to ifname
   if (ec_init(ecPort) > 0)
@@ -748,7 +749,7 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
     /*To write data of the found slaves in EtherCATsoemInfo.txt. Usefull to be sure of the slaves' order*/
  void EcMaster::slaveInfo()
     {
-
+      pFile = fopen ("EtherCATsoemInfo.txt","w");
       ec_configdc();
 
       int cnt, i, j, nSM;
@@ -756,16 +757,19 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
       for( cnt = 1 ; cnt <= ec_slavecount ; cnt++)
 			      
 	{
+	 std::cout<<"writing slave info slave!!!"<<std::endl;
 	    fprintf(pFile,"\nSlave:%d\n Name:%s\n PDO Output size: %dbits\n PDO Input size: %dbits\n State: %d\n Delay: %d[ns]\n Has DC: %d\n",
 		      cnt, ec_slave[cnt].name, ec_slave[cnt].Obits, ec_slave[cnt].Ibits,
 		      ec_slave[cnt].state, ec_slave[cnt].pdelay, ec_slave[cnt].hasdc);
+    std::cout<<"2paso"<<std::endl;	    
 	    if (ec_slave[cnt].hasdc) fprintf(pFile," DCParentport:%d", ec_slave[cnt].parentport);
 	    fprintf(pFile," Activeports:%d.%d.%d.%d\n", (ec_slave[cnt].activeports & 0x01) > 0 ,
-									    (ec_slave[cnt].activeports & 0x02) > 0 , 
+	    								    (ec_slave[cnt].activeports & 0x02) > 0 , 
 									    (ec_slave[cnt].activeports & 0x04) > 0 , 
 									    (ec_slave[cnt].activeports & 0x08) > 0 );
 	    fprintf(pFile," Configured address: %4.4x\n", ec_slave[cnt].configadr);
 	    fprintf(pFile," Man: %8.8x ID: %8.8x Rev: %8.8x\n", (int)ec_slave[cnt].eep_man, (int)ec_slave[cnt].eep_id, (int)ec_slave[cnt].eep_rev);
+    std::cout<<"2paso"<<std::endl;
 	    for(nSM = 0 ; nSM < EC_MAXSM ; nSM++)
 	    {
 		    if(ec_slave[cnt].SM[nSM].StartAddr > 0)
@@ -780,7 +784,7 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
 				ec_slave[cnt].FMMU[j].FMMUtype, ec_slave[cnt].FMMU[j].FMMUactive);
 	    }
 	    fprintf(pFile," FMMUfunc 0:%d 1:%d 2:%d 3:%d\n",
-		    ec_slave[cnt].FMMU0func, ec_slave[cnt].FMMU2func, ec_slave[cnt].FMMU2func, ec_slave[cnt].FMMU3func);
+		    ec_slave[cnt].FMMU0func, ec_slave[cnt].FMMU1func, ec_slave[cnt].FMMU2func, ec_slave[cnt].FMMU3func);
 	    fprintf(pFile," MBX length wr: %d rd: %d MBX protocols : %2.2x\n", ec_slave[cnt].mbx_l, ec_slave[cnt].mbx_rl, ec_slave[cnt].mbx_proto);
 	    ssigen = ec_siifind(cnt, ECT_SII_GENERAL);
 	    /* SII general section */
