@@ -76,6 +76,8 @@ private:
     unsigned int SYNC0TIME;
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
+    
+    void readXML() throw(EcErrorSGDV);
 
     std::vector <parameter> m_params;
 

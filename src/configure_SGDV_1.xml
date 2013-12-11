@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<parameters>
+  <structure>
+    <param name = "index" description ="Modes of operation"> 0x6060 </param>
+    <param name = "subindex"> 0 </param>
+    <param name = "size"> 1 </param>
+    <param name = "value"> 3 </param>  
+  </structure>  
+  <structure>
+    <param name = "index" description ="Max. Profile velocity [mdeg/s]"> 0x607F </param>
+    <param name = "subindex"> 0 </param>
+    <param name = "size"> 4 </param>
+    <param name = "value"> 150000 </param>  
+  </structure>  
+  <structure>
+    <param name = "index" description ="Profile acceleration [mdeg/s2]"> 0x6083 </param>
+    <param name = "subindex"> 0 </param>
+    <param name = "size"> 4 </param>
+    <param name = "value"> 150 </param>  
+  </structure>  
+  <structure>
+    <param name = "index" description ="Profile deceleration [mdeg/s2]"> 0x6084 </param>
+    <param name = "subindex"> 0 </param>
+    <param name = "size"> 4 </param>
+    <param name = "value"> 150 </param>
+   </structure> 
+</parameters>

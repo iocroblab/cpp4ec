@@ -10,6 +10,10 @@
 #include <native/timer.h>
 #include <rtdk.h>
 
+#include <mxml.h>
+#include <stdint.h>
+
+
 
 
 
@@ -23,14 +27,17 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     SHIFTMASTER (1000000), PDOerrorsTolerance (9)
 {
    parameter temp;
+   
+   readXML();
+   
    //setting parameters
-   temp.description = "Modes of Operation";
-   temp.index = 0x6060;
-   temp.subindex = 0x00;
-   temp.name = "OpMode";
-   temp.size = 1;
-   temp.param = 3;
-   m_params.push_back(temp);
+//    temp.description = "Modes of Operation";
+//    temp.index = 0x6060;
+//    temp.subindex = 0x00;
+//    temp.name = "OpMode";
+//    temp.size = 1;
+//    temp.param = 3;
+//    m_params.push_back(temp);
    
    //Position parameter (mode = 1)
    temp.description = "Min Position Limit";
@@ -59,21 +66,21 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 
    //Velocity Parameters (mode = 3,9)
    
-   temp.description = "Max. Profile velocity";
-   temp.index = 0x607F;
-   temp.subindex = 0x00;
-   temp.name = "maxPvel";
-   temp.size = 4;
-   temp.param = 150000;
-   m_params.push_back(temp);
-
-   temp.description = "Profile acceleration";
-   temp.index = 0x6083;
-   temp.subindex = 0x00;
-   temp.name = "Pacc";  
-   temp.size = 4;
-   temp.param = 150;
-   m_params.push_back(temp);
+//    temp.description = "Max. Profile velocity";
+//    temp.index = 0x607F;
+//    temp.subindex = 0x00;
+//    temp.name = "maxPvel";
+//    temp.size = 4;
+//    temp.param = 150000;
+//    m_params.push_back(temp);
+// 
+//    temp.description = "Profile acceleration";
+//    temp.index = 0x6083;
+//    temp.subindex = 0x00;
+//    temp.name = "Pacc";  
+//    temp.size = 4;
+//    temp.param = 150;
+//    m_params.push_back(temp);
 
    //Torque parameters (mode = 4)
    temp.description = "Max Torque";
@@ -274,7 +281,11 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    temp.size = 1;
    temp.param = 1;
    m_params.push_back(temp);
-
+   
+   for (unsigned int i = 0; i < m_params.size(); i++)
+   {
+     std::cout<<"index = "<<m_params[i].index<<" subindex = "<<m_params[i].subindex<<" size = "<<m_params[i].size<<" value = "<<m_params[i].param<<std::endl;
+   }
 }
 
 EcSlaveSGDV::~EcSlaveSGDV()
@@ -343,6 +354,59 @@ bool EcSlaveSGDV::readVelocity (int32_t velocity)
 
 void EcSlaveSGDV::update()
 {
+}
+
+void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
+{
+  parameter temp; 
+  FILE *fp;
+   mxml_node_t *tree;
+   std::string name = "configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
+   const char * cname = name.c_str();
+   std::cout<<"Reading "<<cname<<std::endl;
+   fp = fopen(cname, "r");
+   tree = mxmlLoadFile(NULL, fp, MXML_INTEGER_CALLBACK);//MXML_OPAQUE_CALLBACK might work, lood CDATA
+   if(!tree)
+     std::cout<<"no xml"<<std::endl;
+    // throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR));  
+
+   mxml_node_t *parameters;
+   mxml_node_t *structure;
+   mxml_node_t *param;
+   parameters = mxmlWalkNext(tree, tree, MXML_DESCEND);
+   structure = mxmlWalkNext(parameters, tree, MXML_DESCEND);
+   
+   int i;
+   while(structure)
+   {
+     param = mxmlWalkNext(structure, tree, MXML_DESCEND);
+     i=0;     
+     while(i < 4)
+     {	 
+	const char *name;
+	name = mxmlElementGetAttr(param, "name");
+	
+	if (!strcmp(name, "index"))
+	  temp.index = (int16_t) param->child->value.integer;
+	else if (!strcmp(name, "subindex"))
+	  temp.subindex = (int8_t) param->child->value.integer;
+	else if (!strcmp(name, "size"))
+	  temp.size = (int8_t) param->child->value.integer;
+	else if (!strcmp(name, "value"))
+	  temp.param = param->child->value.integer;
+	else
+	  std::cout<<"no structure error"<<std::endl;
+	 // throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR));
+	      
+	param = mxmlWalkNext(param, tree, MXML_NO_DESCEND);	 
+	i++; 
+     }
+     m_params.push_back(temp);
+     structure = mxmlWalkNext(structure, tree, MXML_NO_DESCEND);
+
+   }    
+   fclose(fp);
+   mxmlDelete(tree);
 }
 
 namespace {
