@@ -88,7 +88,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    temp.subindex = 0x00;
    temp.name = "MaxTorq";
    temp.size = 2;
-   temp.param = 400;
+   temp.param = 1000;
    m_params.push_back(temp);
 
    temp.description = "Slope Torque";
@@ -282,10 +282,6 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    temp.param = 1;
    m_params.push_back(temp);
    
-   for (unsigned int i = 0; i < m_params.size(); i++)
-   {
-     std::cout<<"index = "<<m_params[i].index<<" subindex = "<<m_params[i].subindex<<" size = "<<m_params[i].size<<" value = "<<m_params[i].param<<std::endl;
-   }
 }
 
 EcSlaveSGDV::~EcSlaveSGDV()
@@ -337,7 +333,7 @@ bool EcSlaveSGDV::writeVelocity (int32_t velocity)
 
     rt_mutex_acquire (&mutex, TM_INFINITE);
     //velocity starts in byte 6 (2bytes Controlword + 4bytes TargetPosition)
-    memcpy (m_datap->outputs + 2, &velocity, 4);
+    memcpy (m_datap->outputs + 6, &velocity, 4);
     rt_mutex_release (&mutex);
     return true;//if all is ok
 }
@@ -367,7 +363,7 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
    fp = fopen(cname, "r");
    tree = mxmlLoadFile(NULL, fp, MXML_INTEGER_CALLBACK);//MXML_OPAQUE_CALLBACK might work, lood CDATA
    if(!tree)
-     std::cout<<"no xml"<<std::endl;
+     std::cout<<"Error:no xml"<<std::endl;
     // throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR));  
 
    mxml_node_t *parameters;
@@ -387,7 +383,12 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 	name = mxmlElementGetAttr(param, "name");
 	
 	if (!strcmp(name, "index"))
+	{
+	  const char *description;
+	  description = mxmlElementGetAttr(param, "description");
 	  temp.index = (int16_t) param->child->value.integer;
+          temp.description = description;
+	}
 	else if (!strcmp(name, "subindex"))
 	  temp.subindex = (int8_t) param->child->value.integer;
 	else if (!strcmp(name, "size"))
@@ -395,9 +396,11 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 	else if (!strcmp(name, "value"))
 	  temp.param = param->child->value.integer;
 	else
-	  std::cout<<"no structure error"<<std::endl;
+	  std::cout<<"structure error"<<std::endl;
 	 // throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR));
-	      
+	if(i==3)
+	 temp.name = "0";
+
 	param = mxmlWalkNext(param, tree, MXML_NO_DESCEND);	 
 	i++; 
      }

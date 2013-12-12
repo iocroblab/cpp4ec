@@ -84,7 +84,6 @@ bool EcMaster::preconfigure() throw(EcError)
 	    m_drivers.push_back(driver);
 	    std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
 	    //Adding driver's services to master component
-	    std::cout << "Put configuration parameters in the slaves."<< std::endl;
 	    driver->configure();
 	    
 	  }else{
@@ -757,11 +756,9 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
       for( cnt = 1 ; cnt <= ec_slavecount ; cnt++)
 			      
 	{
-	 std::cout<<"writing slave info slave!!!"<<std::endl;
 	    fprintf(pFile,"\nSlave:%d\n Name:%s\n PDO Output size: %dbits\n PDO Input size: %dbits\n State: %d\n Delay: %d[ns]\n Has DC: %d\n",
 		      cnt, ec_slave[cnt].name, ec_slave[cnt].Obits, ec_slave[cnt].Ibits,
 		      ec_slave[cnt].state, ec_slave[cnt].pdelay, ec_slave[cnt].hasdc);
-    std::cout<<"2paso"<<std::endl;	    
 	    if (ec_slave[cnt].hasdc) fprintf(pFile," DCParentport:%d", ec_slave[cnt].parentport);
 	    fprintf(pFile," Activeports:%d.%d.%d.%d\n", (ec_slave[cnt].activeports & 0x01) > 0 ,
 	    								    (ec_slave[cnt].activeports & 0x02) > 0 , 
@@ -769,7 +766,6 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
 									    (ec_slave[cnt].activeports & 0x08) > 0 );
 	    fprintf(pFile," Configured address: %4.4x\n", ec_slave[cnt].configadr);
 	    fprintf(pFile," Man: %8.8x ID: %8.8x Rev: %8.8x\n", (int)ec_slave[cnt].eep_man, (int)ec_slave[cnt].eep_id, (int)ec_slave[cnt].eep_rev);
-    std::cout<<"2paso"<<std::endl;
 	    for(nSM = 0 ; nSM < EC_MAXSM ; nSM++)
 	    {
 		    if(ec_slave[cnt].SM[nSM].StartAddr > 0)
