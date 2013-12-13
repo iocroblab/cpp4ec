@@ -13,9 +13,13 @@ extern "C"
 }
 
 
-
-EcError::EcError(Ec4CppErrorCode errorcode) throw ():m_errorcode(errorcode)
+EcError::EcError(int errorcode) throw ():m_errorcode(errorcode)
 {
+}
+
+int EcError::getErrorCode() const throw ()
+{
+  return m_errorcode;
 }
 
 
@@ -42,7 +46,7 @@ const char* EcError::what() const throw()
 	       << std::endl;
 	 }
        }
-       return std::string("Fail switching init state.").c_str();
+       return std::string("Error: Failed switching to INIT state.").c_str();
        break;
 
      case FAIL_SWITCHING_STATE_PRE_OP:
@@ -58,7 +62,7 @@ const char* EcError::what() const throw()
 	       << std::endl;
 	 }
        }
-       return std::string("Fail switching pre-op state.").c_str();
+       return std::string("Error: Failed switching to PRE_OPERATIONAL state.").c_str();
        break;
 
      case FAIL_SWITCHING_STATE_SAFE_OP:
@@ -74,7 +78,7 @@ const char* EcError::what() const throw()
 	       << std::endl;
 	 }
        }
-       return std::string("Fail switching safe-op state.").c_str();
+       return std::string("Error: Failed switching to SAFE_OPERATIONAL state.").c_str();
        break;
 
      case FAIL_SWITCHING_STATE_OPERATIONAL:
@@ -90,19 +94,17 @@ const char* EcError::what() const throw()
 	       << std::endl;
 	 }
        }
-       return std::string("Fail switching operational state.").c_str();
+       return std::string("Error: Failed switching to OPERATIONAL state.").c_str();
        break;
 
      case FAIL_CREATING_DRIVER:
 
-       return std::string("Fail creating driver").c_str();
+       return std::string("Error: Failed creating driver").c_str();
        break;
 
      default:
-       return std::string("Invalid error code.").c_str();
+       return std::string("Error: Invalid error code or unexpected error.").c_str();
        break;
    }
-
-
 
 }

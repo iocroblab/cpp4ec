@@ -69,7 +69,7 @@ bool EcMaster::preconfigure() throw(EcError)
     if (ec_config_init(FALSE) > 0)
     {
 	std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
-	std::cout << "Request pre-operational state for all slaves"<< std::endl;
+	std::cout << "Request PRE-OPERATIONAL state for all slaves"<< std::endl;
 
 	//
 	success = switchState (EC_STATE_PRE_OP);
@@ -126,7 +126,7 @@ bool EcMaster::configure() throw(EcError)
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));
 
-  std::cout << "Request safe-operational state for all slaves" << std::endl;
+  std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
   success = switchState (EC_STATE_SAFE_OP);
   if (!success)
     throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
@@ -137,7 +137,7 @@ bool EcMaster::configure() throw(EcError)
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));
 
-  std::cout << "Request operational state for all slaves" << std::endl;
+  std::cout << "Request OPERATIONAL state for all slaves" << std::endl;
   success = switchState(EC_STATE_OPERATIONAL);
   if (!success)
 	throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));

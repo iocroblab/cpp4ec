@@ -30,14 +30,14 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    
    readXML();
    
-   //setting parameters
-//    temp.description = "Modes of Operation";
-//    temp.index = 0x6060;
-//    temp.subindex = 0x00;
-//    temp.name = "OpMode";
-//    temp.size = 1;
-//    temp.param = 3;
-//    m_params.push_back(temp);
+//   setting parameters
+/*   temp.description = "Modes of Operation";
+   temp.index = 0x6060;
+   temp.subindex = 0x00;
+   temp.name = "OpMode";
+   temp.size = 1;
+   temp.param = 3;
+   m_params.push_back(temp);
    
    //Position parameter (mode = 1)
    temp.description = "Min Position Limit";
@@ -66,21 +66,21 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 
    //Velocity Parameters (mode = 3,9)
    
-//    temp.description = "Max. Profile velocity";
-//    temp.index = 0x607F;
-//    temp.subindex = 0x00;
-//    temp.name = "maxPvel";
-//    temp.size = 4;
-//    temp.param = 150000;
-//    m_params.push_back(temp);
-// 
-//    temp.description = "Profile acceleration";
-//    temp.index = 0x6083;
-//    temp.subindex = 0x00;
-//    temp.name = "Pacc";  
-//    temp.size = 4;
-//    temp.param = 150;
-//    m_params.push_back(temp);
+   temp.description = "Max. Profile velocity";
+   temp.index = 0x607F;
+   temp.subindex = 0x00;
+   temp.name = "maxPvel";
+   temp.size = 4;
+   temp.param = 150000;
+   m_params.push_back(temp);
+
+   temp.description = "Profile acceleration";
+   temp.index = 0x6083;
+   temp.subindex = 0x00;
+   temp.name = "Pacc";  
+   temp.size = 4;
+   temp.param = 150;
+   m_params.push_back(temp);
 
    //Torque parameters (mode = 4)
    temp.description = "Max Torque";
@@ -98,7 +98,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    temp.size = 4;
    temp.param = 100;
    m_params.push_back(temp);
-
+*/
    /*-----PDO Mapping-----*/
    //1.Disable the assignment of the Sync manager and PDO
    temp.description = "Disable";
@@ -295,7 +295,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
       ec_SDOwrite(m_slave_nr, m_params[i].index, m_params[i].subindex, FALSE,
 		  m_params[i].size,&(m_params[i].param),EC_TIMEOUTRXM);
       if(EcatError)
-	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR));
+	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR,m_slave_nr,getName()));
 
     }
 
@@ -363,8 +363,7 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
    fp = fopen(cname, "r");
    tree = mxmlLoadFile(NULL, fp, MXML_INTEGER_CALLBACK);//MXML_OPAQUE_CALLBACK might work, lood CDATA
    if(!tree)
-     std::cout<<"Error:no xml"<<std::endl;
-    // throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR));  
+     throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR,m_slave_nr,getName()));  
 
    mxml_node_t *parameters;
    mxml_node_t *structure;
@@ -396,8 +395,7 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 	else if (!strcmp(name, "value"))
 	  temp.param = param->child->value.integer;
 	else
-	  std::cout<<"structure error"<<std::endl;
-	 // throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR));
+	 throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
 	if(i==3)
 	 temp.name = "0";
 
@@ -410,6 +408,16 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
    }    
    fclose(fp);
    mxmlDelete(tree);
+}
+
+void EcSlaveSGDV::setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param)
+{
+  ec_SDOwrite(m_slave_nr, index, subindex, FALSE,psize,param,EC_TIMEOUTRXM);
+}
+
+void EcSlaveSGDV::getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param)
+{
+  ec_SDOread(m_slave_nr, index, subindex, FALSE,psize,param,EC_TIMEOUTRXM);
 }
 
 namespace {

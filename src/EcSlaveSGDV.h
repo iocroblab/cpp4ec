@@ -67,6 +67,8 @@ public:
     bool readStatusWord (EcStatusWord statusWord);
     bool writeVelocity (int32_t velocity);
     bool readVelocity (int32_t velocity);
+    void setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param);
+    void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
 
 private:
 
@@ -76,6 +78,8 @@ private:
     unsigned int SYNC0TIME;
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
+    
+
     
     void readXML() throw(EcErrorSGDV);
 

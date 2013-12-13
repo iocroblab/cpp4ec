@@ -7,12 +7,13 @@
 #include <sstream>
 
 
+
+
 class EcError/*: public exception*/
 {
-
 public:
-
-  enum Ec4CppErrorCode{
+  
+  enum {
     ECAT_ERROR,
     FAIL_SWITCHING_STATE_INIT,
     FAIL_SWITCHING_STATE_PRE_OP,
@@ -21,9 +22,9 @@ public:
     FAIL_CREATING_DRIVER,
   };
 
-  EcError(Ec4CppErrorCode errorcode) throw();
+  EcError(int errorcode) throw();
   const char* what() const throw();
-  Ec4CppErrorCode getErrorCode() const throw ();
+  int getErrorCode() const throw ();
 
 private:
   int m_errorcode;

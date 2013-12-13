@@ -13,6 +13,7 @@ set(EC4CPP_HDRS
 # EC4CPP source files
 set(EC4CPP_SRC
       EcError.cpp
+      EcErrorSGDV.cpp
       EcMaster.cpp
       EcSlave.cpp
       EcSlaveFactory.cpp
