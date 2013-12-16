@@ -18,6 +18,7 @@ public:
     FAIL_CREATING_DRIVER,
     XML_STRUCTURE_ERROR,
     XML_NOT_FOUND_ERROR,
+    XML_TYPE_ERROR,
     };
     
     EcErrorSGDV (int errorcode, unsigned int nslave, std::string name);

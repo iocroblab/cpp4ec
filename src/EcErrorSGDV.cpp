@@ -30,6 +30,9 @@ const char* EcErrorSGDV::what() const throw()
     case XML_NOT_FOUND_ERROR:
       return (std::string("Error: XML file not found. ")+slave_name+to_string(slave_nr,std::dec)).c_str();
       break;
+    case XML_TYPE_ERROR:
+      return (std::string("Error: XML wrong types found. ")+slave_name+to_string(slave_nr,std::dec)).c_str();
+      break;
     default:
       return (std::string("Error: Invalid error code or unexpected error. ")+slave_name+to_string(slave_nr,std::dec)).c_str();
       break;

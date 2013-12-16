@@ -10,8 +10,9 @@
 #include <native/timer.h>
 #include <rtdk.h>
 
-#include <mxml.h>
+#include <pugixml.hpp>
 #include <stdint.h>
+#include <stdlib.h> 
 
 
 
@@ -354,60 +355,60 @@ void EcSlaveSGDV::update()
 
 void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 {
-  parameter temp; 
-  FILE *fp;
-   mxml_node_t *tree;
-   std::string name = "configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
-   const char * cname = name.c_str();
-   std::cout<<"Reading "<<cname<<std::endl;
-   fp = fopen(cname, "r");
-   tree = mxmlLoadFile(NULL, fp, MXML_INTEGER_CALLBACK);//MXML_OPAQUE_CALLBACK might work, lood CDATA
-   if(!tree)
-     throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR,m_slave_nr,getName()));  
+  parameter temp;  
+  std::string xml_name = "configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
+  pugi::xml_document doc;
+  pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
+  if (!result)
+    throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR,m_slave_nr,getName()));  
 
-   mxml_node_t *parameters;
-   mxml_node_t *structure;
-   mxml_node_t *param;
-   parameters = mxmlWalkNext(tree, tree, MXML_DESCEND);
-   structure = mxmlWalkNext(parameters, tree, MXML_DESCEND);
-   
-   int i;
-   while(structure)
-   {
-     param = mxmlWalkNext(structure, tree, MXML_DESCEND);
-     i=0;     
-     while(i < 4)
-     {	 
-	const char *name;
-	name = mxmlElementGetAttr(param, "name");
+  pugi::xml_node parameters = doc.first_child();
+  for (pugi::xml_node structure = parameters.first_child(); structure; structure = structure.next_sibling())
+  {
+    for (pugi::xml_node param = structure.first_child(); param; param = param.next_sibling())
+    {
+        std::string type = std::string(param.attribute("type").value());
 	
-	if (!strcmp(name, "index"))
+      	if (param.attribute("name").value() == "index")
 	{
-	  const char *description;
-	  description = mxmlElementGetAttr(param, "description");
-	  temp.index = (int16_t) param->child->value.integer;
-          temp.description = description;
+	  if (type != "integer")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));	  
+	  temp.index = (int16_t) strtol (param.child_value(),NULL,0);          
 	}
-	else if (!strcmp(name, "subindex"))
-	  temp.subindex = (int8_t) param->child->value.integer;
-	else if (!strcmp(name, "size"))
-	  temp.size = (int8_t) param->child->value.integer;
-	else if (!strcmp(name, "value"))
-	  temp.param = param->child->value.integer;
+	else if (param.attribute("name").value() ==  "subindex")
+	{
+	  if (type != "integer")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
+	  temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
+	}
+	else if (param.attribute("name").value() ==  "size")
+	{
+	  if (type != "integer")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));	  
+	  temp.size = (int8_t) strtol (param.child_value(),NULL,0);
+	}
+	else if (param.attribute("name").value() ==  "value")
+	{
+	  if (type != "integer")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
+	  temp.param = strtol (param.child_value(),NULL,0);
+	}
+	else if (param.attribute("name").value() ==  "name")
+	{
+	  if (type != "string")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
+	    temp.name = param.child_value();
+	}
+	else if (param.attribute("name").value() ==  "description")
+	{
+	  if (type != "string")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
+	  temp.description = param.child_value();
+	}
 	else
 	 throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
-	if(i==3)
-	 temp.name = "0";
-
-	param = mxmlWalkNext(param, tree, MXML_NO_DESCEND);	 
-	i++; 
-     }
-     m_params.push_back(temp);
-     structure = mxmlWalkNext(structure, tree, MXML_NO_DESCEND);
-
-   }    
-   fclose(fp);
-   mxmlDelete(tree);
+    }
+  }
 }
 
 void EcSlaveSGDV::setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param)
