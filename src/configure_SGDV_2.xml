@@ -1,27 +1,74 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <parameters>
   <structure>
-    <param name = "index" description ="Modes of operation"> 0x6060 </param>
+    <param name = "description">Modes of operation </param>
+    <param name = "name">OpMode</param>
+    <param name = "index"> 0x6060 </param>
     <param name = "subindex"> 0 </param>
     <param name = "size"> 1 </param>
     <param name = "value"> 3 </param>  
   </structure>  
   <structure>
-    <param name = "index" description ="Max. Profile velocity [mdeg/s]"> 0x607F </param>
+    <param name = "description">Max. Profile velocity [mdeg/s] </param>
+    <param name = "name">MaxVel</param>
+    <param name = "index"> 0x607F </param>
     <param name = "subindex"> 0 </param>
     <param name = "size"> 4 </param>
     <param name = "value"> 150000 </param>  
   </structure>  
   <structure>
-    <param name = "index" description ="Profile acceleration [mdeg/s2]"> 0x6083 </param>
+    <param name = "description">Profile acceleration [mdeg/s2] </param>
+    <param name = "name">Pacc</param>
+    <param name = "index"> 0x6083 </param>
     <param name = "subindex"> 0 </param>
     <param name = "size"> 4 </param>
     <param name = "value"> 150 </param>  
   </structure>  
   <structure>
-    <param name = "index" description ="Profile deceleration [mdeg/s2]"> 0x6084 </param>
+    <param name = "description">Profile deceleration [mdeg/s2] </param>
+    <param name = "name">Pdec</param>    
+    <param name = "index"> 0x6084 </param>
     <param name = "subindex"> 0 </param>
     <param name = "size"> 4 </param>
     <param name = "value"> 150 </param>
-   </structure> 
+  </structure>   
+<!--  <structure>
+    <param name = "description">Min Position Limit [mdeg] </param>
+    <param name = "name">MinPos</param>  
+    <param name = "index"> 0x607D </param>
+    <param name = "subindex"> 1 </param>
+    <param name = "size"> 4 </param>
+    <param name = "value"> -80000 </param>  
+  </structure>  
+  <structure>
+    <param name = "description">Max Position Limit [mdeg] </param>
+    <param name = "name">MaxPos</param> 
+    <param name = "index"> 0x607D </param>
+    <param name = "subindex"> 2 </param>
+    <param name = "size"> 4 </param>
+    <param name = "value"> 80000 </param>-->
+  <structure>
+    <param name = "description">Profile velocity [mdeg/s]</param>
+    <param name = "name">Pvel</param>
+    <param name = "index"> 0x6081 </param>
+    <param name = "subindex"> 0 </param>
+    <param name = "size"> 4 </param>
+    <param name = "value"> 150000 </param>  
+  </structure>  
+  <structure>
+    <param name = "description">Max Torque[0.1%]</param>
+    <param name = "name">MaxTorq</param>
+    <param name = "index"> 0x6083 </param>
+    <param name = "subindex"> 0 </param>
+    <param name = "size"> 2 </param>
+    <param name = "value"> 1000 </param>  
+  </structure>  
+  <structure>
+    <param name = "description">Slope Torque[0.1%]</param>
+    <param name = "name">SlopeTorq</param>
+    <param name = "index"> 0x6087 </param>
+    <param name = "subindex"> 0 </param>
+    <param name = "size"> 2 </param>
+    <param name = "value"> 100 </param>
+  </structure>  
 </parameters>
