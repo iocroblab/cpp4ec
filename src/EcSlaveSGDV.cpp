@@ -310,6 +310,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 //         configmyDC (internalNumber, true, SYNC0TIME, SHIFTMASTER);
 //     }
     std::cout << getName() << " configured !" <<std::endl;
+    
     return true;
 }
 
@@ -368,38 +369,39 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
     for (pugi::xml_node param = structure.first_child(); param; param = param.next_sibling())
     {
         std::string type = std::string(param.attribute("type").value());
+	std::string name = std::string(param.attribute("name").value());
 	
-      	if (param.attribute("name").value() == "index")
+      	if (name == "index")
 	{
 	  if (type != "integer")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));	  
 	  temp.index = (int16_t) strtol (param.child_value(),NULL,0);          
 	}
-	else if (param.attribute("name").value() ==  "subindex")
+	else if (name ==  "subindex")
 	{
 	  if (type != "integer")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
 	  temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
 	}
-	else if (param.attribute("name").value() ==  "size")
+	else if (name ==  "size")
 	{
 	  if (type != "integer")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));	  
 	  temp.size = (int8_t) strtol (param.child_value(),NULL,0);
 	}
-	else if (param.attribute("name").value() ==  "value")
+	else if (name ==  "value")
 	{
 	  if (type != "integer")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
 	  temp.param = strtol (param.child_value(),NULL,0);
 	}
-	else if (param.attribute("name").value() ==  "name")
+	else if (name ==  "name")
 	{
 	  if (type != "string")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
 	    temp.name = param.child_value();
 	}
-	else if (param.attribute("name").value() ==  "description")
+	else if (name ==  "description")
 	{
 	  if (type != "string")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
@@ -408,6 +410,7 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 	else
 	 throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
     }
+    m_params.push_back(temp);
   }
 }
 

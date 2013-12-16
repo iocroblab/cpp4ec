@@ -23,8 +23,8 @@ public:
   };
 
   EcError(int errorcode) throw();
-  const char* what() const throw();
-  int getErrorCode() const throw ();
+  virtual const char* what() const throw();
+  virtual int getErrorCode() const throw ();
 
 private:
   int m_errorcode;
