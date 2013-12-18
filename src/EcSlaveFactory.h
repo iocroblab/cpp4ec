@@ -32,7 +32,7 @@
 #include <string>
 #include "EcSlave.h"
 
-namespace ec4cpp
+namespace cpp4ec
 {
 
 class EcSlaveFactory

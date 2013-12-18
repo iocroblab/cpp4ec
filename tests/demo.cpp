@@ -2,7 +2,7 @@
 
 int main ()
 {
-  ec4cpp::EcMaster master;
+  cpp4ec::EcMaster master;
   
   master.preconfigure();
   master.configure();

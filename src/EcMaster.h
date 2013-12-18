@@ -50,7 +50,7 @@ struct slaveDCspec {
 
 
 
-namespace ec4cpp
+namespace cpp4ec
 {
 
 class EcMaster

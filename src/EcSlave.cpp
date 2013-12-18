@@ -1,7 +1,7 @@
 #include "EcSlave.h"
 
 
-namespace ec4cpp
+namespace cpp4ec
 {
   EcSlave::EcSlave(ec_slavet* mem_loc) : m_datap(mem_loc), m_name("Slave_" + to_string(m_datap->configadr,
 				     std::hex)), m_slave_nr(m_datap->configadr & 0x0f)

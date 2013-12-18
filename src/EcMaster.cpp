@@ -25,7 +25,7 @@ bool printSDO = TRUE;
 bool printMAP = TRUE;
 
 
-namespace ec4cpp
+namespace cpp4ec
 {
 
 EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
@@ -803,4 +803,4 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
 	std::cout << "Slaves Info has been written to EtherCATsoemInfo.txt" << std::endl;
 			    
     }
-}     ///end of the namespace ec4cpp
+}     ///end of the namespace cpp4ec

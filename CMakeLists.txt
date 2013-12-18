@@ -1,5 +1,5 @@
 #########################################################################
-# CMakeLists.txt file for building  ec4cpp with CMake                      #
+# CMakeLists.txt file for building  cpp4ec with CMake                      #
 #                                                                       #
 # Copyright (c) 2013 Leopold Palomo-Avellaneda <leo@alaxarxa.net>       #
 #                                                                       #
@@ -19,14 +19,14 @@
 
 cmake_minimum_required (VERSION 2.6)
 
-project(EC4CPP)
+project(CPP4EC)
 
 # BMM version. Defined here but not exported to header files, because it's already defined there
-set( EC4CPP_VERSION 0.0.1 )
-string( REGEX MATCHALL "[0-9]+" EC4CPP_VERSIONS ${EC4CPP_VERSION} )
-LIST( GET EC4CPP_VERSIONS 0 EC4CPP_VERSION_MAJOR)
-LIST( GET EC4CPP_VERSIONS 1 EC4CPP_VERSION_MINOR)
-LIST( GET EC4CPP_VERSIONS 2 EC4CPP_VERSION_PATCH)
+set( CPP4EC_VERSION 0.0.1 )
+string( REGEX MATCHALL "[0-9]+" CPP4EC_VERSIONS ${CPP4EC_VERSION} )
+LIST( GET CPP4EC_VERSIONS 0 CPP4EC_VERSION_MAJOR)
+LIST( GET CPP4EC_VERSIONS 1 CPP4EC_VERSION_MINOR)
+LIST( GET CPP4EC_VERSIONS 2 CPP4EC_VERSION_PATCH)
 
 # Some example programs use "libpthread"
 # http://stackoverflow.com/questions/1620918/cmake-and-libpthread
@@ -71,13 +71,13 @@ if(ENABLE_RT)
    message("Found soemrt (soem with realtime patch) and its libs : ${SOEMRT_LIBRARIES}" )
    message("--> with LDFLAGS : ${SOEMRT_LDFLAGS}" )
 
-   list(APPEND EC4CPP_CFLAGS ${SOEMRT_CFLAGS})
-   list(APPEND EC4CPP_CFLAGS ${XENO_NATIVE_CFLAGS})
-   message("The complete ec4cpp CFLAGS : ${EC4CPP_CFLAGS}" )
+   list(APPEND CPP4EC_CFLAGS ${SOEMRT_CFLAGS})
+   list(APPEND CPP4EC_CFLAGS ${XENO_NATIVE_CFLAGS})
+   message("The complete cpp4ec CFLAGS : ${CPP4EC_CFLAGS}" )
 
-   list(APPEND EC4CPP_LDFLAGS ${SOEMRT_LDFLAGS})
-   list(APPEND EC4CPP_LDFLAGS ${XENO_NATIVE_LDFLAGS})
-   message("The complete ec4cpp LFLAGS : ${EC4CPP_LDFLAGS}" )
+   list(APPEND CPP4EC_LDFLAGS ${SOEMRT_LDFLAGS})
+   list(APPEND CPP4EC_LDFLAGS ${XENO_NATIVE_LDFLAGS})
+   message("The complete cpp4ec LFLAGS : ${CPP4EC_LDFLAGS}" )
 
 else(ENABLE_RT)
    message (SEND_ERROR "This package by now needs Xenomai RTOS")

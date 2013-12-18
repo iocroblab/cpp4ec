@@ -23,7 +23,7 @@
 
 
 
-namespace ec4cpp
+namespace cpp4ec
 {
 
 extern RT_MUTEX mutex;
@@ -452,12 +452,12 @@ void EcSlaveSGDV::getSGDVObject(uint16_t index, uint8_t subindex, int *psize, vo
 }
 
 namespace {
-ec4cpp::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)
+cpp4ec::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)
 {
 	return new EcSlaveSGDV(mem_loc);
 }
 
-const bool registered0 = ec4cpp::EcSlaveFactory::Instance().registerDriver("? M:00000539 I:02200001", createEcSlaveSGDV);
+const bool registered0 = cpp4ec::EcSlaveFactory::Instance().registerDriver("? M:00000539 I:02200001", createEcSlaveSGDV);
 
 }
 }

@@ -52,7 +52,7 @@ typedef enum
 
 
 
-namespace ec4cpp
+namespace cpp4ec
 {
 class EcSlaveSGDV: public EcSlave
 {
