@@ -61,7 +61,8 @@ public:
     ~EcSlaveSGDV();
 
     bool configure() throw(EcErrorSGDV);
-    void update();
+    void start() throw(EcErrorSGDV);
+    void stop() throw(EcErrorSGDV);
 
     bool writeControlWord (EcControlWord controlWord);
     bool readStatusWord (EcStatusWord statusWord);

@@ -14,6 +14,11 @@
 #include <stdint.h>
 #include <stdlib.h> 
 
+/*
+#include <sys/time.h>
+#include <time.h>*/
+
+#include <unistd.h>
 
 
 
@@ -314,6 +319,30 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     return true;
 }
 
+void EcSlaveSGDV::start() throw(EcErrorSGDV)
+{
+  
+  writeControlWord(CW_SHUTDOWN);
+  usleep (100000);
+  
+  writeControlWord(CW_SWITCH_ON);
+  usleep (100000);
+  
+  // Enable movement
+  writeControlWord(CW_ENABLE_OP);
+  usleep (100000);
+}
+
+
+void EcSlaveSGDV::stop() throw(EcErrorSGDV)
+{
+  writeControlWord(CW_SHUTDOWN);
+  usleep (100000);
+  
+  writeControlWord(CW_QUICK_STOP);
+  usleep (100000);
+}
+
 bool EcSlaveSGDV::writeControlWord (EcControlWord controlWord)
 {
     //switch the motor state
@@ -350,9 +379,7 @@ bool EcSlaveSGDV::readVelocity (int32_t velocity)
     return true;//if all is ok
 }
 
-void EcSlaveSGDV::update()
-{
-}
+
 
 void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 {

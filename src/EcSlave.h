@@ -58,8 +58,10 @@ public:
 
     const std::string& getName() const;
 
-    virtual void update()=0;
+    
     virtual bool configure();
+    virtual void start()=0;
+    virtual void stop();
 
     virtual bool requestState( ec_state state);
     virtual bool checkState( ec_state state);

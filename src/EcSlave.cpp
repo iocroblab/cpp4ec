@@ -22,6 +22,11 @@ namespace ec4cpp
   {
     return true;
   }
+  
+  void EcSlave::stop()
+  {
+  }
+
 
   bool EcSlave::requestState( ec_state state)
   {

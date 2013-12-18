@@ -84,7 +84,7 @@ bool EcMaster::preconfigure() throw(EcError)
 	    m_drivers.push_back(driver);
 	    std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
 	    //Adding driver's services to master component
-	    driver->configure();
+	    driver -> configure();
 	    
 	  }else{
 	    std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
@@ -157,17 +157,7 @@ bool EcMaster::start()
 
    // Assegurem que els servos estan shutted down
    for (int i = 0 ; i < m_drivers.size() ; i++)
-      ((EcSlaveSGDV*) m_drivers[i]) -> writeControlWord(CW_SHUTDOWN);
-   usleep (100000);
-
-   // Switch servos ON
-   for(int i=0;i<m_drivers.size();i++)
-      ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_SWITCH_ON);
-   usleep (100000);
-
-   // Enable movement
-   for(int i=0;i<m_drivers.size();i++)
-      ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_ENABLE_OP);
+     m_drivers[i] -> start();
    usleep (100000);
 
    std::cout<<"Master started!!!"<<std::endl;
@@ -199,20 +189,14 @@ if(vel.size()!=3)
 
 bool EcMaster::stop()
 {
-   //desactivating motors and ending ethercatLoop
-   for(int i=0;i<m_drivers.size();i++)
-   ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
-   usleep (100000);
-
-   for(int i=0;i<m_drivers.size();i++)
-   ((EcSlaveSGDV*) m_drivers[i])->writeControlWord(CW_SHUTDOWN);
-   usleep (100000);
-
-// Aturem la tasca periòdica
-
-rt_task_suspend (&task);
-std::cout<<"Master stoped!"<<std::endl;
-return true;
+  //desactivating motors and ending ethercatLoop
+  for(int i=0;i<m_drivers.size();i++)
+    m_drivers[i] -> stop();
+   
+  // Aturem la tasca periòdica
+  rt_task_suspend (&task);
+  std::cout<<"Master stoped!"<<std::endl;
+  return true;
 }
 
 
