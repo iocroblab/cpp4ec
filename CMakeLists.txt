@@ -80,10 +80,31 @@ if(ENABLE_RT)
    message("The complete ec4cpp LFLAGS : ${EC4CPP_LDFLAGS}" )
 
 else(ENABLE_RT)
-   message (FATAL_ERROR, "This package by now needs Xenomai RTOS")
+   message (SEND_ERROR "This package by now needs Xenomai RTOS")
 endif(ENABLE_RT)
 
+#PUGI_XML
+find_path(PUGI_XML_INCLUDE_DIRS pugixml.hpp
+    PATHS /user/local/include
+          /usr/include)
 
+if(PUGI_XML_INCLUDE_DIRS)
+  message("Found PUGI_XML_INCLUDE_DIRS  on: ${PUGI_XML_INCLUDE_DIRS}")
+  include_directories(${PUGI_XML_INCLUDE_DIRS})
+else(PUGI_XML_INCLUDE_DIRS)
+  message(SEND_ERROR "Not found PUGI_XML_INCLUDE_DIRS")
+endif(PUGI_XML_INCLUDE_DIRS)
+
+find_library (PUGI_XML_LIBRARIES
+                NAMES pugixml libpugixml
+                PATHS /user/local/lib
+                      /usr/local/lib
+                      /usr/lib)
+if(PUGI_XML_LIBRARIES)
+  message("Found PUGI_XML_LIBRARIES on:" ${PUGI_XML_LIBRARIES})
+else(PUGI_XML_LIBRARIES)
+  message(SEND_ERROR "Not found PUGI_XML_LIBRARIES")
+endif(PUGI_XML_LIBRARIES)
 
 
 add_subdirectory(src)

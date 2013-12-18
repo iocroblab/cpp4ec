@@ -20,31 +20,6 @@ set(EC4CPP_SRC
       EcSlaveSGDV.cpp
 )
 
-#PUGI_XML
-find_path(PUGI_XML_INCLUDE_DIRS pugixml.hpp
-    PATHS /user/local/include
-	  /usr/include)
-
-if(PUGI_XML_INCLUDE_DIRS)
-  message("Found PUGI_XML_INCLUDE_DIRS  on: ${PUGI_XML_INCLUDE_DIRS}")
-else(PUGI_XML_INCLUDE_DIRS)
-  message("Not found PUGI_XML_INCLUDE_DIRS")
-endif(PUGI_XML_INCLUDE_DIRS)
-
-find_library (PUGI_XML_LIBRARIES
-		NAMES pugixml libpugixml
-		PATHS /user/local/lib
-		      /usr/local/lib
-		      /usr/lib)
-if(PUGI_XML_LIBRARIES)
-  message("Found PUGI_XML_LIBRARIES on:" ${PUGI_XML_LIBRARIES})
-else(PUGI_XML_LIBRARIES)
-  message("Not found PUGI_XML_LIBRARIES")
-endif(PUGI_XML_LIBRARIES)
-
-
-include_directories(${PUGI_XML_INCLUDE_DIRS})
-
 if(ENABLE_RT)
     include_directories(${XENO_NATIVE_INCLUDE_DIRS})
     include_directories(${SOEMRT_INCLUDE_DIRS})
