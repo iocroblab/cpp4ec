@@ -292,6 +292,8 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 
 EcSlaveSGDV::~EcSlaveSGDV()
 {
+    delete[] PDOinput;
+    delete[] PDOoutput;
 }
 
 bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
@@ -304,6 +306,8 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR,m_slave_nr,getName()));
 
     }
+    PDOinput = new char[m_datap->Ibytes];
+    PDOoutput = new char[m_datap->Obytes];
 
 //     if (useDC) {
 //         //To change the error tolerance before starting
@@ -347,7 +351,7 @@ bool EcSlaveSGDV::writeControlWord (EcControlWord controlWord)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
-    memcpy (m_datap->outputs, &controlWord , 2);
+    memcpy (PDOoutput, &controlWord , 2);
     rt_mutex_release (&mutex);
 }
 
@@ -355,7 +359,7 @@ bool EcSlaveSGDV::readStatusWord (EcStatusWord statusWord)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
-    memcpy (&statusWord, m_datap->inputs, 2);
+    memcpy (&statusWord, PDOinput, 2);
     rt_mutex_release (&mutex);
 }
 
@@ -364,7 +368,7 @@ bool EcSlaveSGDV::writeVelocity (int32_t velocity)
 
     rt_mutex_acquire (&mutex, TM_INFINITE);
     //velocity starts in byte 6 (2bytes Controlword + 4bytes TargetPosition)
-    memcpy (m_datap->outputs + 6, &velocity, 4);
+    memcpy (PDOoutput + 6, &velocity, 4);
     rt_mutex_release (&mutex);
     return true;//if all is ok
 }
@@ -374,7 +378,7 @@ bool EcSlaveSGDV::readVelocity (int32_t velocity)
 
     rt_mutex_acquire (&mutex, TM_INFINITE);
     //velocity starts in byte 6 (2bytes Controlword + 4bytes TargetPosition)
-    memcpy (&velocity, m_datap->inputs + 6, 4);
+    memcpy (&velocity, PDOinput + 6, 4);
     rt_mutex_release (&mutex);
     return true;//if all is ok
 }
