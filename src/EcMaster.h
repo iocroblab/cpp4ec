@@ -4,18 +4,6 @@
 #include "EcSlave.h"
 #include "EcSlaveFactory.h"
 
-extern "C"
-{
-#include <soem/ethercattype.h>
-#include <soem/ethercatbase.h>
-#include <soem/ethercatmain.h>
-#include <soem/ethercatconfig.h>
-#include <soem/ethercatdc.h>
-#include <soem/ethercatcoe.h>
-#include <soem/ethercatprint.h>
-#include <soem/nicdrv.h>
-}
-
 #include <vector>
 #include <string>
 #include <sstream>

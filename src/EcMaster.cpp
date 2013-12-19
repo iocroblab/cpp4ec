@@ -15,6 +15,19 @@
 #include "servos_rt.h"
 #include "EcSlaveSGDV.h"
 
+extern "C"
+{
+#include <soem/ethercattype.h>
+#include <soem/ethercatbase.h>
+#include <soem/ethercatmain.h>
+#include <soem/ethercatconfig.h>
+#include <soem/ethercatdc.h>
+#include <soem/ethercatcoe.h>
+#include <soem/ethercatprint.h>
+#include <soem/nicdrv.h>
+}
+
+
 //slave info variables
 
 
