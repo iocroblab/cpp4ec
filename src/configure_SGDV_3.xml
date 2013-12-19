@@ -71,4 +71,178 @@
     <param name = "size" type="integer"> 4 </param>
     <param name = "value" type="integer"> 100 </param>
   </structure>  
+<!--  PDO Mapping-->
+<!--  1.Disable the assignment of the Sync manager and PDO   -->
+  <structure>
+    <param name = "description" type="string">Disable</param>
+    <param name = "name" type="string">Sync Manager PDO Assignment </param>
+    <param name = "index" type="integer"> 0x1C12 </param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer"> 0 </param>
+  </structure> 
+  <structure>
+    <param name = "description" type="string">Disable</param>
+    <param name = "name" type="string">Sync Manager PDO Assignment</param>
+    <param name = "index" type="integer"> 0x1C13 </param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer"> 0 </param>
+  </structure>  
+<!--  2.Set all the mapping entry in PDO mapping objects-->
+  <structure>
+    <param name = "description" type="string">Receive PDO Mapping</param>
+    <param name = "name" type="string">Number of objects</param>
+    <param name = "index" type="integer"> 0x1600</param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer"> 0 </param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Receive PDO Mapping</param>
+    <param name = "name" type="string">Number of objects</param>
+    <param name = "index" type="integer"> 0x1600</param>
+    <param name = "subindex" type="integer"> 0x01 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer"> 0x60400010 </param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Receive PDO Mapping</param>
+    <param name = "name" type="string">Target Position</param>
+    <param name = "index" type="integer"> 0x1600</param>
+    <param name = "subindex" type="integer"> 0x02 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer"> 0x607A0020 </param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Receive PDO Mapping</param>
+    <param name = "name" type="string">Target Velovity</param>
+    <param name = "index" type="integer"> 0x1600</param>
+    <param name = "subindex" type="integer"> 0x03 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer"> 0x60FF0020 </param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Receive PDO Mapping</param>
+    <param name = "name" type="string">Target Torque</param>
+    <param name = "index" type="integer"> 0x1600</param>
+    <param name = "subindex" type="integer"> 0x04 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x60710010</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Receive PDO Mapping</param>
+    <param name = "name" type="string">Mode of Operation</param>
+    <param name = "index" type="integer"> 0x1600</param>
+    <param name = "subindex" type="integer"> 0x05 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x60600008</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Number of objects</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer">0</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Status Word</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x01 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x60410010</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Position Actual Value</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x02 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x60640020</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Velocity Actual Value</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x03 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x606C0020</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Torque Actual Value</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x04 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x60770010</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Error Code</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x05 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x603F0010</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Mode of Operation Display</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x06 </param>
+    <param name = "size" type="integer"> 4 </param>
+    <param name = "value" type="integer">0x60610008</param>
+  </structure>
+<!--  3.Set the number of mapping entries in PDO mapping objects-->
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Number of objects</param>
+    <param name = "index" type="integer"> 0x1600</param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer">5</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Transmit PDO Mapping</param>
+    <param name = "name" type="string">Number of objects</param>
+    <param name = "index" type="integer"> 0x1A00</param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer">6</param>
+  </structure>
+<!--  4.Set the assignment of the Sync manager and PDO-->
+  <structure>
+    <param name = "description" type="string">Assing</param>
+    <param name = "name" type="string">Sync Manager PDO Assignment</param>
+    <param name = "index" type="integer"> 0x1C12</param>
+    <param name = "subindex" type="integer"> 0x01 </param>
+    <param name = "size" type="integer"> 2 </param>
+    <param name = "value" type="integer">0x1600</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Assing</param>
+    <param name = "name" type="string">Sync Manager PDO Assignment</param>
+    <param name = "index" type="integer"> 0x1C13</param>
+    <param name = "subindex" type="integer"> 0x01 </param>
+    <param name = "size" type="integer"> 2 </param>
+    <param name = "value" type="integer">0x1A00</param>
+  </structure>
+<!--  5.Enable the assignment of the Sync manager and PDO.-->
+  <structure>
+    <param name = "description" type="string">Enable</param>
+    <param name = "name" type="string">Sync Manager PDO Assignment</param>
+    <param name = "index" type="integer"> 0x1C12</param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer">1</param>
+  </structure>
+  <structure>
+    <param name = "description" type="string">Enable</param>
+    <param name = "name" type="string">Sync Manager PDO Assignment</param>
+    <param name = "index" type="integer"> 0x1C13</param>
+    <param name = "subindex" type="integer"> 0x00 </param>
+    <param name = "size" type="integer"> 1 </param>
+    <param name = "value" type="integer">1</param>
+  </structure>
 </parameters>
