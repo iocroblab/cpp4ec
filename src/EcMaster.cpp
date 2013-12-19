@@ -52,6 +52,10 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
+   
+   inputsize = 0;
+   outputsize = 0;
+   
 
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
@@ -112,7 +116,9 @@ bool EcMaster::preconfigure() throw(EcError)
 	    std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
 	    //Adding driver's services to master component
 	    driver -> configure();
-	    
+       inputsize = inputsize + ec_slave[i].Ibytes;
+       outputsize = outputsize + ec_slave[i].Obytes;
+       
 	  }else{
 	    std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
 	    throw( EcError (EcError::FAIL_CREATING_DRIVER));
@@ -712,38 +718,53 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
          fail("bind");
          for (;;) {
          /* Get packets relayed by the regular thread */
-         ret = recvfrom(s, buf, sizeof(buf), 0, NULL, 0);
+         ret = recvfrom(s, outputbuf, outputsize, 0, NULL, 0);
          if (ret <= 0)
             fail("recvfrom");
             rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
          }
+         
+         //copiar del outputbuf als ec_slave, tenint en compte el OBytes de cada slave
+         
+         
+         
+         
          return NULL;
    }
          
    static void EcMaster::*regular_thread(void *arg)
-    {
-         char buf[128], *devname;
-         int fd, ret;
-         if (asprintf(&devname,
-         "/proc/xenomai/registry/rtipc/xddp/%s",
-         XDDP_PORT_LABEL) < 0)
-         fail("asprintf");
-         fd = open(devname, O_RDWR);
-         free(devname);
-         if (fd < 0)
+   {
+       char * devnameOutput, * devnameInput;
+       char * inputbuf = new char[inputsize];
+       char * outputbuf = new char [outputsize];
+       
+       int fdOutput,fdInput, ret;
+       if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
+          fail("asprintf");
+       
+       if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
+          fail("asprintf");
+       
+       fdOutput = open(devnameInput, O_WRONLY);
+       free(devnameOutput);
+       
+       fdInput = open(devnameInput, O_RDONLY);
+       free(devnameInput);
+       
+       if (fdOutput < 0)
          fail("open");
-         for (;;) {
+       for (;;) {
          /* Get the next message from realtime_thread2. */
          ret = read(fd, buf, sizeof(buf));
          if (ret <= 0)
-         fail("read");
-         /* Relay the message to realtime_thread1. */
+            fail("read");
+            /* Relay the message to realtime_thread1. */
          ret = write(fd, buf, ret);
          if (ret <= 0)
-         fail("write");
+            fail("write");
          }
          return NULL;
-    }
+   }
     
     static RT_TASK task;
     static RT_TASK program;

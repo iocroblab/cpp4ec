@@ -161,6 +161,10 @@ private:
     const char *XDDP_PORT_INPUT "ECMasterInput"
     const char *XDDP_PORT_OUTPUT "ECMasterOutput"
     
+    //size of _ALL_ input and output slaves PDO
+    unsigned int inputsize;
+    unsigned int outputsize;
+    
     
 };
 #endif //SERVOS_RT_H
