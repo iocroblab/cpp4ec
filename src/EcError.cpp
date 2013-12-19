@@ -1,4 +1,5 @@
 #include "EcError.h"
+#include "EcUtil.h"
 
 extern "C"
 {

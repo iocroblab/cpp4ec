@@ -3,6 +3,8 @@
 
 #include "EcSlave.h"
 #include "EcSlaveFactory.h"
+#include "EcError.h"
+#include "EcUtil.h"
 
 #include <vector>
 #include <string>
@@ -13,7 +15,6 @@
 #include <unistd.h>
 #include <stdint.h>
 
-#include "EcError.h"
 
 #define NSEC_PER_SEC 1000000000
 
@@ -145,9 +146,30 @@ private:
     int si_map_sii(int slave);
     void si_sdo(int cnt);
 
+    //realtime task
+    static void *realtime_task(void *arg);
+    static RT_TASK task;
+    
+    //ipc thread
+    static void *regular_thread(void *arg);
+    
+    //thread stuff
+    pthread_attr_t regattr;
+    sigset_t mask, oldmask;
+    
+    //xddp stuff
+    const char *XDDP_PORT_INPUT "ECMasterInput"
+    const char *XDDP_PORT_OUTPUT "ECMasterOutput"
+    
+    
+};
+#endif //SERVOS_RT_H
+    
+    
+    
 };
 
-} //endnamespace Vector3d v;
+} //endnamespace
 
 #endif
 

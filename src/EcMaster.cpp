@@ -9,11 +9,17 @@
 #include <native/task.h>
 #include <native/mutex.h>
 #include <native/timer.h>
+#include <malloc.h>
+#include <pthread.h>
+#include <fcntl.h>
+#include <errno.h>
 #include <rtdk.h>
+#include <rtdm/rtipc.h>
 
 //Thread loop
 #include "servos_rt.h"
 #include "EcSlaveSGDV.h"
+#include "EcUtil.h"
 
 extern "C"
 {
@@ -49,10 +55,17 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
 
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
+   
+   /*
+   * This is a real-time compatible printf() package from
+   * Xenomai's RT Development Kit (RTDK), that does NOT cause
+   * any transition to secondary (i.e. non real-time) mode when
+   * writing output.
+   */
    rt_print_auto_init (1);
-   rt_task_shadow (&program, "soem-master", 20, T_JOINABLE);
+   //rt_task_shadow (&program, "soem-master", 20, T_JOINABLE);
    rt_task_create (&task, "Send PDO", 8192, 99, 0);	// Create the realtime task, but don't start it yet
-   rt_mutex_create (&mutex, "Mutex");
+   //rt_mutex_create (&mutex, "Mutex");
 }
 
 EcMaster::~EcMaster()
@@ -60,7 +73,8 @@ EcMaster::~EcMaster()
 //    reset();
    //must clean memory and delete tasks
    rt_task_delete (&task);
-   rt_mutex_delete(&mutex);
+   //rt_mutex_delete(&mutex);
+   sigsuspend(&oldmask);
    delete[] ecPort;
 }
 
@@ -165,9 +179,27 @@ bool EcMaster::start()
 {
    //Starts a preiodic tasck that sends frames to slaves
    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-   rt_task_start (&task, &ethercatLoop, NULL);
+   rt_task_start (&task, &realtime_thread, NULL);
 
-
+   //creating the thread non-rt
+   sigemptyset(&mask);
+   sigaddset(&mask, SIGINT);
+   signal(SIGINT, cleanup_upon_sig);
+   sigaddset(&mask, SIGTERM);
+   signal(SIGTERM, cleanup_upon_sig);
+   sigaddset(&mask, SIGHUP);
+   signal(SIGHUP, cleanup_upon_sig);
+   pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
+   
+   pthread_attr_init(&regattr);
+   pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
+   pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
+   pthread_attr_setschedpolicy(&regattr, SCHED_OTHER);
+   errno = pthread_create(&nrt, &regattr, &regular_thread, NULL);
+   if (errno)
+      fail("pthread_create");
+   
+   
    // Assegurem que els servos estan shutted down
    for (int i = 0 ; i < m_drivers.size() ; i++)
      m_drivers[i] -> start();
@@ -264,188 +296,6 @@ bool EcMaster::switchState (ec_state state)
 }
 
 
-
-
-
-char* dtype2string(uint16 dtype)
-{
-    switch(dtype)
-    {
-        case ECT_BOOLEAN:
-            sprintf(hstr, "BOOLEAN");
-            break;
-        case ECT_INTEGER8:
-            sprintf(hstr, "INTEGER8");
-            break;
-        case ECT_INTEGER16:
-            sprintf(hstr, "INTEGER16");
-            break;
-        case ECT_INTEGER32:
-            sprintf(hstr, "INTEGER32");
-            break;
-        case ECT_INTEGER24:
-            sprintf(hstr, "INTEGER24");
-            break;
-        case ECT_INTEGER64:
-            sprintf(hstr, "INTEGER64");
-            break;
-        case ECT_UNSIGNED8:
-            sprintf(hstr, "UNSIGNED8");
-            break;
-        case ECT_UNSIGNED16:
-            sprintf(hstr, "UNSIGNED16");
-            break;
-        case ECT_UNSIGNED32:
-            sprintf(hstr, "UNSIGNED32");
-            break;
-        case ECT_UNSIGNED24:
-            sprintf(hstr, "UNSIGNED24");
-            break;
-        case ECT_UNSIGNED64:
-            sprintf(hstr, "UNSIGNED64");
-            break;
-        case ECT_REAL32:
-            sprintf(hstr, "REAL32");
-            break;
-        case ECT_REAL64:
-            sprintf(hstr, "REAL64");
-            break;
-        case ECT_BIT1:
-            sprintf(hstr, "BIT1");
-            break;
-        case ECT_BIT2:
-            sprintf(hstr, "BIT2");
-            break;
-        case ECT_BIT3:
-            sprintf(hstr, "BIT3");
-            break;
-        case ECT_BIT4:
-            sprintf(hstr, "BIT4");
-            break;
-        case ECT_BIT5:
-            sprintf(hstr, "BIT5");
-            break;
-        case ECT_BIT6:
-            sprintf(hstr, "BIT6");
-            break;
-        case ECT_BIT7:
-            sprintf(hstr, "BIT7");
-            break;
-        case ECT_BIT8:
-            sprintf(hstr, "BIT8");
-            break;
-        case ECT_VISIBLE_STRING:
-            sprintf(hstr, "VISIBLE_STRING");
-            break;
-        case ECT_OCTET_STRING:
-            sprintf(hstr, "OCTET_STRING");
-            break;
-        default:
-            sprintf(hstr, "Type 0x%4.4X", dtype);
-    }
-    return hstr;
-}               
-
-char* SDO2string(uint16 slave, uint16 index, uint8 subidx, uint16 dtype)
-{
-   int l = sizeof(usdo) - 1, i;
-   uint8 *u8;
-   int8 *i8;
-   uint16 *u16;
-   int16 *i16;
-   uint32 *u32;
-   int32 *i32;
-   uint64 *u64;
-   int64 *i64;
-   float *sr;
-   double *dr;
-   char es[32];
-
-   memset(&usdo, 0, 128);
-   ec_SDOread(slave, index, subidx, FALSE, &l, &usdo, EC_TIMEOUTRXM);
-   if (EcatError)
-   {
-      return ec_elist2string();
-   }
-   else
-   {
-      switch(dtype)
-      {
-         case ECT_BOOLEAN:
-            u8 = (uint8*) &usdo[0];
-            if (*u8) sprintf(hstr, "TRUE"); 
-             else sprintf(hstr, "FALSE");
-            break;
-         case ECT_INTEGER8:
-            i8 = (int8*) &usdo[0];
-            sprintf(hstr, "0x%2.2x %d", *i8, *i8); 
-            break;
-         case ECT_INTEGER16:
-            i16 = (int16*) &usdo[0];
-            sprintf(hstr, "0x%4.4x %d", *i16, *i16); 
-            break;
-         case ECT_INTEGER32:
-         case ECT_INTEGER24:
-            i32 = (int32*) &usdo[0];
-            sprintf(hstr, "0x%8.8x %d", *i32, *i32); 
-            break;
-         case ECT_INTEGER64:
-            i64 = (int64*) &usdo[0];
-            sprintf(hstr, "0x%16.16llx %lld", *i64, *i64); 
-            break;
-         case ECT_UNSIGNED8:
-            u8 = (uint8*) &usdo[0];
-            sprintf(hstr, "0x%2.2x %u", *u8, *u8); 
-            break;
-         case ECT_UNSIGNED16:
-            u16 = (uint16*) &usdo[0];
-            sprintf(hstr, "0x%4.4x %u", *u16, *u16); 
-            break;
-         case ECT_UNSIGNED32:
-         case ECT_UNSIGNED24:
-            u32 = (uint32*) &usdo[0];
-            sprintf(hstr, "0x%8.8x %u", *u32, *u32); 
-            break;
-         case ECT_UNSIGNED64:
-            u64 = (uint64*) &usdo[0];
-            sprintf(hstr, "0x%16.16llx %llu", *u64, *u64); 
-            break;
-         case ECT_REAL32:
-            sr = (float*) &usdo[0];
-            sprintf(hstr, "%f", *sr); 
-            break;
-         case ECT_REAL64:
-            dr = (double*) &usdo[0];
-            sprintf(hstr, "%f", *dr); 
-            break;
-         case ECT_BIT1:
-         case ECT_BIT2:
-         case ECT_BIT3:
-         case ECT_BIT4:
-         case ECT_BIT5:
-         case ECT_BIT6:
-         case ECT_BIT7:
-         case ECT_BIT8:
-            u8 = (uint8*) &usdo[0];
-            sprintf(hstr, "0x%x", *u8); 
-            break;
-         case ECT_VISIBLE_STRING:
-            strcpy(hstr, usdo);
-            break;
-         case ECT_OCTET_STRING:
-            hstr[0] = 0x00;
-            for (i = 0 ; i < l ; i++)
-            { 
-               sprintf(es, "0x%2.2x ", usdo[i]);
-               strcat( hstr, es);
-            }
-            break;
-         default:
-            sprintf(hstr, "Unknown type");
-      }
-      return hstr;
-   }
-}
 
 int EcMaster::si_PDOassign(uint16 slave, uint16 PDOassign, int mapoffset, int bitoffset)
     {
@@ -816,4 +666,103 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
 	std::cout << "Slaves Info has been written to EtherCATsoemInfo.txt" << std::endl;
 			    
     }
+    
+    static void EcMaster::*realtime_thread(void *arg)
+    {
+         struct rtipc_port_label plabel;
+         struct sockaddr_ipc saddr;
+         char * inputbuf = new char[inputsize];
+         char * outputbuf = new char [outputsize];
+         int ret, s;
+         /*
+         * Get a datagram socket to bind to the RT endpoint. Each
+         * endpoint is represented by a port number within the XDDP
+         * protocol namespace.
+         */
+         s = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
+         if (s < 0) {
+            perror("socket");
+            exit(EXIT_FAILURE); //THROW EXCEPTION
+         }
+         /*
+         * Set a port label. This name will be registered when
+         * binding, in addition to the port number (if given).
+         */
+         strcpy(plabel.label, XDDP_PORT_OUTPUT);
+         ret = setsockopt(s, SOL_XDDP, XDDP_LABEL, &plabel, sizeof(plabel));
+         if (ret)
+            fail("setsockopt");
+         /*
+         * Bind the socket to the port, to setup a proxy to channel
+         * traffic to/from the Linux domain. Assign that port a label,
+         * so that peers may use a descriptive information to locate
+         * it. For instance, the pseudo-device matching our RT
+         * endpoint will appear as
+         * /proc/xenomai/registry/rtipc/xddp/<XDDP_PORT_LABEL> in the
+         * Linux domain, once the socket is bound.
+         *
+         * saddr.sipc_port specifies the port number to use. If -1 is
+         * passed, the XDDP driver will auto-select an idle port.
+         */
+         memset(&saddr, 0, sizeof(saddr));
+         saddr.sipc_family = AF_RTIPC;
+         saddr.sipc_port = -1;
+         ret = bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
+         if (ret)
+         fail("bind");
+         for (;;) {
+         /* Get packets relayed by the regular thread */
+         ret = recvfrom(s, buf, sizeof(buf), 0, NULL, 0);
+         if (ret <= 0)
+            fail("recvfrom");
+            rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
+         }
+         return NULL;
+   }
+         
+   static void EcMaster::*regular_thread(void *arg)
+    {
+         char buf[128], *devname;
+         int fd, ret;
+         if (asprintf(&devname,
+         "/proc/xenomai/registry/rtipc/xddp/%s",
+         XDDP_PORT_LABEL) < 0)
+         fail("asprintf");
+         fd = open(devname, O_RDWR);
+         free(devname);
+         if (fd < 0)
+         fail("open");
+         for (;;) {
+         /* Get the next message from realtime_thread2. */
+         ret = read(fd, buf, sizeof(buf));
+         if (ret <= 0)
+         fail("read");
+         /* Relay the message to realtime_thread1. */
+         ret = write(fd, buf, ret);
+         if (ret <= 0)
+         fail("write");
+         }
+         return NULL;
+    }
+    
+    static RT_TASK task;
+    static RT_TASK program;
+    
+    ///realtime functions
+    inline void ethercatLoop(void *unused)
+    {
+       int nRet;
+       while(1)
+       {
+          rt_mutex_acquire(&mutex, TM_INFINITE);
+          nRet=ec_send_processdata();
+          nRet=ec_receive_processdata(EC_TIMEOUTRET);
+          rt_mutex_release(&mutex);
+          rt_task_wait_period(NULL);
+       }
+    }
+};
+#endif //SERVOS_RT_H
+    
+    
 }     ///end of the namespace cpp4ec

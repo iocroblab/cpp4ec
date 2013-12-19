@@ -8,6 +8,7 @@ set(CPP4EC_HDRS
       EcSlave.h
       EcSlaveSGDV.h
       servos_rt.h
+      EcUtil.h
 )
 
 # CPP4EC source files
@@ -18,6 +19,7 @@ set(CPP4EC_SRC
       EcSlave.cpp
       EcSlaveFactory.cpp
       EcSlaveSGDV.cpp
+      EcUtil.cpp
 )
 
 if(ENABLE_RT)
