@@ -85,6 +85,8 @@ private:
     void readXML() throw(EcErrorSGDV);
 
     std::vector <parameter> m_params;
+    char* PDOoutput;
+    char* PDOinput;
 
 };
 }
