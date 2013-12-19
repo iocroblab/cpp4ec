@@ -100,11 +100,11 @@
   </structure>
   <structure>
     <param name = "description" type="string">Receive PDO Mapping</param>
-    <param name = "name" type="string">Number of objects</param>
+    <param name = "name" type="string">Control Word</param>
     <param name = "index" type="integer"> 0x1600</param>
     <param name = "subindex" type="integer"> 0x01 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer"> 0x60400010 </param>
+    <param name = "value" type="integer" PDOentry="recieve"> 0x60400010 </param>
   </structure>
   <structure>
     <param name = "description" type="string">Receive PDO Mapping</param>
@@ -112,7 +112,7 @@
     <param name = "index" type="integer"> 0x1600</param>
     <param name = "subindex" type="integer"> 0x02 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer"> 0x607A0020 </param>
+    <param name = "value" type="integer" PDOentry="recieve"> 0x607A0020 </param>
   </structure>
   <structure>
     <param name = "description" type="string">Receive PDO Mapping</param>
@@ -120,7 +120,7 @@
     <param name = "index" type="integer"> 0x1600</param>
     <param name = "subindex" type="integer"> 0x03 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer"> 0x60FF0020 </param>
+    <param name = "value" type="integer" PDOentry="recieve"> 0x60FF0020 </param>
   </structure>
   <structure>
     <param name = "description" type="string">Receive PDO Mapping</param>
@@ -128,7 +128,7 @@
     <param name = "index" type="integer"> 0x1600</param>
     <param name = "subindex" type="integer"> 0x04 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x60710010</param>
+    <param name = "value" type="integer" PDOentry="recieve">0x60710010</param>
   </structure>
   <structure>
     <param name = "description" type="string">Receive PDO Mapping</param>
@@ -136,7 +136,7 @@
     <param name = "index" type="integer"> 0x1600</param>
     <param name = "subindex" type="integer"> 0x05 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x60600008</param>
+    <param name = "value" type="integer" PDOentry="recieve">0x60600008</param>
   </structure>
   <structure>
     <param name = "description" type="string">Transmit PDO Mapping</param>
@@ -144,7 +144,7 @@
     <param name = "index" type="integer"> 0x1A00</param>
     <param name = "subindex" type="integer"> 0x00 </param>
     <param name = "size" type="integer"> 1 </param>
-    <param name = "value" type="integer">0</param>
+    <param name = "value" type="integer" >0</param>
   </structure>
   <structure>
     <param name = "description" type="string">Transmit PDO Mapping</param>
@@ -152,7 +152,7 @@
     <param name = "index" type="integer"> 0x1A00</param>
     <param name = "subindex" type="integer"> 0x01 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x60410010</param>
+    <param name = "value" type="integer" PDOentry="transmit">0x60410010</param>
   </structure>
   <structure>
     <param name = "description" type="string">Transmit PDO Mapping</param>
@@ -160,7 +160,7 @@
     <param name = "index" type="integer"> 0x1A00</param>
     <param name = "subindex" type="integer"> 0x02 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x60640020</param>
+    <param name = "value" type="integer" PDOentry="transmit">0x60640020</param>
   </structure>
   <structure>
     <param name = "description" type="string">Transmit PDO Mapping</param>
@@ -168,7 +168,7 @@
     <param name = "index" type="integer"> 0x1A00</param>
     <param name = "subindex" type="integer"> 0x03 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x606C0020</param>
+    <param name = "value" type="integer" PDOentry="transmit">0x606C0020</param>
   </structure>
   <structure>
     <param name = "description" type="string">Transmit PDO Mapping</param>
@@ -176,7 +176,7 @@
     <param name = "index" type="integer"> 0x1A00</param>
     <param name = "subindex" type="integer"> 0x04 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x60770010</param>
+    <param name = "value" type="integer" PDOentry="transmit">0x60770010</param>
   </structure>
   <structure>
     <param name = "description" type="string">Transmit PDO Mapping</param>
@@ -184,7 +184,7 @@
     <param name = "index" type="integer"> 0x1A00</param>
     <param name = "subindex" type="integer"> 0x05 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x603F0010</param>
+    <param name = "value" type="integer" PDOentry="transmit">0x603F0010</param>
   </structure>
   <structure>
     <param name = "description" type="string">Transmit PDO Mapping</param>
@@ -192,7 +192,7 @@
     <param name = "index" type="integer"> 0x1A00</param>
     <param name = "subindex" type="integer"> 0x06 </param>
     <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer">0x60610008</param>
+    <param name = "value" type="integer" PDOentry="transmit">0x60610008</param>
   </structure>
 <!--  3.Set the number of mapping entries in PDO mapping objects-->
   <structure>

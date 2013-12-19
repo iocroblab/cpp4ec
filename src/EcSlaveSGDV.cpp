@@ -322,61 +322,41 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
   
-  writeControlWord(CW_SHUTDOWN);
+  writePDO(firstEntry,CW_SHUTDOWN);
   usleep (100000);
   
-  writeControlWord(CW_SWITCH_ON);
+  writePDO(firstEntry,CW_SWITCH_ON);
   usleep (100000);
   
   // Enable movement
-  writeControlWord(CW_ENABLE_OP);
+  writePDO(firstEntry,CW_ENABLE_OP);
   usleep (100000);
 }
 
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
-  writeControlWord(CW_SHUTDOWN);
+  writePDO(firstEntry,CW_SHUTDOWN);
   usleep (100000);
   
-  writeControlWord(CW_QUICK_STOP);
+  writePDO(firstEntry,CW_QUICK_STOP);
   usleep (100000);
 }
 
-bool EcSlaveSGDV::writeControlWord (EcControlWord controlWord)
+bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
-    memcpy (m_datap->outputs, &controlWord , 2);
+    memcpy (m_datap->outputs + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
     rt_mutex_release (&mutex);
 }
 
-bool EcSlaveSGDV::readStatusWord (EcStatusWord statusWord)
+bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
 {
     //switch the motor state
     rt_mutex_acquire (&mutex, TM_INFINITE);
-    memcpy (&statusWord, m_datap->inputs, 2);
+    memcpy (&value, m_datap->inputs + inputObjects[entry].offset, inputObjects[entry].byteSize);
     rt_mutex_release (&mutex);
-}
-
-bool EcSlaveSGDV::writeVelocity (int32_t velocity)
-{
-
-    rt_mutex_acquire (&mutex, TM_INFINITE);
-    //velocity starts in byte 6 (2bytes Controlword + 4bytes TargetPosition)
-    memcpy (m_datap->outputs + 6, &velocity, 4);
-    rt_mutex_release (&mutex);
-    return true;//if all is ok
-}
-
-bool EcSlaveSGDV::readVelocity (int32_t velocity)
-{
-
-    rt_mutex_acquire (&mutex, TM_INFINITE);
-    //velocity starts in byte 6 (2bytes Controlword + 4bytes TargetPosition)
-    memcpy (&velocity, m_datap->inputs + 6, 4);
-    rt_mutex_release (&mutex);
-    return true;//if all is ok
 }
 
 
@@ -396,9 +376,23 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
     for (pugi::xml_node param = structure.first_child(); param; param = param.next_sibling())
     {
         std::string type = std::string(param.attribute("type").value());
+	std::string PDOentry = std::string(param.attribute("PDOentry").value());
 	std::string name = std::string(param.attribute("name").value());
 	
-      	if (name == "index")
+      	if (name ==  "description")
+	{
+	  if (type != "string")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
+	  temp.description = param.child_value();
+	 
+	}
+	else if (name ==  "name")
+	{
+	  if (type != "string")
+	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
+	    temp.name = param.child_value();
+	}
+	else if (name == "index")
 	{
 	  if (type != "integer")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));	  
@@ -421,26 +415,61 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 	  if (type != "integer")
 	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
 	  temp.param = strtol (param.child_value(),NULL,0);
+	  addPDOobject(PDOentry,temp.param,temp.subindex);
 	}
-	else if (name ==  "name")
-	{
-	  if (type != "string")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
-	    temp.name = param.child_value();
-	}
-	else if (name ==  "description")
-	{
-	  if (type != "string")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
-	  temp.description = param.child_value();
-	}
+	
+	
 	else
 	 throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
     }
     m_params.push_back(temp);
   }
+  //Calculating offset of outputs and inputs if the entries aren't oredered
+//   for (int n = 1; n < inputObjects.size ; n++)
+//       inputObjects[n].offset = inputObjects[n-1].offset + inputObjects[n-1].byteSize;
+//   for (int n = 1; n < outputObjects.size ; n++)
+//       outputObjects[n].offset = outputObjects[n-1].offset + outputObjects[n-1].byteSize;
+      
 }
 
+bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
+{
+    if ( ((PDOentry != "transmit") && (PDOentry != "reviece")) || subindex == 0 )
+    {
+	return false;
+    }
+    int mask1 = 0xFFFF0000;
+    int mask2 = 0x0000FFFF;
+    int objectNumber = (value & mask1) >> 16;
+    int objectSize = value & mask2;
+    
+    if (PDOentry == "transmit")
+    {
+	PDOobject temp;
+	static int trasnmitEntry = 0;
+	temp.offset = inputObjects[trasnmitEntry-1].offset + inputObjects[trasnmitEntry-1].byteSize;
+// 	temp.offset = 0;
+	temp.byteSize = objectSize;
+	
+	inputObjects.push_back(temp);
+	trasnmitEntry += 1;
+    }
+    
+    if (PDOentry == "recieve")
+    {
+	PDOobject temp;
+	static int recieveEntry = 0;
+	temp.offset = outputObjects[recieveEntry-1].offset + outputObjects[recieveEntry-1].byteSize;
+// 	temp.offset = 0;
+	temp.byteSize = objectSize;
+	
+	outputObjects.push_back(temp);
+	recieveEntry += 1;
+    }
+}
+    
+    
+    
 void EcSlaveSGDV::setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param)
 {
   ec_SDOwrite(m_slave_nr, index, subindex, FALSE,psize,param,EC_TIMEOUTRXM);

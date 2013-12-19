@@ -19,7 +19,18 @@ extern "C"
 #include <vector>
 #include <iostream>
 
-
+//PDO Entries
+typedef enum
+{
+    firstEntry, // first = 0
+    secondEntry,
+    thirdEntry,
+    fouthEntry,
+    fithEntry,
+    sixthEntry,
+    seventhEntry,
+    eighthEntry,
+}EcPDOEntry;
 
 //ControlWord commands SGDV
 typedef enum
@@ -50,7 +61,14 @@ typedef enum
    SW_LOW_MASK             = 0xFF00,
 }EcStatusWord;
 
-
+typedef struct
+{
+    std::string name;
+    unsigned int offset;
+    unsigned int byteSize;
+    std::string type;
+}PDOobject;
+    
 
 namespace cpp4ec
 {
@@ -64,10 +82,8 @@ public:
     void start() throw(EcErrorSGDV);
     void stop() throw(EcErrorSGDV);
 
-    bool writeControlWord (EcControlWord controlWord);
-    bool readStatusWord (EcStatusWord statusWord);
-    bool writeVelocity (int32_t velocity);
-    bool readVelocity (int32_t velocity);
+    bool writePDO (EcPDOEntry entry, int value);
+    bool readPDO (EcPDOEntry entry, int &value);
     void setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param);
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
 
@@ -83,8 +99,12 @@ private:
 
     
     void readXML() throw(EcErrorSGDV);
+    bool addPDOobject(std::string PDOentry,int value, int subindex);
+
 
     std::vector <parameter> m_params;
+    std::vector <PDOobject> inputObjects;
+    std::vector <PDOobject> outputObjects;
 
 };
 }
