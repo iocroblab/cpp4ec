@@ -19,17 +19,34 @@ extern "C"
 #include <vector>
 #include <iostream>
 
+//PDO objects
+typedef enum
+{
+    CONTROL_WORD 	= 0x6040,
+    TARGET_POSITION 	= 0x607A,
+    TARGET_VELOCITY 	= 0x60FF,
+    TARGET_TORQUE 	= 0x6071,
+}EcRecieveObjects;
+
+typedef enum
+{
+    STATUS_WORD 	= 0x6041,
+    ACTUAL_POSITION 	= 0x6064,
+    ACTUAL_VELOCITY 	= 0x606C,
+    ACTUAL_TORQUE 	= 0x6077,
+}EcTransmitObjects;
+
 //PDO Entries
 typedef enum
 {
-    firstEntry, // first = 0
-    secondEntry,
-    thirdEntry,
-    fouthEntry,
-    fithEntry,
-    sixthEntry,
-    seventhEntry,
-    eighthEntry,
+    FIRST_ENTRY, // first = 0
+    SECOND_ENTRY,
+    THIRD_ENTRY,
+    FOURTH_ENTRY,
+    FIFTH_ENTRY,
+    SIXTH_ENTRY,
+    SEVENTH_ENTRY,
+    EIGHTH_ENTRY,
 }EcPDOEntry;
 
 //ControlWord commands SGDV
@@ -84,6 +101,19 @@ public:
 
     bool writePDO (EcPDOEntry entry, int value);
     bool readPDO (EcPDOEntry entry, int &value);
+    
+    bool writeControlWord (uint16_t controlWord);
+    bool readStatusWord (uint16_t &statusWord);
+    
+    bool writeVelocity (int32_t velocity);
+    bool readVelocity (int32_t &velocity);
+    
+    bool writePosition (int32_t position);
+    bool readPosition (int32_t &position);
+    
+    bool writeTorque (int16_t torque);
+    bool readTorque (int16_t &torque);
+    
     void setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param);
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
 
@@ -101,6 +131,25 @@ private:
     
     void readXML() throw(EcErrorSGDV);
     bool addPDOobject(std::string PDOentry,int value, int subindex);
+    
+    int controlWordEntry;
+    int targetPositionEntry;
+    int targetVelocityEntry;
+    int targetTorqueEntry;
+    int statusWordEntry;
+    int actualPositionEntry;
+    int actualVelocityEntry;
+    int actualTorqueEntry;
+    
+    bool wControlWordCapable;
+    bool wPositionCapable;
+    bool wVelocityCapable;
+    bool wTorqueCapable;
+    bool rStatusWordCapable;
+    bool rPositionCapable;
+    bool rVelocityCapable;
+    bool rTorqueCapable;
+    
     
 
     std::vector <parameter> m_params;

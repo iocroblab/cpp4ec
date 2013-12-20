@@ -19,6 +19,10 @@ public:
     XML_STRUCTURE_ERROR,
     XML_NOT_FOUND_ERROR,
     XML_TYPE_ERROR,
+    OUTPUT_OBJECTS_ERROR,
+    INPUT_OBJECTS_ERROR,
+    WRONG_ENTRY_ERROR,
+    FUNCTION_NOT_ALLOWED_ERROR,
     };
     
     EcErrorSGDV (int errorcode, unsigned int nslave, std::string name);

@@ -174,7 +174,7 @@ if(vel.size()!=3)
    return false;
    }
    for(int i=0;i<m_drivers.size();i++)
-   ((EcSlaveSGDV*) m_drivers[i])->writePDO(thirdEntry,vel[i]);
+   ((EcSlaveSGDV*) m_drivers[i])->writePDO(THIRD_ENTRY,vel[i]);
 
    return true;
 }

@@ -29,11 +29,18 @@ namespace cpp4ec
 extern RT_MUTEX mutex;
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
-    useDC (true), SYNC0TIME (1000000), SHIFT (125000),
-    SHIFTMASTER (1000000), PDOerrorsTolerance (9),recieveEntry(0),transmitEntry(0)
+    useDC (true), SYNC0TIME (1000000), SHIFT (125000),SHIFTMASTER (1000000), PDOerrorsTolerance (9),
+    recieveEntry(0),transmitEntry(0), 
+    controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
+    statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
+    wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
+    rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false)
 {
  //  parameter temp;
    readXML();
+   m_params.resize(0);
+   inputObjects.resize(0);
+   outputObjects.resize(0);
    
 //   setting parameters
 //    temp.description = "Modes of Operation";
@@ -322,30 +329,32 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
   
-  writePDO(firstEntry,CW_SHUTDOWN);
+  writePDO(FIRST_ENTRY,CW_SHUTDOWN);
   usleep (100000);
   
-  writePDO(firstEntry,CW_SWITCH_ON);
+  writePDO(FIRST_ENTRY,CW_SWITCH_ON);
   usleep (100000);
   
   // Enable movement
-  writePDO(firstEntry,CW_ENABLE_OP);
+  writePDO(FIRST_ENTRY,CW_ENABLE_OP);
   usleep (100000);
 }
 
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
-  writePDO(firstEntry,CW_SHUTDOWN);
+  writePDO(FIRST_ENTRY,CW_SHUTDOWN);
   usleep (100000);
   
-  writePDO(firstEntry,CW_QUICK_STOP);
+  writePDO(FIRST_ENTRY,CW_QUICK_STOP);
   usleep (100000);
 }
 
 bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 {
-    //switch the motor state
+    if(entry<0 || entry>=outputObjects.size())
+	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
+    //write on the desired position of the PDO
     rt_mutex_acquire (&mutex, TM_INFINITE);
     memcpy (m_datap->outputs + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
     rt_mutex_release (&mutex);
@@ -353,13 +362,80 @@ bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 
 bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
 {
-    //switch the motor state
+    if(entry<0 || entry>=inputObjects.size())
+	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
+    //read the desired position of the PDO
     rt_mutex_acquire (&mutex, TM_INFINITE);
     memcpy (&value, m_datap->inputs + inputObjects[entry].offset, inputObjects[entry].byteSize);
     rt_mutex_release (&mutex);
 }
 
 
+bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
+{
+    if (!wControlWordCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (m_datap->outputs + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
+    rt_mutex_release (&mutex);
+}
+bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
+{
+    if (!rStatusWordCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (&statusWord ,m_datap->outputs + inputObjects[statusWordEntry].offset, inputObjects[statusWordEntry].byteSize);
+    rt_mutex_release (&mutex);
+    
+} 
+bool EcSlaveSGDV::writePosition (int32_t position)
+{
+    if (!wPositionCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (m_datap->outputs + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
+    rt_mutex_release (&mutex);
+}
+bool EcSlaveSGDV::readPosition (int32_t &position)
+{
+    if (!rPositionCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (&position ,m_datap->outputs + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
+    rt_mutex_release (&mutex);
+}
+bool EcSlaveSGDV::writeVelocity (int32_t velocity)
+{
+    if (!wVelocityCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (m_datap->outputs + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
+    rt_mutex_release (&mutex);
+}
+bool EcSlaveSGDV::readVelocity (int32_t &velocity)
+{
+    if (!rVelocityCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (&velocity ,m_datap->outputs + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
+    rt_mutex_release (&mutex);
+}
+bool EcSlaveSGDV::writeTorque (int16_t torque)
+{
+    if (!wTorqueCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (m_datap->outputs + outputObjects[targetTorqueEntry].offset, &torque ,outputObjects[targetTorqueEntry].byteSize);
+    rt_mutex_release (&mutex);
+}
+bool EcSlaveSGDV::readTorque (int16_t &torque)
+{
+    if (!rTorqueCapable)
+	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (&torque ,m_datap->outputs + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
+    rt_mutex_release (&mutex);
+}
 
 void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 {
@@ -452,7 +528,34 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
           temp.offset = 0;
 	}
 	temp.byteSize = objectSize;
-	inputObjects.push_back(temp);
+	
+	switch (objectNumber)
+	{
+	    case STATUS_WORD:
+		statusWordEntry = transmitEntry;
+		rStatusWordCapable = true;  
+		break;
+		
+	    case ACTUAL_POSITION:
+		actualPositionEntry=transmitEntry;
+		rPositionCapable = true; 
+		break;
+		
+	    case ACTUAL_VELOCITY:
+		actualVelocityEntry = transmitEntry;
+		rVelocityCapable = true;
+		break;
+		
+	    case ACTUAL_TORQUE:
+		actualTorqueEntry=transmitEntry;
+		rTorqueCapable = true;
+		break;
+		
+	    default:
+		break;
+		
+	}
+	inputObjects.push_back(temp);	
 	transmitEntry += 1;
     }
     
@@ -466,9 +569,41 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
           temp.offset = 0;
 	}
 	temp.byteSize = objectSize;
+	
+	switch (objectNumber)
+	{
+	    case CONTROL_WORD:
+		controlWordEntry = transmitEntry;
+		wControlWordCapable = true;  
+		break;
+		
+	    case TARGET_POSITION:
+		targetPositionEntry = transmitEntry;
+		wPositionCapable = true;
+		break;
+		
+	    case TARGET_VELOCITY:
+		targetVelocityEntry = transmitEntry;
+		wVelocityCapable = true;
+		break;
+		
+	    case TARGET_TORQUE:
+		targetTorqueEntry = transmitEntry;
+		wTorqueCapable = true;
+		break;
+		
+	    default:
+		break;
+		
+	}
 	outputObjects.push_back(temp);
 	recieveEntry += 1;
     }
+    if(outputObjects.size()<=0)
+	throw(EcErrorSGDV(EcErrorSGDV::OUTPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+    if(inputObjects.size()<=0)
+	throw(EcErrorSGDV(EcErrorSGDV::INPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+	
 }
     
     
