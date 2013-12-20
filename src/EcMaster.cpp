@@ -77,7 +77,6 @@ EcMaster::~EcMaster()
 //    reset();
    //must clean memory and delete tasks
    rt_task_delete (&task);
-   //rt_mutex_delete(&mutex);
    sigsuspend(&oldmask);
    delete[] ecPort;
 }
@@ -146,6 +145,9 @@ bool EcMaster::preconfigure() throw(EcError)
     return false;
 
   }
+  outputbuf = new char [outputsize];
+  
+  
   std::cout<<"Master preconfigured!!!"<<std::endl;
   return true;
 }
@@ -185,7 +187,7 @@ bool EcMaster::start()
 {
    //Starts a preiodic tasck that sends frames to slaves
    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-   rt_task_start (&task, &realtime_thread, NULL);
+   rt_task_start (&task, &this->realtime_thread, NULL);
 
    //creating the thread non-rt
    sigemptyset(&mask);
@@ -201,7 +203,7 @@ bool EcMaster::start()
    pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
    pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
    pthread_attr_setschedpolicy(&regattr, SCHED_OTHER);
-   errno = pthread_create(&nrt, &regattr, &regular_thread, NULL);
+   errno = pthread_create(&nrt, &regattr, this->regular_thread, NULL);
    if (errno)
       fail("pthread_create");
    
@@ -374,7 +376,7 @@ int EcMaster::si_PDOassign(uint16 slave, uint16 PDOassign, int mapoffset, int bi
 	return bsize;
     }
 
- int EcMaster::si_map_sdo(int slave)
+int EcMaster::si_map_sdo(int slave)
     {
 	int wkc, rdl;
 	int retVal = 0;
@@ -538,7 +540,7 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
 	return totalsize;
     }
 
-    int EcMaster::si_map_sii(int slave)
+int EcMaster::si_map_sii(int slave)
     {
 	int retVal = 0;
 	int Tsize, outputs_bo, inputs_bo;
@@ -560,7 +562,7 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
     }
 
 
-    void EcMaster::si_sdo(int cnt)
+void EcMaster::si_sdo(int cnt)
     {
 	int i, j;
 	
@@ -599,7 +601,7 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
     }
 
     /*To write data of the found slaves in EtherCATsoemInfo.txt. Usefull to be sure of the slaves' order*/
- void EcMaster::slaveInfo()
+void EcMaster::slaveInfo()
     {
       pFile = fopen ("EtherCATsoemInfo.txt","w");
       ec_configdc();
@@ -673,20 +675,30 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
 			    
     }
     
-    static void EcMaster::*realtime_thread(void *arg)
+void EcMaster::*realtime_thread(void *arg)
     {
          struct rtipc_port_label plabel;
          struct sockaddr_ipc saddr;
-         char * inputbuf = new char[inputsize];
-         char * outputbuf = new char [outputsize];
-         int ret, s;
+         char * rtinputbuf = new char[inputsize];
+         char * rtoutputbuf = new char[outputsize];
+         
+         int ret, s_output, s_input, nRet;
+         
+         /*need to put a lot of stuff to create
+          * two sockets: one to receive data from nonrt part
+          * and another to send data to the nonrt part
+          * use same option as the xenomai xddp-label example
+          * 
+         
          /*
          * Get a datagram socket to bind to the RT endpoint. Each
          * endpoint is represented by a port number within the XDDP
          * protocol namespace.
          */
-         s = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
-         if (s < 0) {
+         s_output = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
+         
+         
+         if (s_output < 0) {
             perror("socket");
             exit(EXIT_FAILURE); //THROW EXCEPTION
          }
@@ -694,7 +706,7 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
          * Set a port label. This name will be registered when
          * binding, in addition to the port number (if given).
          */
-         strcpy(plabel.label, XDDP_PORT_OUTPUT);
+         strcpy(plabel.label, XDDP_PORT_INPUT);
          ret = setsockopt(s, SOL_XDDP, XDDP_LABEL, &plabel, sizeof(plabel));
          if (ret)
             fail("setsockopt");
@@ -715,24 +727,39 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
          saddr.sipc_port = -1;
          ret = bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
          if (ret)
-         fail("bind");
+            fail("bind");
          for (;;) {
          /* Get packets relayed by the regular thread */
-         ret = recvfrom(s, outputbuf, outputsize, 0, NULL, 0);
-         if (ret <= 0)
-            fail("recvfrom");
-            rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
+            ret = recvfrom(s_output, rtoutputbuf, outputsize, 0, NULL, 0);
+            if (ret <= 0)
+            {
+            //nothing to do, no new data transferred
+           //rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
+            }
+            else{
+               //received some data from the buffer 
+               //traffic that data from
+               //rtoutputbuf to ec_slave[i].output
+               //copiar del outputbuf als ec_slave, tenint en compte el OBytes de cada slave
+               
+             
+            }
+            nRet=ec_send_processdata();
+            //make some check of sending data
+            nRet=ec_receive_processdata(EC_TIMEOUTRET);
+            
+            //now, we need to transmit the data outside
+            //from ec_slave[i].inputs
+            //build rtinputbuf
+            ret = sendto(s_input, rtinputbuf, inputsize, 0, NULL, 0);
+            
+            rt_task_wait_period(NULL);
          }
-         
-         //copiar del outputbuf als ec_slave, tenint en compte el OBytes de cada slave
-         
-         
-         
-         
+        
          return NULL;
    }
          
-   static void EcMaster::*regular_thread(void *arg)
+void EcMaster::*regular_thread(void *arg)
    {
        char * devnameOutput, * devnameInput;
        char * inputbuf = new char[inputsize];
@@ -755,7 +782,7 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
          fail("open");
        for (;;) {
          /* Get the next message from realtime_thread2. */
-         ret = read(fd, buf, sizeof(buf));
+         ret = read(fdInput, inputbuf, inputsize));
          if (ret <= 0)
             fail("read");
             /* Relay the message to realtime_thread1. */
@@ -765,23 +792,13 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
          }
          return NULL;
    }
+   
+void EcMaster::update_ec()
+{
+   
+}
+
     
-    static RT_TASK task;
-    static RT_TASK program;
-    
-    ///realtime functions
-    inline void ethercatLoop(void *unused)
-    {
-       int nRet;
-       while(1)
-       {
-          rt_mutex_acquire(&mutex, TM_INFINITE);
-          nRet=ec_send_processdata();
-          nRet=ec_receive_processdata(EC_TIMEOUTRET);
-          rt_mutex_release(&mutex);
-          rt_task_wait_period(NULL);
-       }
-    }
 };
 #endif //SERVOS_RT_H
     

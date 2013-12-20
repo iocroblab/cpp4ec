@@ -3,8 +3,18 @@
 
 #include "EcSlave.h"
 #include "EcSlaveFactory.h"
-#include "EcError.h"
-#include "EcUtil.h"
+
+extern "C"
+{
+#include <soem/ethercattype.h>
+#include <soem/ethercatbase.h>
+#include <soem/ethercatmain.h>
+#include <soem/ethercatconfig.h>
+#include <soem/ethercatdc.h>
+#include <soem/ethercatcoe.h>
+#include <soem/ethercatprint.h>
+#include <soem/nicdrv.h>
+}
 
 #include <vector>
 #include <string>
@@ -15,6 +25,7 @@
 #include <unistd.h>
 #include <stdint.h>
 
+#include "EcError.h"
 
 #define NSEC_PER_SEC 1000000000
 
@@ -146,34 +157,18 @@ private:
     int si_map_sii(int slave);
     void si_sdo(int cnt);
 
-    //realtime task
-    static void *realtime_task(void *arg);
-    static RT_TASK task;
+    ///realtime stuff
+    char * outputbuf;
+    void * realtime_thread(void *unused);
+    static void * regular_thread(void *arg);
     
-    //ipc thread
-    static void *regular_thread(void *arg);
+    void update_ec();
     
-    //thread stuff
-    pthread_attr_t regattr;
-    sigset_t mask, oldmask;
-    
-    //xddp stuff
-    const char *XDDP_PORT_INPUT "ECMasterInput"
-    const char *XDDP_PORT_OUTPUT "ECMasterOutput"
-    
-    //size of _ALL_ input and output slaves PDO
-    unsigned int inputsize;
-    unsigned int outputsize;
-    
-    
-};
-#endif //SERVOS_RT_H
-    
-    
+    RT_TASK task;
     
 };
 
-} //endnamespace
+} //endnamespace Vector3d v;
 
 #endif
 
