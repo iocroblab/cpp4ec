@@ -95,12 +95,13 @@ private:
     unsigned int SYNC0TIME;
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
-    
-
+        
+    int transmitEntry;
+    int recieveEntry;
     
     void readXML() throw(EcErrorSGDV);
     bool addPDOobject(std::string PDOentry,int value, int subindex);
-
+    
 
     std::vector <parameter> m_params;
     std::vector <PDOobject> inputObjects;

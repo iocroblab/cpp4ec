@@ -30,10 +30,9 @@ extern RT_MUTEX mutex;
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     useDC (true), SYNC0TIME (1000000), SHIFT (125000),
-    SHIFTMASTER (1000000), PDOerrorsTolerance (9)
+    SHIFTMASTER (1000000), PDOerrorsTolerance (9),recieveEntry(0),transmitEntry(0)
 {
-   parameter temp;
-   
+ //  parameter temp;
    readXML();
    
 //   setting parameters
@@ -316,6 +315,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 //     }
     std::cout << getName() << " configured !" <<std::endl;
     
+    
     return true;
 }
 
@@ -369,7 +369,7 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
   pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
   if (!result)
     throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR,m_slave_nr,getName()));  
-
+  
   pugi::xml_node parameters = doc.first_child();
   for (pugi::xml_node structure = parameters.first_child(); structure; structure = structure.next_sibling())
   {
@@ -429,40 +429,47 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 //       inputObjects[n].offset = inputObjects[n-1].offset + inputObjects[n-1].byteSize;
 //   for (int n = 1; n < outputObjects.size ; n++)
 //       outputObjects[n].offset = outputObjects[n-1].offset + outputObjects[n-1].byteSize;
-      
+
+  for( int i = 0; i<outputObjects.size(); i++)
+      std::cout<<"Offset "<<outputObjects[i].offset<<" byteSize "<<outputObjects[i].byteSize<<std::endl;     
 }
 
 bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
 {
-    if ( ((PDOentry != "transmit") && (PDOentry != "reviece")) || subindex == 0 )
+    if ( ((PDOentry != "transmit") && (PDOentry != "recieve")) || subindex == 0 )
     {
 	return false;
     }
     int mask1 = 0xFFFF0000;
     int mask2 = 0x0000FFFF;
     int objectNumber = (value & mask1) >> 16;
-    int objectSize = value & mask2;
-    
+    int objectSize = (value & mask2)/8;
     if (PDOentry == "transmit")
     {
+        std::cout<<"holaaa?"<<std::endl;
 	PDOobject temp;
-	static int trasnmitEntry = 0;
-	temp.offset = inputObjects[trasnmitEntry-1].offset + inputObjects[trasnmitEntry-1].byteSize;
-// 	temp.offset = 0;
+	if(transmitEntry>0)
+	{
+	  temp.offset = inputObjects[transmitEntry-1].offset + inputObjects[transmitEntry-1].byteSize;
+ 	}else{
+          temp.offset = 0;
+	}
 	temp.byteSize = objectSize;
-	
 	inputObjects.push_back(temp);
-	trasnmitEntry += 1;
+	transmitEntry += 1;
     }
     
     if (PDOentry == "recieve")
     {
+        std::cout<<"holaaa?"<<std::endl;
 	PDOobject temp;
-	static int recieveEntry = 0;
-	temp.offset = outputObjects[recieveEntry-1].offset + outputObjects[recieveEntry-1].byteSize;
-// 	temp.offset = 0;
+	if(recieveEntry>0)
+	{
+	  temp.offset = outputObjects[recieveEntry-1].offset + outputObjects[recieveEntry-1].byteSize;
+        }else{ 	
+          temp.offset = 0;
+	}
 	temp.byteSize = objectSize;
-	
 	outputObjects.push_back(temp);
 	recieveEntry += 1;
     }
