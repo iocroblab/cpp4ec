@@ -430,8 +430,6 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 //   for (int n = 1; n < outputObjects.size ; n++)
 //       outputObjects[n].offset = outputObjects[n-1].offset + outputObjects[n-1].byteSize;
 
-  for( int i = 0; i<outputObjects.size(); i++)
-      std::cout<<"Offset "<<outputObjects[i].offset<<" byteSize "<<outputObjects[i].byteSize<<std::endl;     
 }
 
 bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
@@ -446,7 +444,6 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
     int objectSize = (value & mask2)/8;
     if (PDOentry == "transmit")
     {
-        std::cout<<"holaaa?"<<std::endl;
 	PDOobject temp;
 	if(transmitEntry>0)
 	{
@@ -461,7 +458,6 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
     
     if (PDOentry == "recieve")
     {
-        std::cout<<"holaaa?"<<std::endl;
 	PDOobject temp;
 	if(recieveEntry>0)
 	{
