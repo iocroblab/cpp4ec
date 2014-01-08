@@ -37,10 +37,11 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false)
 {
  //  parameter temp;
-   readXML();
    m_params.resize(0);
    inputObjects.resize(0);
    outputObjects.resize(0);
+
+   readXML();
    
 //   setting parameters
 //    temp.description = "Modes of Operation";
@@ -352,8 +353,12 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 
 bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 {
-    if(entry<0 || entry>=outputObjects.size())
-	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
+    if(entry < 0 || entry >= outputObjects.size())
+    {
+        std::cout<<"entry "<<entry<<std::endl;
+       	std::cout<<"outputsize "<<outputObjects.size()<<std::endl;
+       	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
+    }
     //write on the desired position of the PDO
     rt_mutex_acquire (&mutex, TM_INFINITE);
     memcpy (m_datap->outputs + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
@@ -500,6 +505,11 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
     }
     m_params.push_back(temp);
   }
+  if(outputObjects.size() <= 0)
+      throw(EcErrorSGDV(EcErrorSGDV::OUTPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+  if(inputObjects.size() <= 0)
+      throw(EcErrorSGDV(EcErrorSGDV::INPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+
   //Calculating offset of outputs and inputs if the entries aren't oredered
 //   for (int n = 1; n < inputObjects.size ; n++)
 //       inputObjects[n].offset = inputObjects[n-1].offset + inputObjects[n-1].byteSize;
@@ -599,10 +609,6 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
 	outputObjects.push_back(temp);
 	recieveEntry += 1;
     }
-    if(outputObjects.size()<=0)
-	throw(EcErrorSGDV(EcErrorSGDV::OUTPUT_OBJECTS_ERROR,m_slave_nr,getName()));
-    if(inputObjects.size()<=0)
-	throw(EcErrorSGDV(EcErrorSGDV::INPUT_OBJECTS_ERROR,m_slave_nr,getName()));
 	
 }
     
