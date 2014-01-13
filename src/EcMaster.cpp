@@ -148,6 +148,7 @@ bool EcMaster::configure() throw(EcError)
 }
 
 
+
 bool EcMaster::start()
 {
    //Starts a preiodic tasck that sends frames to slaves
@@ -164,6 +165,10 @@ bool EcMaster::start()
 
    return true;
 }
+std::vector<EcSlave*> EcMaster::getSlaves()
+{
+    return m_drivers;
+}
 
 bool EcMaster::setVelocity (std::vector <int32_t>&vel)
 {
@@ -174,7 +179,7 @@ if(vel.size()!=3)
    return false;
    }
    for(int i=0;i<m_drivers.size();i++)
-   ((EcSlaveSGDV*) m_drivers[i])->writePDO(THIRD_ENTRY,vel[i]);
+    ((EcSlaveSGDV*) m_drivers[i])->writePDO(THIRD_ENTRY,vel[i]);
 
    return true;
 }

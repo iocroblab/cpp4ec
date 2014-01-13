@@ -130,6 +130,7 @@ public:
      */
     bool getVelocity (std::vector <int32_t>&vel);
     
+    std::vector<EcSlave*> getSlaves();
 
 
 
