@@ -94,7 +94,8 @@ class EcSlaveSGDV: public EcSlave
 public:
     EcSlaveSGDV (ec_slavet* mem_loc);
     ~EcSlaveSGDV();
-
+    
+    const std::string& getName() const;
     bool configure() throw(EcErrorSGDV);
     void start() throw(EcErrorSGDV);
     void stop() throw(EcErrorSGDV);
@@ -116,6 +117,7 @@ public:
     
     void setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param);
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
+    
 
 private:
 

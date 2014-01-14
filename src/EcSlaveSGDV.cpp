@@ -40,7 +40,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.resize(0);
    inputObjects.resize(0);
    outputObjects.resize(0);
-  
+   m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
    
 
    readXML();
@@ -301,6 +301,11 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 
 EcSlaveSGDV::~EcSlaveSGDV()
 {
+}
+
+const std::string& EcSlaveSGDV::getName() const
+{
+    return m_name;
 }
 
 bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
