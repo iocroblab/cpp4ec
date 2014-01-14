@@ -361,10 +361,10 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
-  writePDO(FIRST_ENTRY,CW_SHUTDOWN);
+  writeControlWord(FIRST_ENTRY,CW_SHUTDOWN);
   usleep (100000);
   
-  writePDO(FIRST_ENTRY,CW_QUICK_STOP);
+  writeControlWord(FIRST_ENTRY,CW_QUICK_STOP);
   usleep (100000);
 }
 
