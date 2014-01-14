@@ -339,14 +339,17 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
   
-  writePDO(FIRST_ENTRY,CW_SHUTDOWN);
+  //writePDO(FIRST_ENTRY,CW_SHUTDOWN);
+  writeControlWord(CW_SHUTDOWN);
   usleep (100000);
   
-  writePDO(FIRST_ENTRY,CW_SWITCH_ON);
+ // writePDO(FIRST_ENTRY,CW_SWITCH_ON);
+  writeControlWord(CW_SWITCH_ON);
   usleep (100000);
   
   // Enable movement
-  writePDO(FIRST_ENTRY,CW_ENABLE_OP);
+ // writePDO(FIRST_ENTRY,CW_ENABLE_OP);
+  writeControlWord(CW_ENABLE_OP);
   usleep (100000);
 }
 
@@ -594,25 +597,21 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
 	    case CONTROL_WORD:
 		controlWordEntry = recieveEntry;
 		wControlWordCapable = true;  
-		//std::cout<<"CW entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    case TARGET_POSITION:
 		targetPositionEntry = recieveEntry;
 		wPositionCapable = true;
-		//std::cout<<"pos entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    case TARGET_VELOCITY:
 		targetVelocityEntry = recieveEntry;
 		wVelocityCapable = true;
-		//std::cout<<"vel entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    case TARGET_TORQUE:
 		targetTorqueEntry = recieveEntry;
 		wTorqueCapable = true;
-		//std::cout<<"torq entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    default:
