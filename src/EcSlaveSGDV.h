@@ -125,7 +125,8 @@ private:
     unsigned int SYNC0TIME;
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
-        
+    
+    
     int transmitEntry;
     int recieveEntry;
     
@@ -151,7 +152,8 @@ private:
     bool rTorqueCapable;
     
     
-
+    char* inputPDO;
+    char *outputPDP;
     std::vector <parameter> m_params;
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;

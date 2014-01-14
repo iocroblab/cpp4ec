@@ -40,6 +40,8 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.resize(0);
    inputObjects.resize(0);
    outputObjects.resize(0);
+  
+   
 
    readXML();
    
@@ -321,6 +323,13 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 //         configmyDC = this->getPeer ("Master")->getOperation ("configDC");
 //         configmyDC (internalNumber, true, SYNC0TIME, SHIFTMASTER);
 //     }
+    int inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
+    int outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
+    std::cout<<"InputSize "<<inputSize<<std::endl;
+    std::cout<<"OutputSize "<<outputSize<<std::endl;
+    inputPDO  = new char[inputSize];
+    outputPDP = new char[outputSize];
+    
     std::cout << getName() << " configured !" <<std::endl;
     
     
@@ -583,23 +592,27 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
 	switch (objectNumber)
 	{
 	    case CONTROL_WORD:
-		controlWordEntry = transmitEntry;
+		controlWordEntry = recieveEntry;
 		wControlWordCapable = true;  
+		//std::cout<<"CW entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    case TARGET_POSITION:
-		targetPositionEntry = transmitEntry;
+		targetPositionEntry = recieveEntry;
 		wPositionCapable = true;
+		//std::cout<<"pos entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    case TARGET_VELOCITY:
-		targetVelocityEntry = transmitEntry;
+		targetVelocityEntry = recieveEntry;
 		wVelocityCapable = true;
+		//std::cout<<"vel entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    case TARGET_TORQUE:
-		targetTorqueEntry = transmitEntry;
+		targetTorqueEntry = recieveEntry;
 		wTorqueCapable = true;
+		//std::cout<<"torq entry "<<transmitEntry<<std::endl;
 		break;
 		
 	    default:
