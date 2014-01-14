@@ -361,10 +361,10 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
-  writeControlWord(FIRST_ENTRY,CW_SHUTDOWN);
+  writeControlWord(CW_SHUTDOWN);
   usleep (100000);
   
-  writeControlWord(FIRST_ENTRY,CW_QUICK_STOP);
+  writeControlWord(CW_QUICK_STOP);
   usleep (100000);
 }
 
