@@ -330,8 +330,8 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 //     }
     int inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
     int outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
-    std::cout<<"InputSize "<<inputSize<<std::endl;
-    std::cout<<"OutputSize "<<outputSize<<std::endl;
+//    std::cout<<"InputSize "<<inputSize<<std::endl;
+//    std::cout<<"OutputSize "<<outputSize<<std::endl;
     inputPDO  = new char[inputSize];
     outputPDP = new char[outputSize];
     

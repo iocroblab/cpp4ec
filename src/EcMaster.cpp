@@ -90,6 +90,8 @@ bool EcMaster::preconfigure() throw(EcError)
 	    std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
 	    throw( EcError (EcError::FAIL_CREATING_DRIVER));
 	  }
+//	  std::cout <<"Ibytes "<<ec_slave[i].Ibytes<<std::endl;
+//	  std::cout <<"Obytes "<<ec_slave[i].Obytes<<std::endl;
 
 	}
 	slaveInfo();
