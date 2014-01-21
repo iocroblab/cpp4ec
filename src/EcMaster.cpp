@@ -15,6 +15,7 @@
 #include <errno.h>
 #include <rtdk.h>
 #include <rtdm/rtipc.h>
+#include <signal.h>
 
 //Thread loop
 #include "servos_rt.h"
@@ -146,7 +147,7 @@ bool EcMaster::preconfigure() throw(EcError)
 
   }
   outputbuf = new char [outputsize];
-  
+  inputbuf = new char[inputsize];
   
   std::cout<<"Master preconfigured!!!"<<std::endl;
   return true;
@@ -185,6 +186,7 @@ bool EcMaster::configure() throw(EcError)
 
 bool EcMaster::start()
 {
+   int ret;
    //Starts a preiodic tasck that sends frames to slaves
    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
    rt_task_start (&task, &this->realtime_thread, NULL);
@@ -199,6 +201,8 @@ bool EcMaster::start()
    signal(SIGHUP, cleanup_upon_sig);
    pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
    
+   
+   // review all this part
    pthread_attr_init(&regattr);
    pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
    pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
@@ -213,6 +217,18 @@ bool EcMaster::start()
      m_drivers[i] -> start();
    usleep (100000);
 
+   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
+      fail("asprintf");
+   
+   fdOutput = open(devnameoOutput, O_WRONLY);
+   free(devnameOutput);
+   
+   if (fdOutput < 0)
+   {
+      fail("open");
+      //throw something
+   }
+   
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
@@ -677,18 +693,25 @@ void EcMaster::slaveInfo()
     
 void EcMaster::*realtime_thread(void *arg)
     {
-         struct rtipc_port_label plabel;
-         struct sockaddr_ipc saddr;
+         struct rtipc_port_label plabel_in, plabel_out;
+         struct sockaddr_ipc saddr_in, saddrr_out;
+         
+         struct timespec ts;
+         struct timeval tv;
+         socklen_t addrlen;
+         
+         int ret_in, s_output, s_input, ret_out;
          char * rtinputbuf = new char[inputsize];
          char * rtoutputbuf = new char[outputsize];
          
-         int ret, s_output, s_input, nRet;
-         
+        
          /*need to put a lot of stuff to create
           * two sockets: one to receive data from nonrt part
           * and another to send data to the nonrt part
           * use same option as the xenomai xddp-label example
           * 
+          * the output part came from the NRT part to the RT world
+          * the input part came from the RT part to the NRT world
          
          /*
          * Get a datagram socket to bind to the RT endpoint. Each
@@ -696,20 +719,54 @@ void EcMaster::*realtime_thread(void *arg)
          * protocol namespace.
          */
          s_output = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
+         s_input = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
          
          
          if (s_output < 0) {
             perror("socket");
             exit(EXIT_FAILURE); //THROW EXCEPTION
          }
+         if (s_input < 0) {
+            perror("socket");
+            exit(EXIT_FAILURE); //THROW EXCEPTION
+         }
+         
+         
          /*
-         * Set a port label. This name will be registered when
+          * Set a port label. This name will be registered when
          * binding, in addition to the port number (if given).
          */
-         strcpy(plabel.label, XDDP_PORT_INPUT);
-         ret = setsockopt(s, SOL_XDDP, XDDP_LABEL, &plabel, sizeof(plabel));
-         if (ret)
+         strcpy(plabel_out.label, XDDP_PORT_OUTPUT);
+         ret_out = setsockopt(s_output, SOL_XDDP, XDDP_PORT_OUTPUT, &plabel_out, sizeof(plabel_out));
+         if (ret_out)
             fail("setsockopt");
+         
+         
+         
+         /*
+          * Set the socket timeout; it will apply when attempting to
+          * connect to a labeled port, and to recvfrom() calls. The
+          * following setup tells the XDDP driver to wait for at most
+          * one second until a socket is bound to a port using the same
+          * label, or return with a timeout error.
+          */
+         tv.tv_sec = 1;
+         tv.tv_usec = 0;
+         ret_in = setsockopt(s_input, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+         if (ret_in)
+            fail("setsockopt");
+         /*
+          * Set a port label. This name will be used to find the peer
+          * when connecting, instead of the port number.
+          */
+         strcpy(plabel_in.label, XDDP_PORT_INPUT);
+         ret_in = setsockopt(s_input, SOL_XDDP, XDDP_PORT_INPUT,
+                          &plabel_in, sizeof(plabel_in));
+         if (ret_in)
+            fail("setsockopt");
+         
+         
+         
          /*
          * Bind the socket to the port, to setup a proxy to channel
          * traffic to/from the Linux domain. Assign that port a label,
@@ -722,12 +779,32 @@ void EcMaster::*realtime_thread(void *arg)
          * saddr.sipc_port specifies the port number to use. If -1 is
          * passed, the XDDP driver will auto-select an idle port.
          */
-         memset(&saddr, 0, sizeof(saddr));
-         saddr.sipc_family = AF_RTIPC;
-         saddr.sipc_port = -1;
-         ret = bind(s, (struct sockaddr *)&saddr, sizeof(saddr));
-         if (ret)
+         
+         /*
+          * Output!!!!!
+          * from NRT to RT
+          */
+         memset(&saddr_out, 0, sizeof(saddr_out));
+         saddr_out.sipc_family = AF_RTIPC;
+         saddr_out.sipc_port = -1;
+         ret_out = bind(s_output, (struct sockaddr *)&saddr_out, sizeof(saddr_out));
+         if (ret_out)
             fail("bind");
+         
+         
+         /*
+          * Input!!!!!
+          * from RT to NRT
+          */
+         
+         
+         
+         
+         
+         
+         
+         
+         
          for (;;) {
          /* Get packets relayed by the regular thread */
             ret = recvfrom(s_output, rtoutputbuf, outputsize, 0, NULL, 0);
@@ -758,27 +835,27 @@ void EcMaster::*realtime_thread(void *arg)
         
          return NULL;
    }
-         
-void EcMaster::*regular_thread(void *arg)
+
+/*
+ *
+ * 
+ This function open a socket and waits the current state
+ from the xddp port
+*/
+
+   
+void EcMaster::*update_EcSlaves(void *arg)
    {
-       char * devnameOutput, * devnameInput;
-       char * inputbuf = new char[inputsize];
-       char * outputbuf = new char [outputsize];
-       
-       int fdOutput,fdInput, ret;
-       if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
-          fail("asprintf");
-       
+       char * devnameInput;
+                            
+       int fdInput, ret;
        if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
           fail("asprintf");
-       
-       fdOutput = open(devnameInput, O_WRONLY);
-       free(devnameOutput);
-       
+              
        fdInput = open(devnameInput, O_RDONLY);
        free(devnameInput);
        
-       if (fdOutput < 0)
+       if (fdInput < 0)
          fail("open");
        for (;;) {
          /* Get the next message from realtime_thread2. */
@@ -786,16 +863,31 @@ void EcMaster::*regular_thread(void *arg)
          if (ret <= 0)
             fail("read");
             /* Relay the message to realtime_thread1. */
-         ret = write(fd, buf, ret);
-         if (ret <= 0)
-            fail("write");
-         }
+         /*
+          * Update the servos
+          * put the functions here
+          */ 
          return NULL;
    }
    
-void EcMaster::update_ec()
+/*
+ *
+ * 
+ *
+ This function uses the sockect createdx in the configure to send
+ data to the realtime thread
+
+*/
+void EcMaster::update_ec(void)
 {
+   //we have configured before the connection
+   //so we have a device number
+   int ret;
    
+   //do something to put the infor in outputbuf
+   ret = write(fdOutput,outputbuf,ret);
+   if(ret<=0)
+      fail("Write"); //throw something
 }
 
     

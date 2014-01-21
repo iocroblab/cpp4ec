@@ -28,7 +28,8 @@ extern "C"
 #include "EcError.h"
 
 #define NSEC_PER_SEC 1000000000
-
+#define XDDP_PORT_INPUT "EcMaster-xddp-input"
+#define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
 
 /*Structure to know the activated DC slaves*/
 struct slaveDCspec {
@@ -148,7 +149,11 @@ private:
     ec_ODlistt ODlist;
     ec_OElistt OElist;
     FILE * pFile;
+    int inputsize, outputsize;
+    char * devnameOutput;
+    int fdOutput;
     
+    ///Ethercat stuff
     void slaveInfo();
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
     int si_PDOassign(uint16 slave, uint16 PDOassign, int mapoffset, int bitoffset);
@@ -158,13 +163,16 @@ private:
     void si_sdo(int cnt);
 
     ///realtime stuff
+    char * inputtbuf;
     char * outputbuf;
+    
     void * realtime_thread(void *unused);
-    static void * regular_thread(void *arg);
-    
-    void update_ec();
-    
+    //static void * regular_thread(void *arg);
+    static void *update_EcSlaves(void *arg);
+    void update_ec(void);
+        
     RT_TASK task;
+    
     
 };
 
