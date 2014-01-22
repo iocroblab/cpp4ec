@@ -694,13 +694,13 @@ void EcMaster::slaveInfo()
 void EcMaster::*realtime_thread(void *arg)
     {
          struct rtipc_port_label plabel_in, plabel_out;
-         struct sockaddr_ipc saddr_in, saddrr_out;
+         struct sockaddr_ipc saddr_in, saddr_out;
          
          struct timespec ts;
          struct timeval tv;
          socklen_t addrlen;
          
-         int ret_in, s_output, s_input, ret_out;
+         int ret_in, ret_out, s_input, s_output, nRet;
          char * rtinputbuf = new char[inputsize];
          char * rtoutputbuf = new char[outputsize];
          
@@ -739,7 +739,7 @@ void EcMaster::*realtime_thread(void *arg)
          strcpy(plabel_out.label, XDDP_PORT_OUTPUT);
          ret_out = setsockopt(s_output, SOL_XDDP, XDDP_PORT_OUTPUT, &plabel_out, sizeof(plabel_out));
          if (ret_out)
-            fail("setsockopt");
+            fail("setsockopt, output");
          
          
          
@@ -754,7 +754,7 @@ void EcMaster::*realtime_thread(void *arg)
          tv.tv_usec = 0;
          ret_in = setsockopt(s_input, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
          if (ret_in)
-            fail("setsockopt");
+            fail("setsockopt, input");
          /*
           * Set a port label. This name will be used to find the peer
           * when connecting, instead of the port number.
@@ -763,7 +763,7 @@ void EcMaster::*realtime_thread(void *arg)
          ret_in = setsockopt(s_input, SOL_XDDP, XDDP_PORT_INPUT,
                           &plabel_in, sizeof(plabel_in));
          if (ret_in)
-            fail("setsockopt");
+            fail("setsockopt, input");
          
          
          
@@ -797,10 +797,24 @@ void EcMaster::*realtime_thread(void *arg)
           * from RT to NRT
           */
          
+         memset(&saddr_in, 0, sizeof(saddr_in));
+         saddr_in.sipc_family = AF_RTIPC;
+         saddr_in.sipc_port = -1; /* Tell XDDP to search by label. */
+         ret = connect(s_input, (struct sockaddr *)&saddr_in, sizeof(saddr_in));
+         if (ret_in)
+            fail("connect");
+         /*
+          * We succeeded in making the port our default destination
+          * address by using its label, but we don't know its actual
+          * port number yet. Use getpeername() to retrieve it.
+          */
+         addrlen = sizeof(saddr_in);
+         ret_in = getpeername(s, (struct sockaddr *)&saddr_in, &addrlen);
+         if (ret_in || addrlen != sizeof(saddr_in))
+            fail("getpeername, input");
+         //rt_printf("%s: NRT peer is reading from /dev/rtp%d\n",          __FUNCTION__, saddr_in.sipc_port);
          
-         
-         
-         
+          
          
          
          
@@ -812,7 +826,8 @@ void EcMaster::*realtime_thread(void *arg)
             {
             //nothing to do, no new data transferred
            //rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
-            }
+            } 
+            
             else{
                //received some data from the buffer 
                //traffic that data from
@@ -828,7 +843,7 @@ void EcMaster::*realtime_thread(void *arg)
             //now, we need to transmit the data outside
             //from ec_slave[i].inputs
             //build rtinputbuf
-            ret = sendto(s_input, rtinputbuf, inputsize, 0, NULL, 0);
+            ret_in = sendto(s_input, rtinputbuf, inputsize, 0, NULL, 0);
             
             rt_task_wait_period(NULL);
          }
