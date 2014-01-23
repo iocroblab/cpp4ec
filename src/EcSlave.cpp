@@ -23,9 +23,13 @@ namespace cpp4ec
     return true;
   }
   
+  void EcSlave::start(){}
+  
   void EcSlave::stop()
   {
   }
+  
+  void EcSlave::setPDOBuffer(char * input, char * output){}
 
 
   bool EcSlave::requestState( ec_state state)
@@ -48,4 +52,6 @@ namespace cpp4ec
   {
     return (ec_state)(m_datap->state);
   }
+  
+
 }

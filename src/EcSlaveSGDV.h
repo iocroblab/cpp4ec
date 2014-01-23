@@ -96,10 +96,15 @@ public:
     ~EcSlaveSGDV();
     
     const std::string& getName() const;
+    
     bool configure() throw(EcErrorSGDV);
     void start() throw(EcErrorSGDV);
+    void update(); 
     void stop() throw(EcErrorSGDV);
 
+    
+    void setPDOBuffer(char * input, char * output);
+    
     bool writePDO (EcPDOEntry entry, int value);
     bool readPDO (EcPDOEntry entry, int &value);
     
@@ -118,6 +123,8 @@ public:
     void setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param);
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
     
+    
+    
 
 private:
 
@@ -127,6 +134,9 @@ private:
     unsigned int SYNC0TIME;
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
+    
+    int outputSize;
+    int inputSize;
     
     
     int transmitEntry;
@@ -155,7 +165,9 @@ private:
     
     
     char* inputPDO;
-    char *outputPDP;
+    char* outputPDO;
+    char* pBufferOut;
+    char* pBufferIn;
     std::vector <parameter> m_params;
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;

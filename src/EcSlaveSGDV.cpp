@@ -41,7 +41,10 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    inputObjects.resize(0);
    outputObjects.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
-   
+   inputPDO = NULL;
+   outputPDO = NULL;
+   pBufferOut = NULL;
+   pBufferIn = NULL;
 
    readXML();
    
@@ -318,22 +321,11 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR,m_slave_nr,getName()));
 
     }
+    inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
+    outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
 
-//     if (useDC) {
-//         //To change the error tolerance before starting
-//         SDOwrite (0x1F01, 2, false, 4, PDOerrorsTolerance);
-//         //To set the desired shift of the outputs in the slave
-//         SDOwrite (0x1C33, 0x03, false, 4, SHIFT);
-//         //To let know the master that this slave will use DC
-//         configmyDC = this->getPeer ("Master")->getOperation ("configDC");
-//         configmyDC (internalNumber, true, SYNC0TIME, SHIFTMASTER);
-//     }
-    int inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
-    int outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
-//    std::cout<<"InputSize "<<inputSize<<std::endl;
-//    std::cout<<"OutputSize "<<outputSize<<std::endl;
     inputPDO  = new char[inputSize];
-    outputPDP = new char[outputSize];
+    outputPDO = new char[outputSize];
     
     std::cout << getName() << " configured !" <<std::endl;
     
@@ -344,20 +336,30 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
   
-  //writePDO(FIRST_ENTRY,CW_SHUTDOWN);
   writeControlWord(CW_SHUTDOWN);
   usleep (100000);
   
- // writePDO(FIRST_ENTRY,CW_SWITCH_ON);
   writeControlWord(CW_SWITCH_ON);
   usleep (100000);
   
   // Enable movement
- // writePDO(FIRST_ENTRY,CW_ENABLE_OP);
   writeControlWord(CW_ENABLE_OP);
   usleep (100000);
 }
+void EcSlaveSGDV::update() 
+{
+    rt_mutex_acquire (&mutex, TM_INFINITE);
+    memcpy (inputPDO ,pBufferOut ,inputSize);
+    memcpy (pBufferIn ,outputPDO ,outputSize);
+    rt_mutex_release (&mutex);
+}
 
+
+void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
+{
+    pBufferIn=input;
+    pBufferOut=output;
+}
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {

@@ -60,12 +60,14 @@ public:
 
     
     virtual bool configure();
-    virtual void start()=0;
+    virtual void start();
+    virtual void update()=0;
     virtual void stop();
 
     virtual bool requestState( ec_state state);
     virtual bool checkState( ec_state state);
     virtual ec_state getState();
+    virtual void setPDOBuffer(char * input, char * output);
 
 protected:
     EcSlave(ec_slavet* mem_loc);
