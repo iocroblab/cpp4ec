@@ -51,22 +51,72 @@ typedef struct
 
 namespace cpp4ec
 {
+/**
+* \brief EcSlave
+* 
+* The EcSlave is a base class designed as a template for ethercat slaves.  
+*/  
 class EcSlave
 {
 public:
+    /**
+    * \brief Destructor
+    *   
+    */
     virtual ~EcSlave();
-
+    
+    /**
+    * \brief Get the slave name
+    *   
+    */
     const std::string& getName() const;
 
-    
+    /**
+    * \brief Configures the slave
+    *   
+    */
     virtual bool configure();
+    
+    /**
+    * \brief Starts the slave
+    *   
+    */
     virtual void start();
+    
+    /**
+    * \brief Updates the slave
+    *   
+    */
     virtual void update()=0;
+    
+    /**
+    * \brief Stops the slave
+    *   
+    */
     virtual void stop();
 
+    /**
+    * \brief Requests the slave state
+    *   
+    */
     virtual bool requestState( ec_state state);
+    
+    /**
+    * \brief Checks the slave state
+    *   
+    */
     virtual bool checkState( ec_state state);
+    
+    /**
+    * \brief Gets the slave state
+    *   
+    */
     virtual ec_state getState();
+    
+    /**
+    * \brief Set PDO buffer
+    *   
+    */
     virtual void setPDOBuffer(char * input, char * output);
 
 protected:

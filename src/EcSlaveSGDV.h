@@ -87,40 +87,188 @@ typedef struct
 }PDOobject;
     
 
+
 namespace cpp4ec
 {
+/**
+ * \brief EcSlaveSGDV.
+ * 
+ * The class EcSlaveSGDV configures and controls the SGDV motors.  
+ */
 class EcSlaveSGDV: public EcSlave
 {
 public:
+    /**
+     * \brief Constructor
+     * 
+     * \param mem_loc A posinter to the slave information of ec_slave (SOEM)
+     */ 
     EcSlaveSGDV (ec_slavet* mem_loc);
+    
+    /**
+     * \brief Destructor
+     * 
+     */
     ~EcSlaveSGDV();
     
+    /**
+     * \brief Gets the name
+     * 
+     */
     const std::string& getName() const;
     
+    /**
+     * \brief Configure the SGDV servopack
+     * 
+     * Set the parameters readed from the XML, which include the PDO mapping.
+     */
     bool configure() throw(EcErrorSGDV);
+    
+    /**
+     * \brief Start motors
+     * 
+     * Switch on the motors.
+     * 
+     */
     void start() throw(EcErrorSGDV);
+    
+    /**
+     * \brief Update the data
+     * 
+     * Update the output and input values to and from their respective buffers.
+     * 
+     */
     void update(); 
+    
+    /**
+     * \brief Stop motors
+     * 
+     */
     void stop() throw(EcErrorSGDV);
 
-    
+    /**
+     * \brief Sets locations Buffer
+     * 
+     * The master join all the outputs and inputs in their respective buffer to transmit to the real time task.
+     * This functions sets the input and output pointers to the right location on the where the PDO must be put. 
+     * 
+     * \param input the pointer to the right location on the master input buffer
+     * \param output the pointer to the right location on the master input buffer
+     */
     void setPDOBuffer(char * input, char * output);
     
+    /**
+    * \brief Writes on the output PDOentry
+    * 
+    *  
+    * \param entry especifies the entry that occupies the object thatis wanted to write on.
+    * \param value the desired value of the onject.
+    * 
+    */
     bool writePDO (EcPDOEntry entry, int value);
+    
+    /**
+    * \brief Read on the input PDOentry
+    * 
+    * \param entry especifies the entry that occupies the object that is wanted to read on.
+    * \param value return the value of this onject.
+    * 
+    */
     bool readPDO (EcPDOEntry entry, int &value);
     
+    /**
+    * \brief Write on the Controlword object
+    * 
+    * It's an specific function to write on the Controlword object (0x6040).If this object is not mapped in the PDO, then an error will happen.
+    * \param controlWord the desired value of the Controlword object .
+    * 
+    */
     bool writeControlWord (uint16_t controlWord);
+    
+    /**
+    * \brief Read the Statusword object
+    * 
+    * It's an specific function to read the Statusword object (0x6041).If this object is not mapped in the PDO, then an error will happen.
+    * \param statusWord return the value of the Statusword object .
+    * 
+    */
     bool readStatusWord (uint16_t &statusWord);
-    
-    bool writeVelocity (int32_t velocity);
-    bool readVelocity (int32_t &velocity);
-    
+
+    /**
+    * \brief Write on the position object
+    * 
+    * It's an specific function to write on the Target Position object (0x607A).If this object is not mapped in the PDO, then an error will happen.
+    * \param postion the desired value of the Target Position object.
+    * 
+    */
     bool writePosition (int32_t position);
+    
+    /**
+    * \brief Read the position object
+    * 
+    * It's an specific function to read the Position Actual Value object (0x6064).If this object is not mapped in the PDO, then an error will happen.
+    * \param position return the value of the Position Actual Value object .
+    * 
+    */
     bool readPosition (int32_t &position);
     
+    /**
+    * \brief Write on the velocity object
+    * 
+    * It's an specific function to write on the Target Velocity object (0x60FF).If this object is not mapped in the PDO, then an error will happen.
+    * \param velocity the desired value of the Target Velocity object.
+    * 
+    */
+    bool writeVelocity (int32_t velocity);
+    
+    /**
+    * \brief Read the velocity object
+    * 
+    * It's an specific function to read the Velocity Actual Value object (0x606C).If this object is not mapped in the PDO, then an error will happen.
+    * \param velocity return the value of the Velocity Actual Value object .
+    * 
+    */
+    bool readVelocity (int32_t &velocity);
+    
+    /**
+    * \brief Write on the torque object
+    * 
+    * It's an specific function to write on the Target Torque object (0x6071).If this object is not mapped in the PDO, then an error will happen.
+    * \param torque the desired value of the Target Torque object.
+    * 
+    */
     bool writeTorque (int16_t torque);
+    
+    /**
+    * \brief Read the torque object
+    * 
+    * It's an specific function to read the Torque Actual Value object (0x6077).If this object is not mapped in the PDO, then an error will happen.
+    * \param torque return the value of the Torque Actual Value object .
+    * 
+    */
     bool readTorque (int16_t &torque);
     
+    /**
+    * \brief Set an SGDV object
+    * 
+    * This functions set the desired value on the desired object of an SGDV Servopack.
+    * \param index the index of the object.
+    * \param subindex the subindedex of the objec.
+    * \param psize the size of the param buffer.
+    * \param param a buffer with the desired value.
+    * 
+    */
     void setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param);
+    
+    /**
+    * \brief Set an SGDV object
+    * 
+    * This functions set the desired value on the desired object of an SGDV Servopack.
+    * \param index the index of the object.
+    * \param subindex the subindedex of the objec.
+    * \param psize the size of the param buffer.
+    * \param param a pointer to the buffer with the returned value.
+    */
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
     
     
