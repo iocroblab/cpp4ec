@@ -12,7 +12,7 @@
 class EcError/*: public exception*/
 {
 public:
-  
+
   enum {
     ECAT_ERROR,
     FAIL_SWITCHING_STATE_INIT,
@@ -21,9 +21,23 @@ public:
     FAIL_SWITCHING_STATE_OPERATIONAL,
     FAIL_CREATING_DRIVER,
   };
-
+  
+  /**
+  * \brief Constructor
+  *   
+  */
   EcError(int errorcode) throw();
+  
+  /**
+  * \brief Get string identifying exception
+  *   
+  */
   virtual const char* what() const throw();
+  
+  /**
+  * \brief Get the code of the error
+  *   
+  */
   virtual int getErrorCode() const throw ();
 
 private:

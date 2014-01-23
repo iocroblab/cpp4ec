@@ -25,7 +25,16 @@ public:
     FUNCTION_NOT_ALLOWED_ERROR,
     };
     
+    /**
+    * \brief Constructor
+    *   
+    */
     EcErrorSGDV (int errorcode, unsigned int nslave, std::string name);
+    
+    /**
+    * \brief Get string identifying exception
+    *	   
+    */
     const char* what() const throw();
 
 
