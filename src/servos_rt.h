@@ -36,5 +36,6 @@ namespace cpp4ec
          rt_task_wait_period(NULL);
       }
     }
+    
 };
 #endif //SERVOS_RT_H
