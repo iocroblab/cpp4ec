@@ -166,13 +166,10 @@ private:
     char * inputtbuf;
     char * outputbuf;
     
-    void * realtime_thread(void *unused);
+    static void * realtime_thread(void *unused);
     //static void * regular_thread(void *arg);
     static void *update_EcSlaves(void *arg);
     void update_ec(void);
-        
-    RT_TASK task;
-    
     
 };
 
