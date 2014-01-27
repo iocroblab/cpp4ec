@@ -45,12 +45,4 @@ private:
 
 };
 
-template<class T>
-inline std::string to_string(const T& t, std::ios_base & (*f)(std::ios_base&))
-{
-   std::stringstream ss;
-   ss << f << t;
-   return ss.str();
-};
-
 #endif

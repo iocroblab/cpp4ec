@@ -1,4 +1,5 @@
 #include "EcError.h"
+#include "EcUtil.h"
 
 extern "C"
 {
@@ -12,6 +13,7 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
+using namespace cpp4ec;
 
 EcError::EcError(int errorcode) throw ():m_errorcode(errorcode)
 {
@@ -108,3 +110,4 @@ const char* EcError::what() const throw()
    }
 
 }
+

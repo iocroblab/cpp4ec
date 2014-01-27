@@ -317,6 +317,7 @@ private:
     char* pBufferOut;
     char* pBufferIn;
     std::vector <parameter> m_params;
+
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
 

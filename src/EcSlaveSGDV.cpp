@@ -1,4 +1,5 @@
 #include "EcSlaveSGDV.h"
+#include "EcUtil.h"
 
 #include <sys/mman.h>
 #include "EcSlaveSGDV.h"
@@ -53,6 +54,8 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 
 EcSlaveSGDV::~EcSlaveSGDV()
 {
+    delete[] inputPDO;
+    delete[] outputPDO;
 }
 
 const std::string& EcSlaveSGDV::getName() const
