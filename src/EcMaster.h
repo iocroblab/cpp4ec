@@ -39,11 +39,11 @@ struct slaveDCspec {
     unsigned int shift;
 };
 
- ///realtime stuff
-    char * inputBuf;
-    char * outputBuf;
-    int inputSize, outputSize;
-
+//  ///realtime stuff
+//     char * inputBuf;
+//     char * outputBuf;
+//     int inputSize, outputSize;
+// 
     pthread_t nrt;
 
 // template<class T>
@@ -177,12 +177,12 @@ private:
 //     static void update_EcSlaves(void *unused);
     void update_ec(void);
     ///realtime stuff
-//     char * inputBuf;
-//     static char * outputBuf;
-//     static int inputSize, outputSize;
+    char * inputBuf;
+    char * outputBuf;
+    int inputSize, outputSize;
 // 
 //     static pthread_t nrt;
-    static void *update_EcSlaves(void *unused);
+    void update_EcSlaves(void);
     static void cleanup_upon_sig(int sig);
     
 };

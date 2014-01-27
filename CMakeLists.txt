@@ -34,6 +34,7 @@ find_package(Threads REQUIRED)
 include(FindPkgConfig)
 
 #set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
+ADD_DEFINITIONS(-std=c++11 )
 
 include_directories(${PROJECT_SOURCE_DIR})
 

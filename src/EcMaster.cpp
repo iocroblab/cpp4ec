@@ -34,6 +34,7 @@ extern "C"
 #include <soem/nicdrv.h>
 }
 
+#include <thread> 
 
 //slave info variables
 
@@ -80,7 +81,7 @@ EcMaster::~EcMaster()
 //    reset();
    //must clean memory and delete tasks
    rt_task_delete (&task);
-   sigsuspend(&oldmask);
+//    sigsuspend(&oldmask);
    delete[] ecPort;
 }
 
@@ -200,24 +201,24 @@ bool EcMaster::start()
    rt_task_start (&task, &realtime_thread, NULL);
 
    //creating the thread non-rt
-   sigemptyset(&mask);
-   sigaddset(&mask, SIGINT);
-   signal(SIGINT, cleanup_upon_sig);
-   sigaddset(&mask, SIGTERM);
-   signal(SIGTERM, cleanup_upon_sig);
-   sigaddset(&mask, SIGHUP);
-   signal(SIGHUP, cleanup_upon_sig);
-   pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
+//    sigemptyset(&mask);
+//    sigaddset(&mask, SIGINT);
+//    signal(SIGINT, cleanup_upon_sig);
+//    sigaddset(&mask, SIGTERM);
+//    signal(SIGTERM, cleanup_upon_sig);
+//    sigaddset(&mask, SIGHUP);
+//    signal(SIGHUP, cleanup_upon_sig);
+//    pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
    
    pthread_attr_t rtattr,regattr;
    // review all this part
-   pthread_attr_init(&regattr);
-   pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
-   pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
-   pthread_attr_setschedpolicy(&regattr, SCHED_OTHER);
-   
-   errno = pthread_create(&nrt, &regattr, &update_EcSlaves, NULL);
-   if (errno){}
+//    pthread_attr_init(&regattr);
+//    pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
+//    pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
+//    pthread_attr_setschedpolicy(&regattr, SCHED_OTHER);
+   std::thread updateThread(&EcMaster::update_EcSlaves,this);
+//    errno = pthread_create(&nrt, &regattr, &update_EcSlaves, NULL);
+//    if (errno){}
       //fail("pthread_create");
    
    
@@ -875,7 +876,7 @@ void EcMaster::slaveInfo()
 
 
    
-void *EcMaster::update_EcSlaves(void *unused)
+void EcMaster::update_EcSlaves(void)
    {
        char * devnameInput;
                             
@@ -923,12 +924,12 @@ void EcMaster::update_ec(void)
    if(ret<=0){}
       //fail("Write"); //throw something
 }
-void EcMaster::cleanup_upon_sig(int sig)
-{
-    pthread_cancel(nrt);
-    signal(sig, SIG_DFL);
-    pthread_join(nrt,NULL);
-}
+// void EcMaster::cleanup_upon_sig(int sig)
+// {
+//     pthread_cancel(nrt);
+//     signal(sig, SIG_DFL);
+//     pthread_join(nrt,NULL);
+// }
     
 };
 //SERVOS_RT_H
