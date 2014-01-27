@@ -2,13 +2,15 @@
 #define ECUTIL_H
 
 #include <stdint.h>
+#include <string>
+#include <iostream>
+#include <sstream>
+
+
 
 namespace cpp4ec
 {
-   
-   char* dtype2string(uint16_t dtype);
-   char* SDO2string(uint16_t slave, uint16_t index, uint8_t subidx, uint16_t dtype);
-   
+
    template<class T>
    inline std::string to_string(const T& t, std::ios_base & (*f)(std::ios_base&))
    {

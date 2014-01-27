@@ -6,19 +6,19 @@
 #include <fstream> //Just to verify the time
 
 //Xenomai
-#include <native/task.h>
-#include <native/mutex.h>
-#include <native/timer.h>
-#include <malloc.h>
-#include <pthread.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <rtdk.h>
-#include <rtdm/rtipc.h>
-#include <signal.h>
+// #include <native/task.h>
+// #include <native/mutex.h>
+// #include <native/timer.h>
+// #include <malloc.h>
+// #include <pthread.h>
+// #include <fcntl.h>
+// #include <errno.h>
+// #include <rtdk.h>
+// #include <rtdm/rtipc.h>
+// #include <signal.h>
 
 //Thread loop
-#include "servos_rt.h"
+#include "realtimetask.h"
 #include "EcSlaveSGDV.h"
 #include "EcUtil.h"
 
@@ -48,7 +48,7 @@ bool printMAP = TRUE;
 namespace cpp4ec
 {
    
-   static RT_TASK task;
+
 
 EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
 {
@@ -56,8 +56,8 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
    
-   inputsize = 0;
-   outputsize = 0;
+   inputSize = 0;
+   outputSize = 0;
    
 
    //Realtime tasks
@@ -118,8 +118,6 @@ bool EcMaster::preconfigure() throw(EcError)
 	    std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
 	    //Adding driver's services to master component
 	    driver -> configure();
-       inputsize = inputsize + ec_slave[i].Ibytes;
-       outputsize = outputsize + ec_slave[i].Obytes;
        
 	  }else{
 	    std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
@@ -148,8 +146,7 @@ bool EcMaster::preconfigure() throw(EcError)
     return false;
 
   }
-  outputbuf = new char [outputsize];
-  inputbuf = new char[inputsize];
+  
   
   std::cout<<"Master preconfigured!!!"<<std::endl;
   return true;
@@ -163,6 +160,15 @@ bool EcMaster::configure() throw(EcError)
   ec_config_map(&m_IOmap);
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));
+  
+  //Calulating the buffers size
+  for(int i = 0; i <= ec_slavecount; i++)
+  {
+      inputSize += ec_slave[i].Ibytes;
+      outputSize += ec_slave[i].Obytes;
+  }
+  outputBuf = new char [outputSize];
+  inputBuf = new char[inputSize];
 
   std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
   success = switchState (EC_STATE_SAFE_OP);
@@ -191,7 +197,7 @@ bool EcMaster::start()
    int ret;
    //Starts a preiodic tasck that sends frames to slaves
    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-   rt_task_start (&task, &this->realtime_thread, NULL);
+   rt_task_start (&task, &realtime_thread, NULL);
 
    //creating the thread non-rt
    sigemptyset(&mask);
@@ -203,15 +209,16 @@ bool EcMaster::start()
    signal(SIGHUP, cleanup_upon_sig);
    pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
    
-   
+   pthread_attr_t rtattr,regattr;
    // review all this part
    pthread_attr_init(&regattr);
    pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
    pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
    pthread_attr_setschedpolicy(&regattr, SCHED_OTHER);
-   errno = pthread_create(&nrt, &regattr, this->regular_thread, NULL);
-   if (errno)
-      fail("pthread_create");
+   
+   errno = pthread_create(&nrt, &regattr, &update_EcSlaves, NULL);
+   if (errno){}
+      //fail("pthread_create");
    
    
    // Assegurem que els servos estan shutted down
@@ -219,15 +226,15 @@ bool EcMaster::start()
      m_drivers[i] -> start();
    usleep (100000);
 
-   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
-      fail("asprintf");
+   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0){}
+      //fail("asprintf");
    
-   fdOutput = open(devnameoOutput, O_WRONLY);
+   fdOutput = open(devnameOutput, O_WRONLY);
    free(devnameOutput);
    
    if (fdOutput < 0)
    {
-      fail("open");
+      //fail("open");
       //throw something
    }
    
@@ -272,18 +279,6 @@ bool EcMaster::stop()
 
 
 
-bool EcMaster::setPosition (std::vector <int32_t>&pos)
-{
-   return true;//if all is ok
-}
-
-
-
-bool EcMaster::getPosition (std::vector <int32_t>&pos)
-{
-   return true;//if all is ok
-}
-
 
 bool EcMaster::reset() throw(EcError)
 {
@@ -321,7 +316,185 @@ bool EcMaster::switchState (ec_state state)
    return reachState;
 }
 
+char* dtype2string(uint16 dtype)
+{
+   switch(dtype)
+   {
+      case ECT_BOOLEAN:
+         sprintf(hstr, "BOOLEAN");
+         break;
+      case ECT_INTEGER8:
+         sprintf(hstr, "INTEGER8");
+         break;
+      case ECT_INTEGER16:
+         sprintf(hstr, "INTEGER16");
+         break;
+      case ECT_INTEGER32:
+         sprintf(hstr, "INTEGER32");
+         break;
+      case ECT_INTEGER24:
+         sprintf(hstr, "INTEGER24");
+         break;
+      case ECT_INTEGER64:
+         sprintf(hstr, "INTEGER64");
+         break;
+      case ECT_UNSIGNED8:
+         sprintf(hstr, "UNSIGNED8");
+         break;
+      case ECT_UNSIGNED16:
+         sprintf(hstr, "UNSIGNED16");
+         break;
+      case ECT_UNSIGNED32:
+         sprintf(hstr, "UNSIGNED32");
+         break;
+      case ECT_UNSIGNED24:
+         sprintf(hstr, "UNSIGNED24");
+         break;
+      case ECT_UNSIGNED64:
+         sprintf(hstr, "UNSIGNED64");
+         break;
+      case ECT_REAL32:
+         sprintf(hstr, "REAL32");
+         break;
+      case ECT_REAL64:
+         sprintf(hstr, "REAL64");
+         break;
+      case ECT_BIT1:
+         sprintf(hstr, "BIT1");
+         break;
+      case ECT_BIT2:
+         sprintf(hstr, "BIT2");
+         break;
+      case ECT_BIT3:
+         sprintf(hstr, "BIT3");
+         break;
+      case ECT_BIT4:
+         sprintf(hstr, "BIT4");
+         break;
+      case ECT_BIT5:
+         sprintf(hstr, "BIT5");
+         break;
+      case ECT_BIT6:
+         sprintf(hstr, "BIT6");
+         break;
+      case ECT_BIT7:
+         sprintf(hstr, "BIT7");
+         break;
+      case ECT_BIT8:
+         sprintf(hstr, "BIT8");
+         break;
+      case ECT_VISIBLE_STRING:
+         sprintf(hstr, "VISIBLE_STRING");
+         break;
+      case ECT_OCTET_STRING:
+         sprintf(hstr, "OCTET_STRING");
+         break;
+      default:
+         sprintf(hstr, "Type 0x%4.4X", dtype);
+   }
+   return hstr;
+}               
 
+char* SDO2string(uint16 slave, uint16 index, uint8 subidx, uint16 dtype)
+{
+   int l = sizeof(usdo) - 1, i;
+   uint8 *u8;
+   int8 *i8;
+   uint16 *u16;
+   int16 *i16;
+   uint32 *u32;
+   int32 *i32;
+   uint64 *u64;
+   int64 *i64;
+   float *sr;
+   double *dr;
+   char es[32];
+   
+   memset(&usdo, 0, 128);
+   ec_SDOread(slave, index, subidx, FALSE, &l, &usdo, EC_TIMEOUTRXM);
+   if (EcatError)
+   {
+      return ec_elist2string();
+   }
+   else
+   {
+      switch(dtype)
+      {
+         case ECT_BOOLEAN:
+            u8 = (uint8*) &usdo[0];
+            if (*u8) sprintf(hstr, "TRUE"); 
+                 else sprintf(hstr, "FALSE");
+                 break;
+         case ECT_INTEGER8:
+            i8 = (int8*) &usdo[0];
+            sprintf(hstr, "0x%2.2x %d", *i8, *i8); 
+            break;
+         case ECT_INTEGER16:
+            i16 = (int16*) &usdo[0];
+            sprintf(hstr, "0x%4.4x %d", *i16, *i16); 
+            break;
+         case ECT_INTEGER32:
+         case ECT_INTEGER24:
+            i32 = (int32*) &usdo[0];
+            sprintf(hstr, "0x%8.8x %d", *i32, *i32); 
+            break;
+         case ECT_INTEGER64:
+            i64 = (int64*) &usdo[0];
+            sprintf(hstr, "0x%16.16llx %lld", *i64, *i64); 
+            break;
+         case ECT_UNSIGNED8:
+            u8 = (uint8*) &usdo[0];
+            sprintf(hstr, "0x%2.2x %u", *u8, *u8); 
+            break;
+         case ECT_UNSIGNED16:
+            u16 = (uint16*) &usdo[0];
+            sprintf(hstr, "0x%4.4x %u", *u16, *u16); 
+            break;
+         case ECT_UNSIGNED32:
+         case ECT_UNSIGNED24:
+            u32 = (uint32*) &usdo[0];
+            sprintf(hstr, "0x%8.8x %u", *u32, *u32); 
+            break;
+         case ECT_UNSIGNED64:
+            u64 = (uint64*) &usdo[0];
+            sprintf(hstr, "0x%16.16llx %llu", *u64, *u64); 
+            break;
+         case ECT_REAL32:
+            sr = (float*) &usdo[0];
+            sprintf(hstr, "%f", *sr); 
+            break;
+         case ECT_REAL64:
+            dr = (double*) &usdo[0];
+            sprintf(hstr, "%f", *dr); 
+            break;
+         case ECT_BIT1:
+         case ECT_BIT2:
+         case ECT_BIT3:
+         case ECT_BIT4:
+         case ECT_BIT5:
+         case ECT_BIT6:
+         case ECT_BIT7:
+         case ECT_BIT8:
+            u8 = (uint8*) &usdo[0];
+            sprintf(hstr, "0x%x", *u8); 
+            break;
+         case ECT_VISIBLE_STRING:
+            strcpy(hstr, usdo);
+            break;
+         case ECT_OCTET_STRING:
+            hstr[0] = 0x00;
+            for (i = 0 ; i < l ; i++)
+            { 
+               sprintf(es, "0x%2.2x ", usdo[i]);
+               strcat( hstr, es);
+            }
+            break;
+         default:
+            sprintf(hstr, "Unknown type");
+      }
+      return hstr;
+   }
+}
 
 int EcMaster::si_PDOassign(uint16 slave, uint16 PDOassign, int mapoffset, int bitoffset)
     {
@@ -695,194 +868,40 @@ void EcMaster::slaveInfo()
     
 /*
  *
- * 
- This function open a socket and waits the current state
- from the xddp port
-*/
+ * This function open a socket and waits the current state
+ * from the xddp port
+ */
 
-
-void EcMaster::*realtime_thread(void *arg)
-{
-   struct rtipc_port_label plabel_in, plabel_out;
-   struct sockaddr_ipc saddr_in, saddr_out;
-   
-   struct timespec ts;
-   struct timeval tv;
-   socklen_t addrlen;
-   
-   int ret_in, ret_out, s_input, s_output, nRet;
-   char * rtinputbuf = new char[inputsize];
-   char * rtoutputbuf = new char[outputsize];
-   
-   
-   /*need to put a lot of stuff to create
-    * two sockets: one to receive data from nonrt part
-    * and another to send data to the nonrt part
-    * use same option as the xenomai xddp-label example
-    * 
-    * the output part came from the NRT part to the RT world
-    * the input part came from the RT part to the NRT world
-    *         
-    *         /*
-    * Get a datagram socket to bind to the RT endpoint. Each
-    * endpoint is represented by a port number within the XDDP
-    * protocol namespace.
-    */
-    s_output = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
-    s_input = socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
-    
-    
-    if (s_output < 0) {
-       perror("socket");
-       exit(EXIT_FAILURE); //THROW EXCEPTION
-    }
-    if (s_input < 0) {
-       perror("socket");
-       exit(EXIT_FAILURE); //THROW EXCEPTION
-    }
-    
-    
-    /*
-     * Set a port label. This name will be registered when
-     * binding, in addition to the port number (if given).
-     */
-    strcpy(plabel_out.label, XDDP_PORT_OUTPUT);
-    ret_out = setsockopt(s_output, SOL_XDDP, XDDP_PORT_OUTPUT, &plabel_out, sizeof(plabel_out));
-    if (ret_out)
-       fail("setsockopt, output");
-    
-    
-    
-    /*
-     * Set the socket timeout; it will apply when attempting to
-     * connect to a labeled port, and to recvfrom() calls. The
-     * following setup tells the XDDP driver to wait for at most
-     * one second until a socket is bound to a port using the same
-     * label, or return with a timeout error.
-     */
-    tv.tv_sec = 1;
-    tv.tv_usec = 0;
-    ret_in = setsockopt(s_input, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    if (ret_in)
-       fail("setsockopt, input");
-    /*
-     * Set a port label. This name will be used to find the peer
-     * when connecting, instead of the port number.
-     */
-    strcpy(plabel_in.label, XDDP_PORT_INPUT);
-    ret_in = setsockopt(s_input, SOL_XDDP, XDDP_PORT_INPUT,
-                        &plabel_in, sizeof(plabel_in));
-    if (ret_in)
-       fail("setsockopt, input");
-    
-    
-    
-    /*
-     * Bind the socket to the port, to setup a proxy to channel
-     * traffic to/from the Linux domain. Assign that port a label,
-     * so that peers may use a descriptive information to locate
-     * it. For instance, the pseudo-device matching our RT
-     * endpoint will appear as
-     * /proc/xenomai/registry/rtipc/xddp/<XDDP_PORT_LABEL> in the
-     * Linux domain, once the socket is bound.
-     *
-     * saddr.sipc_port specifies the port number to use. If -1 is
-     * passed, the XDDP driver will auto-select an idle port.
-     */
-    
-    /*
-     * Output!!!!!
-     * from NRT to RT
-     */
-    memset(&saddr_out, 0, sizeof(saddr_out));
-    saddr_out.sipc_family = AF_RTIPC;
-    saddr_out.sipc_port = -1;
-    ret_out = bind(s_output, (struct sockaddr *)&saddr_out, sizeof(saddr_out));
-    if (ret_out)
-       fail("bind");
-    
-    
-    /*
-     * Input!!!!!
-     * from RT to NRT
-     */
-    
-    memset(&saddr_in, 0, sizeof(saddr_in));
-    saddr_in.sipc_family = AF_RTIPC;
-    saddr_in.sipc_port = -1; /* Tell XDDP to search by label. */
-    ret = connect(s_input, (struct sockaddr *)&saddr_in, sizeof(saddr_in));
-    if (ret_in)
-       fail("connect");
-    /*
-     * We succeeded in making the port our default destination
-     * address by using its label, but we don't know its actual
-     * port number yet. Use getpeername() to retrieve it.
-     */
-    addrlen = sizeof(saddr_in);
-    ret_in = getpeername(s, (struct sockaddr *)&saddr_in, &addrlen);
-    if (ret_in || addrlen != sizeof(saddr_in))
-       fail("getpeername, input");
-    //rt_printf("%s: NRT peer is reading from /dev/rtp%d\n",          __FUNCTION__, saddr_in.sipc_port);
-       
-       
-       for (;;) {
-          /* Get packets relayed by the regular thread */
-          ret = recvfrom(s_output, rtoutputbuf, outputsize, 0, NULL, 0);
-          if (ret <= 0)
-          {
-             //nothing to do, no new data transferred
-             //rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
-          } 
-          
-          else{
-             //received some data from the buffer 
-             //traffic that data from
-             //rtoutputbuf to ec_slave[i].output
-             //copiar del outputbuf als ec_slave, tenint en compte el OBytes de cada slave
-             
-             
-          }
-          nRet=ec_send_processdata();
-          //make some check of sending data
-          nRet=ec_receive_processdata(EC_TIMEOUTRET);
-          
-          //now, we need to transmit the data outside
-          //from ec_slave[i].inputs
-          //build rtinputbuf
-          ret_in = sendto(s_input, rtinputbuf, inputsize, 0, NULL, 0);
-          
-          rt_task_wait_period(NULL);
-       }
-       
-       return NULL;
-}
 
 
    
-void EcMaster::*update_EcSlaves(void *arg)
+void *EcMaster::update_EcSlaves(void *unused)
    {
        char * devnameInput;
                             
        int fdInput, ret;
-       if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
-          fail("asprintf");
+       if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0){}
+	//fail("asprintf");
               
        fdInput = open(devnameInput, O_RDONLY);
        free(devnameInput);
        
-       if (fdInput < 0)
-         fail("open");
-       for (;;) {
+       if (fdInput < 0){}
+         //fail("open");
+       for (;;) 
+       {
          /* Get the next message from realtime_thread2. */
-         ret = read(fdInput, inputbuf, inputsize));
-         if (ret <= 0)
-            fail("read");
+         ret = read(fdInput, inputBuf, inputSize);
+         //if (ret <= 0)
+	     //fail
+       }
+            //fail("read");
             /* Relay the message to realtime_thread1. */
          /*
           * Update the servos
           * put the functions here
           */ 
-         return NULL;
+
    }
    
 /*
@@ -899,15 +918,20 @@ void EcMaster::update_ec(void)
    //so we have a device number
    int ret;
    
-   //do something to put the infor in outputbuf
-   ret = write(fdOutput,outputbuf,ret);
-   if(ret<=0)
-      fail("Write"); //throw something
+   //do something to put the infor in outputBuf
+   ret = write(fdOutput,outputBuf,ret);
+   if(ret<=0){}
+      //fail("Write"); //throw something
 }
-
+void EcMaster::cleanup_upon_sig(int sig)
+{
+    pthread_cancel(nrt);
+    signal(sig, SIG_DFL);
+    pthread_join(nrt,NULL);
+}
     
 };
-#endif //SERVOS_RT_H
+//SERVOS_RT_H
     
     
-}     ///end of the namespace cpp4ec
+     ///end of the namespace cpp4ec

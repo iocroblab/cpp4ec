@@ -1,4 +1,5 @@
 #include "EcSlaveSGDV.h"
+#include "EcUtil.h"
 
 #include <sys/mman.h>
 #include "EcSlaveSGDV.h"

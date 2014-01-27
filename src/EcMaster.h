@@ -28,8 +28,8 @@ extern "C"
 #include "EcError.h"
 
 #define NSEC_PER_SEC 1000000000
-#define XDDP_PORT_INPUT "EcMaster-xddp-input"
-#define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
+// #define XDDP_PORT_INPUT "EcMaster-xddp-input"
+// #define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
 
 /*Structure to know the activated DC slaves*/
 struct slaveDCspec {
@@ -39,6 +39,12 @@ struct slaveDCspec {
     unsigned int shift;
 };
 
+ ///realtime stuff
+    char * inputBuf;
+    char * outputBuf;
+    int inputSize, outputSize;
+
+    pthread_t nrt;
 
 // template<class T>
 // inline std::string to_string (const T& t, std::ios_base & (*f) (std::ios_base&))
@@ -54,6 +60,7 @@ struct slaveDCspec {
 namespace cpp4ec
 {
 
+    
 class EcMaster
 {
 
@@ -149,7 +156,6 @@ private:
     ec_ODlistt ODlist;
     ec_OElistt OElist;
     FILE * pFile;
-    int inputsize, outputsize;
     char * devnameOutput;
     int fdOutput;
     
@@ -161,15 +167,23 @@ private:
     int si_map_sdo(int slave);
     int si_map_sii(int slave);
     void si_sdo(int cnt);
-
-    ///realtime stuff
-    char * inputtbuf;
-    char * outputbuf;
     
-    static void * realtime_thread(void *unused);
-    //static void * regular_thread(void *arg);
-    static void *update_EcSlaves(void *arg);
+    //signal stuff
+    sigset_t mask, oldmask;
+
+   //realtime stuff   
+//     pthread_t nrt;
+//     static void cleanup_upon_sig(int sig)
+//     static void update_EcSlaves(void *unused);
     void update_ec(void);
+    ///realtime stuff
+//     char * inputBuf;
+//     static char * outputBuf;
+//     static int inputSize, outputSize;
+// 
+//     static pthread_t nrt;
+    static void *update_EcSlaves(void *unused);
+    static void cleanup_upon_sig(int sig);
     
 };
 

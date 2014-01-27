@@ -1,4 +1,5 @@
 #include "EcSlave.h"
+#include "EcUtil.h"
 
 
 namespace cpp4ec
