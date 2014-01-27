@@ -31,8 +31,7 @@ namespace cpp4ec
 {
    void realtime_thread(void *unused);
    RT_TASK task;  
-   extern RT_MUTEX mutex;
-   RT_MUTEX mutex;
+
 
    
 inline void realtime_thread(void *unused)

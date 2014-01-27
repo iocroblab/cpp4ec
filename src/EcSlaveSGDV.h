@@ -18,6 +18,7 @@ extern "C"
 
 #include <vector>
 #include <iostream>
+#include <mutex> 
 
 //PDO objects
 typedef enum
@@ -282,6 +283,8 @@ private:
     unsigned int SYNC0TIME;
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
+    
+    std::mutex slaveMutex;
     
     int outputSize;
     int inputSize;

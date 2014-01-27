@@ -25,6 +25,8 @@ extern "C"
 #include <unistd.h>
 #include <stdint.h>
 
+#include <mutex> 
+
 #include "EcError.h"
 
 #define NSEC_PER_SEC 1000000000
@@ -150,7 +152,10 @@ private:
     //signal stuff
     sigset_t mask, oldmask;
 
-   //realtime stuff   
+   //realtime stuff 
+
+   
+    
 //     pthread_t nrt;
 //     static void cleanup_upon_sig(int sig)
 //     static void update_EcSlaves(void *unused);

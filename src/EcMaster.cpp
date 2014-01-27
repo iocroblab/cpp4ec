@@ -48,7 +48,9 @@ bool printMAP = TRUE;
 
 namespace cpp4ec
 {
-   
+   extern std::mutex masterMutex;
+   std::mutex masterMutex;  
+ 
 
 
 EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
@@ -137,7 +139,7 @@ bool EcMaster::preconfigure() throw(EcError)
     }else{
 	std::cout << "Configuration of slaves failed!!!" << std::endl;
 	if(EcatError)
-    throw(EcError(EcError::ECAT_ERROR));
+	    throw(EcError(EcError::ECAT_ERROR));
 	return false;
 
     }
