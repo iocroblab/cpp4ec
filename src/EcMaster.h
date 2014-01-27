@@ -114,29 +114,7 @@ public:
      */
     bool reset() throw(EcError);
 
-    /**
-     *  \brief Sets Position
-     */
-    bool setPosition (std::vector <int32_t>&pos);
-
-    /**
-     *  \brief Gets Position
-     */
-    bool getPosition (std::vector <int32_t>&pos);
-
-    /**
-     *  \brief Sets Velocity
-     *
-     * Writes on the PDO the desired velocity for each motor in milidegrees/second.
-     */
-    bool setVelocity (std::vector <int32_t>&vel);
-
-    /**
-     *  \brief Gets Velocity
-     *
-     * Reads on the PDO the velocity of each motor in milidegrees/second.
-     */
-    bool getVelocity (std::vector <int32_t>&vel);
+    
     
     std::vector<EcSlave*> getSlaves();
 

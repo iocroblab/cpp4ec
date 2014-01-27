@@ -164,14 +164,24 @@ bool EcMaster::configure() throw(EcError)
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));
   
+
   //Calulating the buffers size
-  for(int i = 0; i <= ec_slavecount; i++)
+  for(int i = 1; i <= ec_slavecount; i++)
   {
       inputSize += ec_slave[i].Ibytes;
       outputSize += ec_slave[i].Obytes;
   }
   outputBuf = new char [outputSize];
   inputBuf = new char[inputSize];
+  int offSetInput = 0;
+  int offSetOutput = 0;
+
+  for(int i = 0; i < m_drivers.size();i++)
+  {
+      m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
+      offSetOutput += ec_slave[i].Obytes;
+      offSetInput  += ec_slave[i].Ibytes;
+  }
 
   std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
   success = switchState (EC_STATE_SAFE_OP);
@@ -251,27 +261,7 @@ std::vector<EcSlave*> EcMaster::getSlaves()
     return m_drivers;
 }
 
-bool EcMaster::setVelocity (std::vector <int32_t>&vel)
-{
 
-if(vel.size()!=3)
-   {
-   std::cout<<"Vector velocity dimension has to be 3"<<std::endl;
-   return false;
-   }
-   for(int i=0;i<m_drivers.size();i++)
-    ((EcSlaveSGDV*) m_drivers[i])->writePDO(THIRD_ENTRY,vel[i]);
-
-   return true;
-}
-// bool EcMaster::getVelocity (std::vector <int32_t>&vel)
-// {
-//   vel.resize(3);
-//   for(int i=0;i<m_drivers.size();i++)
-//     m_drivers[i]->readVelocity(vel[i]);
-//
-//   return true;
-// }
 
 bool EcMaster::stop()
 {
@@ -298,6 +288,9 @@ bool EcMaster::reset() throw(EcError)
 
    for (unsigned int i = 0; i < m_drivers.size(); i++)
          delete m_drivers[i];
+   
+   delete[] outputBuf;
+   delete[] inputBuf;
    ec_close();
    
    std::cout<<"Master reseted!"<<std::endl;
@@ -902,6 +895,11 @@ void EcMaster::update_EcSlaves(void)
          ret = read(fdInput, inputBuf, inputSize);
          //if (ret <= 0)
 	     //fail
+	for(int i = 0; i < m_drivers.size();i++)
+	{
+	    m_drivers[i] -> update();
+	}
+	update_ec();
        }
             //fail("read");
             /* Relay the message to realtime_thread1. */
