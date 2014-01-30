@@ -243,15 +243,14 @@ bool EcMaster::start()
    usleep (100000);
 
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0){}
-      //fail("asprintf");
+      std::cout<<"fail asprintf"<<std::endl;
    
    fdOutput = open(devnameOutput, O_WRONLY);
    free(devnameOutput);
    
    if (fdOutput < 0)
    {
-      //fail("open");
-      //throw something
+      throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
    
    std::cout<<"Master started!!!"<<std::endl;
@@ -890,14 +889,14 @@ void EcMaster::update_EcSlaves(void)
        free(devnameInput);
        
        if (fdInput < 0)
-         std::cout<<"fail open"<<std::endl;
+         throw(EcError(EcError::FAIL_OPENING_INPUT));
        
        for (;;) 
        {
          /* Get the next message from realtime_thread2. */
          ret = read(fdInput, inputBuf, inputSize);
          if (ret <= 0)
-	     std::cout<<"fail reading"<<std::endl;
+	    throw(EcError(EcError::FAIL_READING));
 /*	for(int i = 0; i < m_drivers.size();i++)
 	{
 	    m_drivers[i] -> update();
@@ -929,9 +928,10 @@ void EcMaster::update_ec(void)
    
    //do something to put the infor in outputBuf
    ret = write(fdOutput,outputBuf,ret);
-   if(ret<=0){}
-      //fail("Write"); //throw something
+   if(ret<=0)
+       throw(EcError(EcError::FAIL_WRITING));
 }
+
 // void EcMaster::cleanup_upon_sig(int sig)
 // {
 //     pthread_cancel(nrt);

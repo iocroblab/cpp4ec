@@ -19,7 +19,20 @@ const char* EcErrorSGDV::what() const throw()
     case FAIL_SWITCHING_STATE_PRE_OP:
     case FAIL_SWITCHING_STATE_SAFE_OP:
     case FAIL_SWITCHING_STATE_OPERATIONAL:
-    case FAIL_CREATING_DRIVER:      
+    case FAIL_CREATING_DRIVER:     
+//     case FAIL_SOCKET_OUTPUT:
+//     case FAIL_SOCKET_INPUT:
+//     case FAIL_SETSOCKOPT_OUTPUT:
+//     case FAIL_SETSOCKOPT_INPUT:
+//     case FAIL_BINDING:
+//     case FAIL_CONNECTING:
+//     case FAIL_GETTING_PEERNAME_INPUT:
+//     case FAIL_RECIEVING:
+//     case FAIL_SENDING:
+//     case FAIL_OPENING_OUTPUT:
+//     case FAIL_WRITING:
+//     case FAIL_OPENING_INPUT:
+//     case FAIL_READING:
       errormessage = EcError::what();
       return (std::string(errormessage)+slave_name).c_str();
       break;
