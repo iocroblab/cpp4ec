@@ -72,8 +72,9 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
    * any transition to secondary (i.e. non real-time) mode when
    * writing output.
    */
+   RT_TASK program;
    rt_print_auto_init (1);
-   //rt_task_shadow (&program, "soem-master", 20, T_JOINABLE);
+   rt_task_shadow (&program, "soem-master", 20, T_JOINABLE);
    rt_task_create (&task, "Send PDO", 8192, 99, 0);	// Create the realtime task, but don't start it yet
    //rt_mutex_create (&mutex, "Mutex");
 }
@@ -235,7 +236,6 @@ bool EcMaster::start()
 //    errno = pthread_create(&nrt, &regattr, &update_EcSlaves, NULL);
 //    if (errno){}
       //fail("pthread_create");
-   
    
    // Assegurem que els servos estan shutted down
    for (int i = 0 ; i < m_drivers.size() ; i++)
@@ -883,25 +883,26 @@ void EcMaster::update_EcSlaves(void)
        char * devnameInput;
                             
        int fdInput, ret;
-       if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0){}
-	//fail("asprintf");
+       if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
+	std::cout<<"fail asprintf"<<std::endl;
               
        fdInput = open(devnameInput, O_RDONLY);
        free(devnameInput);
        
-       if (fdInput < 0){}
-         //fail("open");
+       if (fdInput < 0)
+         std::cout<<"fail open"<<std::endl;
+       
        for (;;) 
        {
          /* Get the next message from realtime_thread2. */
          ret = read(fdInput, inputBuf, inputSize);
-         //if (ret <= 0)
-	     //fail
-	for(int i = 0; i < m_drivers.size();i++)
+         if (ret <= 0)
+	     std::cout<<"fail reading"<<std::endl;
+/*	for(int i = 0; i < m_drivers.size();i++)
 	{
 	    m_drivers[i] -> update();
 	}
-	update_ec();
+	update_ec();*/
        }
             //fail("read");
             /* Relay the message to realtime_thread1. */

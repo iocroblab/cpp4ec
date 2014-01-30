@@ -64,7 +64,7 @@ inline void realtime_thread(void *unused)
     * the output part came from the NRT part to the RT world
     * the input part came from the RT part to the NRT world
     *         
-    *         /*
+    *         
     * Get a datagram socket to bind to the RT endpoint. Each
     * endpoint is represented by a port number within the XDDP
     * protocol namespace.
@@ -74,12 +74,10 @@ inline void realtime_thread(void *unused)
     
     
     if (s_output < 0) {
-//        perror("socket");
-//        exit(EXIT_FAILURE); //THROW EXCEPTION
+      std::cout<<"error socket output"<<std::endl;
     }
     if (s_input < 0) {
-//        perror("socket");
-//        exit(EXIT_FAILURE); //THROW EXCEPTION
+      std::cout<<"error socket output"<<std::endl;
     }
     
     
@@ -89,8 +87,8 @@ inline void realtime_thread(void *unused)
      */
     strcpy(plabel_out.label, XDDP_PORT_OUTPUT);
     ret_out = setsockopt(s_output, SOL_XDDP, XDDP_LABEL, &plabel_out, sizeof(plabel_out));
-    if (ret_out){}
-//        fail("setsockopt, output");
+    if (ret_out)
+        std::cout<<"fail setsockopt output"<<std::endl;
     
     
     
@@ -104,18 +102,16 @@ inline void realtime_thread(void *unused)
     tv.tv_sec = 1;
     tv.tv_usec = 0;
     ret_in = setsockopt(s_input, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
-    if (ret_in){}
-//        fail("setsockopt, input");
+    if (ret_in)
+       std::cout<<"fail setsockopt input"<<std::endl;
     /*
      * Set a port label. This name will be used to find the peer
      * when connecting, instead of the port number.
      */
     strcpy(plabel_in.label, XDDP_PORT_INPUT);
     ret_in = setsockopt(s_input, SOL_XDDP, XDDP_LABEL,&plabel_in, sizeof(plabel_in));
-    if (ret_in){}
-//        fail("setsockopt, input");
-//     
-    
+    if (ret_in)
+        std::cout<<"fail setsockopt input"<<std::endl;
     
     /*
      * Bind the socket to the port, to setup a proxy to channel
@@ -138,8 +134,8 @@ inline void realtime_thread(void *unused)
     saddr_out.sipc_family = AF_RTIPC;
     saddr_out.sipc_port = -1;
     ret_out = bind(s_output, (struct sockaddr *)&saddr_out, sizeof(saddr_out));
-    if (ret_out){}
-//        fail("bind");
+    if (ret_out)
+        std::cout<<"fail bind"<<std::endl;
     
     
     /*
@@ -151,8 +147,8 @@ inline void realtime_thread(void *unused)
     saddr_in.sipc_family = AF_RTIPC;
     saddr_in.sipc_port = -1; /* Tell XDDP to search by label. */
     ret_in = connect(s_input, (struct sockaddr *)&saddr_in, sizeof(saddr_in));
-    if (ret_in){}
-//        fail("connect");
+    if (ret_in)
+        std::cout<<"fail connect"<<std::endl;
     /*
      * We succeeded in making the port our default destination
      * address by using its label, but we don't know its actual
@@ -160,8 +156,8 @@ inline void realtime_thread(void *unused)
      */
     addrlen = sizeof(saddr_in);
     ret_in = getpeername(s_input, (struct sockaddr *)&saddr_in, &addrlen);
-    if (ret_in || addrlen != sizeof(saddr_in)){}
-//        fail("getpeername, input");
+    if (ret_in || addrlen != sizeof(saddr_in))
+        std::cout<<"fail getpeername, input"<<std::endl;
     //rt_printf("%s: NRT peer is reading from /dev/rtp%d\n",          __FUNCTION__, saddr_in.sipc_port);
        
        
@@ -170,6 +166,7 @@ inline void realtime_thread(void *unused)
           ret_out = recvfrom(s_output, rtoutputbuf, outputSize, 0, NULL, 0);
           if (ret_out <= 0)
           {
+            std::cout<<"fail recieving"<<std::endl;
              //nothing to do, no new data transferred
              //rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
           } 
@@ -203,6 +200,9 @@ inline void realtime_thread(void *unused)
 	  
 	  
           ret_in = sendto(s_input, rtinputbuf, inputSize, 0, NULL, 0);
+          if(ret_in != inputSize)
+            std::cout<<"fail sendto"<<std::endl;
+          
           
           rt_task_wait_period(NULL);
        }
