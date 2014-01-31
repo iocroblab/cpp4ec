@@ -31,12 +31,12 @@ extern "C"
 
 namespace cpp4ec
 {
-   void realtime_thread(void *unused);
+   void realtime_thread(void *unused) throw(EcError);
    RT_TASK task;  
 
 
    
-inline void realtime_thread(void *unused)
+inline void realtime_thread(void *unused) throw(EcError)
 {
    struct rtipc_port_label plabel_in, plabel_out;
    struct sockaddr_ipc saddr_in, saddr_out;

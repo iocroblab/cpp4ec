@@ -100,7 +100,7 @@ public:
      *
      * The realtime task for comunication starts sendding PDOs and the mottor are switched on.
      */
-    bool start();
+    bool start() throw(EcError);
 
     /**
      *  \brief Stops communication
@@ -159,14 +159,14 @@ private:
 //     pthread_t nrt;
 //     static void cleanup_upon_sig(int sig)
 //     static void update_EcSlaves(void *unused);
-    void update_ec(void);
+    void update_ec(void) throw(EcError);
     ///realtime stuff
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
 // 
 //     static pthread_t nrt;
-    void update_EcSlaves(void);
+    void update_EcSlaves(void) throw(EcError);
     static void cleanup_upon_sig(int sig);
     
 };

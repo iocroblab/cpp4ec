@@ -209,7 +209,7 @@ bool EcMaster::configure() throw(EcError)
 
 
 
-bool EcMaster::start()
+bool EcMaster::start() throw(EcError)
 {
    int ret;
    //Starts a preiodic tasck that sends frames to slaves
@@ -877,7 +877,7 @@ void EcMaster::slaveInfo()
 
 
    
-void EcMaster::update_EcSlaves(void)
+void EcMaster::update_EcSlaves(void) throw(EcError)
    {
        char * devnameInput;
                             
@@ -920,7 +920,7 @@ void EcMaster::update_EcSlaves(void)
  data to the realtime thread
 
 */
-void EcMaster::update_ec(void)
+void EcMaster::update_ec(void) throw(EcError)
 {
    //we have configured before the connection
    //so we have a device number
