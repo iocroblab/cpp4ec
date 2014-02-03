@@ -31,12 +31,12 @@ extern "C"
 
 namespace cpp4ec
 {
-   void realtime_thread(void *unused) throw(EcError);
+//   void realtime_thread(void *unused) throw(EcError);
    RT_TASK task;  
 
 
    
-inline void realtime_thread(void *unused) throw(EcError)
+inline void realtime_thread(void *unused)  
 {
    struct rtipc_port_label plabel_in, plabel_out;
    struct sockaddr_ipc saddr_in, saddr_out;
@@ -44,6 +44,7 @@ inline void realtime_thread(void *unused) throw(EcError)
    struct timespec ts;
    struct timeval tv;
    socklen_t addrlen;
+//   mlockall(MCL_CURRENT | MCL_FUTURE);
    
    int ret_in, ret_out, s_input, s_output, nRet;
    int inputSize = 0, outputSize = 0;
@@ -76,9 +77,13 @@ inline void realtime_thread(void *unused) throw(EcError)
     
     
     if (s_output < 0) {
+      perror("socket");
+      std::cout<<"socket"<<std::endl;
       throw(EcError(EcError::FAIL_SOCKET_OUTPUT));
     }
     if (s_input < 0) {
+      perror("socket");
+      std::cout<<"socket"<<std::endl; 
       throw(EcError(EcError::FAIL_SOCKET_INPUT));
     }
     
@@ -90,8 +95,11 @@ inline void realtime_thread(void *unused) throw(EcError)
     strcpy(plabel_out.label, XDDP_PORT_OUTPUT);
     ret_out = setsockopt(s_output, SOL_XDDP, XDDP_LABEL, &plabel_out, sizeof(plabel_out));
     if (ret_out)
-        throw(EcError(EcError::FAIL_SETSOCKOPT_OUTPUT));
-    
+    {
+      perror("setsockopt");
+      std::cout<<"setsockopt"<<std::endl; 
+      throw(EcError(EcError::FAIL_SETSOCKOPT_OUTPUT));
+    }
     
     
     /*
@@ -105,7 +113,11 @@ inline void realtime_thread(void *unused) throw(EcError)
     tv.tv_usec = 0;
     ret_in = setsockopt(s_input, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     if (ret_in)
+    {
+      perror("setsockopt");
+      std::cout<<"setsockopt"<<std::endl;
        throw(EcError(EcError::FAIL_SETSOCKOPT_INPUT));
+    }
     /*
      * Set a port label. This name will be used to find the peer
      * when connecting, instead of the port number.
@@ -113,8 +125,11 @@ inline void realtime_thread(void *unused) throw(EcError)
     strcpy(plabel_in.label, XDDP_PORT_INPUT);
     ret_in = setsockopt(s_input, SOL_XDDP, XDDP_LABEL,&plabel_in, sizeof(plabel_in));
     if (ret_in)
-        throw(EcError(EcError::FAIL_SETSOCKOPT_INPUT));
-    
+    {
+      perror("setsockopt");
+      std::cout<<"setsockopt"<<std::endl;
+      throw(EcError(EcError::FAIL_SETSOCKOPT_INPUT));
+    }
     /*
      * Bind the socket to the port, to setup a proxy to channel
      * traffic to/from the Linux domain. Assign that port a label,
@@ -137,8 +152,11 @@ inline void realtime_thread(void *unused) throw(EcError)
     saddr_out.sipc_port = -1;
     ret_out = bind(s_output, (struct sockaddr *)&saddr_out, sizeof(saddr_out));
     if (ret_out)
-        throw(EcError(EcError::FAIL_BINDING));
-    
+    {
+      perror("bind");
+      std::cout<<"bind"<<std::endl;
+      throw(EcError(EcError::FAIL_BINDING));
+    }
     
     /*
      * Input!!!!!
@@ -150,7 +168,11 @@ inline void realtime_thread(void *unused) throw(EcError)
     saddr_in.sipc_port = -1; /* Tell XDDP to search by label. */
     ret_in = connect(s_input, (struct sockaddr *)&saddr_in, sizeof(saddr_in));
     if (ret_in)
-        throw(EcError(EcError::FAIL_CONNECTING));
+    {
+      perror("connect");
+      std::cout<<"connect"<<std::endl;
+      throw(EcError(EcError::FAIL_CONNECTING));
+    }
     /*
      * We succeeded in making the port our default destination
      * address by using its label, but we don't know its actual
@@ -159,7 +181,11 @@ inline void realtime_thread(void *unused) throw(EcError)
     addrlen = sizeof(saddr_in);
     ret_in = getpeername(s_input, (struct sockaddr *)&saddr_in, &addrlen);
     if (ret_in || addrlen != sizeof(saddr_in))
-        throw(EcError(EcError::FAIL_GETTING_PEERNAME_INPUT));
+    {
+      perror("getpeername");
+      std::cout<<"getpeername"<<std::endl;
+      throw(EcError(EcError::FAIL_GETTING_PEERNAME_INPUT));
+    }
     //rt_printf("%s: NRT peer is reading from /dev/rtp%d\n",          __FUNCTION__, saddr_in.sipc_port);
        
        
@@ -168,6 +194,8 @@ inline void realtime_thread(void *unused) throw(EcError)
           ret_out = recvfrom(s_output, rtoutputbuf, outputSize, 0, NULL, 0);
           if (ret_out <= 0)
           {
+            perror("recvfrom");
+            std::cout<<"recievefrom"<<std::endl;
             throw(EcError(EcError::FAIL_RECIEVING));
              //nothing to do, no new data transferred
              //rt_printf("%s: \"%.*s\" relayed by peer\n", __function__, ret, buf);
@@ -203,9 +231,13 @@ inline void realtime_thread(void *unused) throw(EcError)
 	  
           ret_in = sendto(s_input, rtinputbuf, inputSize, 0, NULL, 0);
           if(ret_in != inputSize)
+          {
+            perror("sendto");
+            std::cout<<"sendto"<<std::endl;
             throw(EcError(EcError::FAIL_SENDING));
+          }
           
-          
+          std::cout<<"realtimetask finished"<<std::endl;
           rt_task_wait_period(NULL);
        }
        

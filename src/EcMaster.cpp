@@ -217,23 +217,23 @@ bool EcMaster::start() throw(EcError)
    rt_task_start (&task, &realtime_thread, NULL);
 
    //creating the thread non-rt
-//    sigemptyset(&mask);
-//    sigaddset(&mask, SIGINT);
-//    signal(SIGINT, cleanup_upon_sig);
-//    sigaddset(&mask, SIGTERM);
-//    signal(SIGTERM, cleanup_upon_sig);
-//    sigaddset(&mask, SIGHUP);
-//    signal(SIGHUP, cleanup_upon_sig);
-//    pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    signal(SIGINT, cleanup_upon_sig);
+    sigaddset(&mask, SIGTERM);
+    signal(SIGTERM, cleanup_upon_sig);
+    sigaddset(&mask, SIGHUP);
+    signal(SIGHUP, cleanup_upon_sig);
+    pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
    
-   pthread_attr_t rtattr,regattr;
+//   pthread_attr_t rtattr,regattr;
+//   pthread_t rt;
    // review all this part
 //    pthread_attr_init(&regattr);
 //    pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
 //    pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
-//    pthread_attr_setschedpolicy(&regattr, SCHED_OTHER);
-   std::thread updateThread(&EcMaster::update_EcSlaves,this);
-//    errno = pthread_create(&nrt, &regattr, &update_EcSlaves, NULL);
+//    pthread_attr_setschedpolicy(&regattr, SCHED_FIFO);
+//    errno = pthread_create(&rt, &regattr, &realtime_thread, NULL);
 //    if (errno){}
       //fail("pthread_create");
    
@@ -250,9 +250,11 @@ bool EcMaster::start() throw(EcError)
    
    if (fdOutput < 0)
    {
+      perror("open");
+      std::cout<<"open out"<<std::endl;
       throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
-   
+   std::thread updateThread(&EcMaster::update_EcSlaves,this);
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
@@ -889,14 +891,21 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
        free(devnameInput);
        
        if (fdInput < 0)
-         throw(EcError(EcError::FAIL_OPENING_INPUT));
-       
+       {
+         perror("open");
+         std::cout<<"open read input"<<std::endl;
+     //    throw(EcError(EcError::FAIL_OPENING_INPUT));
+       }
        for (;;) 
        {
          /* Get the next message from realtime_thread2. */
          ret = read(fdInput, inputBuf, inputSize);
          if (ret <= 0)
-	    throw(EcError(EcError::FAIL_READING));
+         {
+            perror("read");
+            std::cout<<"read"<<std::endl;
+//	    throw(EcError(EcError::FAIL_READING));
+         }
 /*	for(int i = 0; i < m_drivers.size();i++)
 	{
 	    m_drivers[i] -> update();
@@ -929,15 +938,19 @@ void EcMaster::update_ec(void) throw(EcError)
    //do something to put the infor in outputBuf
    ret = write(fdOutput,outputBuf,ret);
    if(ret<=0)
+   {
+       perror("write");
+       std::cout<<"write"<<std::endl;
        throw(EcError(EcError::FAIL_WRITING));
+   }
 }
 
-// void EcMaster::cleanup_upon_sig(int sig)
-// {
-//     pthread_cancel(nrt);
-//     signal(sig, SIG_DFL);
-//     pthread_join(nrt,NULL);
-// }
+ void EcMaster::cleanup_upon_sig(int sig)
+ {
+     pthread_cancel(nrt);
+     signal(sig, SIG_DFL);
+     pthread_join(nrt,NULL);
+ }
     
 };
 //SERVOS_RT_H
