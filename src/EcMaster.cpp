@@ -32,6 +32,7 @@ extern "C"
 #include <soem/ethercatcoe.h>
 #include <soem/ethercatprint.h>
 #include <soem/nicdrv.h>
+#include <soem/ethercatrealtime.h>
 }
 
 #include <thread> 
@@ -75,8 +76,6 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
    RT_TASK program;
    rt_print_auto_init (1);
    rt_task_shadow (&program, "soem-master", 20, T_JOINABLE);
-   rt_task_create (&task, "Send PDO", 8192, 99, 0);	// Create the realtime task, but don't start it yet
-   //rt_mutex_create (&mutex, "Mutex");
 }
 
 EcMaster::~EcMaster()
@@ -213,29 +212,8 @@ bool EcMaster::start() throw(EcError)
 {
    int ret;
    //Starts a preiodic tasck that sends frames to slaves
-   rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-   rt_task_start (&task, &realtime_thread, NULL);
-
-   //creating the thread non-rt
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT);
-    signal(SIGINT, cleanup_upon_sig);
-    sigaddset(&mask, SIGTERM);
-    signal(SIGTERM, cleanup_upon_sig);
-    sigaddset(&mask, SIGHUP);
-    signal(SIGHUP, cleanup_upon_sig);
-    pthread_sigmask(SIG_BLOCK, &mask, &oldmask);
-   
-//   pthread_attr_t rtattr,regattr;
-//   pthread_t rt;
-   // review all this part
-//    pthread_attr_init(&regattr);
-//    pthread_attr_setdetachstate(&regattr, PTHREAD_CREATE_JOINABLE);
-//    pthread_attr_setinheritsched(&regattr, PTHREAD_EXPLICIT_SCHED);
-//    pthread_attr_setschedpolicy(&regattr, SCHED_FIFO);
-//    errno = pthread_create(&rt, &regattr, &realtime_thread, NULL);
-//    if (errno){}
-      //fail("pthread_create");
+   //ec_create_rt_thread(m_cycleTime);
+   ec_create_rt_thread(100000000);
    
    // Assegurem que els servos estan shutted down
    for (int i = 0 ; i < m_drivers.size() ; i++)
@@ -254,7 +232,7 @@ bool EcMaster::start() throw(EcError)
       std::cout<<"open out"<<std::endl;
       throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
-   std::thread updateThread(&EcMaster::update_EcSlaves,this);
+//   std::thread updateThread(&EcMaster::update_EcSlaves,this);
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
@@ -273,7 +251,7 @@ bool EcMaster::stop()
     m_drivers[i] -> stop();
    
   // Aturem la tasca periòdica
-  rt_task_suspend (&task);
+  ec_delete_rt_thread();
   std::cout<<"Master stoped!"<<std::endl;
   return true;
 }
@@ -945,12 +923,6 @@ void EcMaster::update_ec(void) throw(EcError)
    }
 }
 
- void EcMaster::cleanup_upon_sig(int sig)
- {
-     pthread_cancel(nrt);
-     signal(sig, SIG_DFL);
-     pthread_join(nrt,NULL);
- }
     
 };
 //SERVOS_RT_H
