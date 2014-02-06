@@ -37,6 +37,9 @@ extern "C"
 
 #include <thread> 
 
+#define XDDP_PORT_INPUT "EcMaster-xddp-input"
+#define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
+
 //slave info variables
 
 
@@ -212,15 +215,10 @@ bool EcMaster::start() throw(EcError)
 {
    int ret;
    //Starts a preiodic tasck that sends frames to slaves
-   //ec_create_rt_thread(m_cycleTime);
-   ec_create_rt_thread(100000000);
-   
-   // Assegurem que els servos estan shutted down
-   for (int i = 0 ; i < m_drivers.size() ; i++)
-     m_drivers[i] -> start();
+   ec_create_rt_thread(m_cycleTime);
    usleep (100000);
 
-   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0){}
+   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
       std::cout<<"fail asprintf"<<std::endl;
    
    fdOutput = open(devnameOutput, O_WRONLY);
@@ -230,9 +228,14 @@ bool EcMaster::start() throw(EcError)
    {
       perror("open");
       std::cout<<"open out"<<std::endl;
-      throw(EcError(EcError::FAIL_OPENING_OUTPUT));
+//      throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
 //   std::thread updateThread(&EcMaster::update_EcSlaves,this);
+   for (int i = 0 ; i < m_drivers.size() ; i++)
+     m_drivers[i] -> start();
+   usleep (100000);
+  
+  
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
