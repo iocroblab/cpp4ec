@@ -11,6 +11,7 @@ int main ()
     master.preconfigure();
     master.configure();
     master.start();
+    usleep(3000000);
     master.stop();
     master.reset();
   }

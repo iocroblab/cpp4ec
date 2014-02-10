@@ -35,7 +35,6 @@ extern "C"
 #include <soem/ethercatrealtime.h>
 }
 
-#include <thread> 
 
 #define XDDP_PORT_INPUT "EcMaster-xddp-input"
 #define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
@@ -65,7 +64,7 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
    
    inputSize = 0;
    outputSize = 0;
-   
+   threadFinished = false;
 
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
@@ -216,7 +215,8 @@ bool EcMaster::start() throw(EcError)
    int ret;
    //Starts a preiodic tasck that sends frames to slaves
    ec_create_rt_thread(m_cycleTime);
-   usleep (100000);
+   
+   usleep(10000);
 
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
       std::cout<<"fail asprintf"<<std::endl;
@@ -230,16 +230,93 @@ bool EcMaster::start() throw(EcError)
       std::cout<<"open out"<<std::endl;
 //      throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
-//   std::thread updateThread(&EcMaster::update_EcSlaves,this);
+   if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
+    std::cout<<"fail asprintf"<<std::endl;
+              
+   fdInput = open(devnameInput, O_RDONLY);
+   free(devnameInput);
+       
+   if (fdInput < 0)
+   {
+     perror("open");
+     std::cout<<"open read input"<<std::endl;
+     //    throw(EcError(EcError::FAIL_OPENING_INPUT));
+   }
+   
+   updateThread = std::thread(&EcMaster::update_EcSlaves,this);
+//   updateThread.detach();
    for (int i = 0 ; i < m_drivers.size() ; i++)
      m_drivers[i] -> start();
+   
    usleep (100000);
-  
+   
+//   update_ec();
   
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
 }
+
+/*
+ *
+ * This function open a socket and waits the current state
+ * from the xddp port
+ */
+
+   
+void EcMaster::update_EcSlaves(void) throw(EcError)
+   {
+       int ret;
+     
+       while (!threadFinished) 
+       {
+         /* Get the next message from realtime_thread2. */
+         ret = read(fdInput, inputBuf, inputSize);
+         if (ret <= 0)
+         {
+            perror("read");
+            std::cout<<"read"<<std::endl;
+//	    throw(EcError(EcError::FAIL_READING));
+         }
+	for(int i = 0; i < m_drivers.size();i++)
+	{
+	    m_drivers[i] -> update();
+	}
+//	update_ec();
+       }
+            //fail("read");
+            /* Relay the message to realtime_thread1. */
+         /*
+          * Update the servos
+          * put the functions here
+          */ 
+
+   }
+   
+/*
+ *
+ * 
+ *
+ This function uses the sockect createdx in the configure to send
+ data to the realtime thread
+
+*/
+void EcMaster::update_ec(void) throw(EcError)
+{
+   //we have configured before the connection
+   //so we have a device number
+   int ret;
+   
+   //do something to put the infor in outputBuf
+   ret = write(fdOutput,outputBuf,outputSize);
+   if(ret<=0)
+   {
+       perror("write");
+       throw(EcError(EcError::FAIL_WRITING));
+   }
+}
+
+
 std::vector<EcSlave*> EcMaster::getSlaves()
 {
     return m_drivers;
@@ -252,7 +329,9 @@ bool EcMaster::stop()
   //desactivating motors and ending ethercatLoop
   for(int i=0;i<m_drivers.size();i++)
     m_drivers[i] -> stop();
-   
+  
+  threadFinished = true; 
+  updateThread.join();
   // Aturem la tasca periòdica
   ec_delete_rt_thread();
   std::cout<<"Master stoped!"<<std::endl;
@@ -272,9 +351,10 @@ bool EcMaster::reset() throw(EcError)
 
    for (unsigned int i = 0; i < m_drivers.size(); i++)
          delete m_drivers[i];
-   
+
    delete[] outputBuf;
-   delete[] inputBuf;
+   //delete[] inputBuf;
+
    ec_close();
    
    std::cout<<"Master reseted!"<<std::endl;
@@ -851,80 +931,6 @@ void EcMaster::slaveInfo()
 			    
     }
     
-/*
- *
- * This function open a socket and waits the current state
- * from the xddp port
- */
-
-
-
-   
-void EcMaster::update_EcSlaves(void) throw(EcError)
-   {
-       char * devnameInput;
-                            
-       int fdInput, ret;
-       if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
-	std::cout<<"fail asprintf"<<std::endl;
-              
-       fdInput = open(devnameInput, O_RDONLY);
-       free(devnameInput);
-       
-       if (fdInput < 0)
-       {
-         perror("open");
-         std::cout<<"open read input"<<std::endl;
-     //    throw(EcError(EcError::FAIL_OPENING_INPUT));
-       }
-       for (;;) 
-       {
-         /* Get the next message from realtime_thread2. */
-         ret = read(fdInput, inputBuf, inputSize);
-         if (ret <= 0)
-         {
-            perror("read");
-            std::cout<<"read"<<std::endl;
-//	    throw(EcError(EcError::FAIL_READING));
-         }
-/*	for(int i = 0; i < m_drivers.size();i++)
-	{
-	    m_drivers[i] -> update();
-	}
-	update_ec();*/
-       }
-            //fail("read");
-            /* Relay the message to realtime_thread1. */
-         /*
-          * Update the servos
-          * put the functions here
-          */ 
-
-   }
-   
-/*
- *
- * 
- *
- This function uses the sockect createdx in the configure to send
- data to the realtime thread
-
-*/
-void EcMaster::update_ec(void) throw(EcError)
-{
-   //we have configured before the connection
-   //so we have a device number
-   int ret;
-   
-   //do something to put the infor in outputBuf
-   ret = write(fdOutput,outputBuf,ret);
-   if(ret<=0)
-   {
-       perror("write");
-       std::cout<<"write"<<std::endl;
-       throw(EcError(EcError::FAIL_WRITING));
-   }
-}
 
     
 };

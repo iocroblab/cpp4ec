@@ -26,6 +26,7 @@ extern "C"
 #include <stdint.h>
 
 #include <mutex> 
+#include <thread>
 
 #include "EcError.h"
 
@@ -130,6 +131,8 @@ private:
      * This block contains the private attributes and methods
      */
     std::string ethPort;
+    std::thread updateThread;
+    bool threadFinished;
     char * ecPort;
     char m_IOmap[4096];
     int m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
@@ -138,7 +141,8 @@ private:
     ec_OElistt OElist;
     FILE * pFile;
     char * devnameOutput;
-    int fdOutput;
+    char * devnameInput;
+    int fdOutput,fdInput;
     
     ///Ethercat stuff
     void slaveInfo();
