@@ -103,8 +103,8 @@ void EcSlaveSGDV::update()
 {
     slaveMutex.lock();
     masterMutex.lock();
-    memcpy (inputPDO ,pBufferOut ,inputSize);
-    memcpy (pBufferIn ,outputPDO ,outputSize);
+    memcpy (inputPDO ,pBufferIn ,inputSize);
+    memcpy (pBufferOut ,outputPDO ,outputSize);
     masterMutex.unlock();
     slaveMutex.unlock();
 }

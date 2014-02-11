@@ -41,6 +41,7 @@ extern "C"
 
 //slave info variables
 
+#include <iomanip>
 
 
 char usdo[128];
@@ -177,14 +178,19 @@ bool EcMaster::configure() throw(EcError)
   }
   outputBuf = new char [outputSize];
   inputBuf = new char[inputSize];
+  memset(outputBuf,0, outputSize);
+  memset(inputBuf,0, inputSize);
+
+  std::cout<<(outputBuf)<<std::endl;
+  std::cout<<(inputBuf)<<std::endl;;     
   int offSetInput = 0;
   int offSetOutput = 0;
 
   for(int i = 0; i < m_drivers.size();i++)
   {
       m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
-      offSetOutput += ec_slave[i].Obytes;
-      offSetInput  += ec_slave[i].Ibytes;
+      offSetOutput += ec_slave[i+1].Obytes;
+      offSetInput  += ec_slave[i+1].Ibytes;
   }
 
   std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
@@ -246,8 +252,20 @@ bool EcMaster::start() throw(EcError)
    updateThread = std::thread(&EcMaster::update_EcSlaves,this);
 //   updateThread.detach();
    for (int i = 0 ; i < m_drivers.size() ; i++)
-     m_drivers[i] -> start();
-   
+   {
+        ((EcSlaveSGDV*) m_drivers[i]) ->  writeControlWord(CW_SHUTDOWN);
+        usleep (100000);  
+        update_ec();
+             
+        ((EcSlaveSGDV*) m_drivers[i]) -> writeControlWord(CW_SWITCH_ON);
+        usleep (100000);
+        update_ec();
+                 
+        // Enable movement
+        ((EcSlaveSGDV*) m_drivers[i]) -> writeControlWord(CW_ENABLE_OP);
+        usleep (100000);
+        update_ec();
+   }
    usleep (100000);
    
 //   update_ec();
@@ -272,6 +290,7 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
        {
          /* Get the next message from realtime_thread2. */
          ret = read(fdInput, inputBuf, inputSize);
+         //std::cout<<"Bytes readed "<<ret<<std::endl;
          if (ret <= 0)
          {
             perror("read");

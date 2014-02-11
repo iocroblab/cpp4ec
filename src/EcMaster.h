@@ -121,7 +121,8 @@ public:
     
     std::vector<EcSlave*> getSlaves();
 
-
+    void update_ec(void) throw(EcError);
+   
 
 
 private:
@@ -163,7 +164,6 @@ private:
 //     pthread_t nrt;
 //     static void cleanup_upon_sig(int sig)
 //     static void update_EcSlaves(void *unused);
-    void update_ec(void) throw(EcError);
     ///realtime stuff
     char * inputBuf;
     char * outputBuf;
