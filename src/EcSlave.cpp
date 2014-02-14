@@ -24,9 +24,9 @@ namespace cpp4ec
     return true;
   }
   
-  void EcSlave::start(){}
+  std::vector<char*> EcSlave::start(){}
   
-  void EcSlave::stop()
+  std::vector<char*> EcSlave::stop()
   {
   }
   

@@ -131,7 +131,7 @@ public:
      * Switch on the motors.
      * 
      */
-    void start() throw(EcErrorSGDV);
+     std::vector<char*> start() throw(EcErrorSGDV);
     
     /**
      * \brief Update the data
@@ -145,7 +145,7 @@ public:
      * \brief Stop motors
      * 
      */
-    void stop() throw(EcErrorSGDV);
+     std::vector<char*> stop() throw(EcErrorSGDV);
 
     /**
      * \brief Sets locations Buffer
@@ -314,13 +314,14 @@ private:
     bool rVelocityCapable;
     bool rTorqueCapable;
     
+    
     char* pBufferOut;
     char* pBufferIn;
     std::vector <parameter> m_params;
 
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
-
+    std::vector <char*> bufferList;
 };
 }
 #endif

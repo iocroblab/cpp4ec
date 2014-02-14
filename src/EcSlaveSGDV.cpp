@@ -41,6 +41,8 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.resize(0);
    inputObjects.resize(0);
    outputObjects.resize(0);
+   bufferList.resize(0);
+   
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
 
    pBufferOut = NULL;
@@ -54,9 +56,15 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 
 EcSlaveSGDV::~EcSlaveSGDV()
 {
-    delete[] inputPDO;
-    delete[] outputPDO;
+    for( int i = 0; i < bufferList.size(); i++)
+           delete[] bufferList[i];
+            
 }
+
+void EcSlaveSGDV::update()
+{
+}
+
 
 const std::string& EcSlaveSGDV::getName() const
 {
@@ -84,18 +92,32 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     return true;
 }
 
-void EcSlaveSGDV::start() throw(EcErrorSGDV)
+std::vector<char*> EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
+  char * temp1 = new char[outputSize];
+  char * temp2 = new char[outputSize];
+  char * temp3 = new char[outputSize];
   
   writeControlWord(CW_SHUTDOWN);
-  usleep (100000);
+  slaveMutex.lock();
+  memcpy(temp1,pBufferOut,m_datap->Obytes);
+  slaveMutex.unlock();
+  bufferList.push_back(temp1);
   
   writeControlWord(CW_SWITCH_ON);
-  usleep (100000);
+  slaveMutex.lock();
+  memcpy(temp2,pBufferOut,m_datap->Obytes);
+  slaveMutex.unlock();
+  bufferList.push_back(temp2);
   
   // Enable movement
   writeControlWord(CW_ENABLE_OP);
-  usleep (100000);
+  slaveMutex.lock();
+  memcpy(temp3,pBufferOut,m_datap->Obytes);
+  slaveMutex.unlock();
+  bufferList.push_back(temp3);
+  
+  return bufferList;
 }
 
 void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
@@ -104,13 +126,24 @@ void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
     pBufferOut=output;
 }
 
-void EcSlaveSGDV::stop() throw(EcErrorSGDV)
+std::vector<char*> EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
+  for( int i = 0; i < bufferList.size(); i++)
+      delete[] bufferList[i];
+      
+  bufferList.resize(0);
+  char * temp1 = new char[outputSize];
+  char * temp2 = new char[outputSize];
+      
   writeControlWord(CW_SHUTDOWN);
-  usleep (100000);
-  
+  memcpy(temp1,pBufferOut,m_datap->Obytes);
+  bufferList.push_back(temp1);
+    
   writeControlWord(CW_QUICK_STOP);
-  usleep (100000);
+  memcpy(temp2,pBufferOut,m_datap->Obytes);
+  bufferList.push_back(temp2);
+    
+  return bufferList;
 }
 
 bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)

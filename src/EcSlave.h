@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 #include "EcError.h"
 //#include "soem_slave_config.hpp"
 
@@ -81,7 +82,7 @@ public:
     * \brief Starts the slave
     *   
     */
-    virtual void start();
+    virtual std::vector<char*> start();
     
     /**
     * \brief Updates the slave
@@ -93,7 +94,7 @@ public:
     * \brief Stops the slave
     *   
     */
-    virtual void stop();
+    virtual std::vector<char*> stop();
 
     /**
     * \brief Requests the slave state

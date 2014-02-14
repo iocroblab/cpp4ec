@@ -144,14 +144,21 @@ bool EcMaster::configure() throw(EcError)
   memset(inputBuf,0, inputSize);
 
   int offSetInput = 0;
-  int offSetOutput = 0;
+  offSetOutput = new int[ec_slavecount];
 
+  (*offSetOutput) = 0;
   for(int i = 0; i < m_drivers.size();i++)
   {
-      m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
-      offSetOutput += ec_slave[i+1].Obytes;
-      offSetInput  += ec_slave[i+1].Ibytes;
+      m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + *(offSetOutput+i));
+      if(i<2)
+      {
+          *(offSetOutput+i+1) = *(offSetOutput+i) + ec_slave[i+1].Obytes;
+          offSetInput  += ec_slave[i+1].Ibytes;
+      }
   }
+  
+  for(int k=0;k<ec_slavecount;k++)
+      std::cout<<"Offset k "<<k<<" value: "<<*(offSetOutput+k)<<std::endl;
 
   std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
   success = switchState (EC_STATE_SAFE_OP);
@@ -211,23 +218,17 @@ bool EcMaster::start() throw(EcError)
    }
    
    updateThread = std::thread(&EcMaster::update_EcSlaves,this);
-
+   std::vector<char*> commandList;
    for (int i = 0 ; i < m_drivers.size() ; i++)
    {
-        ((EcSlaveSGDV*) m_drivers[i]) ->  writeControlWord(CW_SHUTDOWN);
-        usleep (100000);  
-        update_ec();
-             
-        ((EcSlaveSGDV*) m_drivers[i]) -> writeControlWord(CW_SWITCH_ON);
-        usleep (100000);
-        update_ec();
-                 
-        // Enable movement
-        ((EcSlaveSGDV*) m_drivers[i]) -> writeControlWord(CW_ENABLE_OP);
-        usleep (100000);
-        update_ec();
+        commandList = m_drivers[i] ->  start();
+        for(int k = 0; k < commandList.size(); k ++)
+        {
+            memcpy(outputBuf+*(offSetOutput+i),commandList[k],ec_slave[i].Obytes);
+            update_ec();
+        }
+        usleep (10000);  
    }
-   usleep (100000);   
   
    std::cout<<"Master started!!!"<<std::endl;
 
@@ -289,11 +290,18 @@ std::vector<EcSlave*> EcMaster::getSlaves()
 
 bool EcMaster::stop()
 {
-    
+  std::vector<char*> commandList;  
   //Stops slaves
-  for(int i=0;i<m_drivers.size();i++)
-    m_drivers[i] -> stop();
-  
+  for (int i = 0 ; i < m_drivers.size() ; i++)
+  {
+    commandList = m_drivers[i] ->  stop();
+    for(int k = 0; k < commandList.size(); k ++)
+    {
+      memcpy(outputBuf+*(offSetOutput+i),commandList[k],ec_slave[i].Obytes);
+      update_ec();
+    }
+    usleep (10000);  
+  }
   //Stops the NRT thread
   threadFinished = true; 
   updateThread.join();
@@ -319,7 +327,7 @@ bool EcMaster::reset() throw(EcError)
 
    delete[] outputBuf;
    //delete[] inputBuf;
-
+   delete[] offSetOutput;
    ec_close();
    
    std::cout<<"Master reseted!"<<std::endl;

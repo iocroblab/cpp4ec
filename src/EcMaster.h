@@ -154,10 +154,7 @@ private:
     int si_map_sii(int slave);
     void si_sdo(int cnt);
     
-    //signal stuff
-    sigset_t mask, oldmask;
-
-   //realtime stuff 
+    int* offSetOutput;
 
    
     
@@ -165,6 +162,7 @@ private:
 //     static void cleanup_upon_sig(int sig)
 //     static void update_EcSlaves(void *unused);
     ///realtime stuff
+      
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
