@@ -314,9 +314,6 @@ private:
     bool rVelocityCapable;
     bool rTorqueCapable;
     
-    
-    char* inputPDO;
-    char* outputPDO;
     char* pBufferOut;
     char* pBufferIn;
     std::vector <parameter> m_params;

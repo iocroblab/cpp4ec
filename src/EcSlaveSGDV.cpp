@@ -42,8 +42,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    inputObjects.resize(0);
    outputObjects.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
-   inputPDO = NULL;
-   outputPDO = NULL;
+
    pBufferOut = NULL;
    pBufferIn = NULL;
    
@@ -77,8 +76,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
 
-    inputPDO  = new char[inputSize];
-    outputPDO = new char[outputSize];
+
     
     std::cout << getName() << " configured !" <<std::endl;
     
@@ -99,16 +97,6 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
   writeControlWord(CW_ENABLE_OP);
   usleep (100000);
 }
-void EcSlaveSGDV::update() 
-{
-    slaveMutex.lock();
-    masterMutex.lock();
-    memcpy (inputPDO ,pBufferIn ,inputSize);
-    memcpy (pBufferOut ,outputPDO ,outputSize);
-    masterMutex.unlock();
-    slaveMutex.unlock();
-}
-
 
 void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
 {
@@ -135,7 +123,7 @@ bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
     }
     //write on the desired position of the PDO
     slaveMutex.lock();
-    memcpy (outputPDO + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
+    memcpy (pBufferOut + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
     slaveMutex.unlock();
 }
 
@@ -145,7 +133,7 @@ bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
 	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
     //read the desired position of the PDO
     slaveMutex.lock();
-    memcpy (&value, inputPDO + inputObjects[entry].offset, inputObjects[entry].byteSize);
+    memcpy (&value, pBufferIn + inputObjects[entry].offset, inputObjects[entry].byteSize);
     slaveMutex.unlock();
 }
 
@@ -155,7 +143,7 @@ bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
     if (!wControlWordCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (outputPDO + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
+    memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
     slaveMutex.unlock();
 }
 bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
@@ -163,7 +151,7 @@ bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
     if (!rStatusWordCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (&statusWord ,inputPDO + inputObjects[statusWordEntry].offset, inputObjects[statusWordEntry].byteSize);
+    memcpy (&statusWord ,pBufferIn + inputObjects[statusWordEntry].offset, inputObjects[statusWordEntry].byteSize);
     slaveMutex.unlock();
     
 } 
@@ -172,7 +160,7 @@ bool EcSlaveSGDV::writePosition (int32_t position)
     if (!wPositionCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (outputPDO + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
+    memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
     slaveMutex.unlock();
 }
 bool EcSlaveSGDV::readPosition (int32_t &position)
@@ -180,7 +168,7 @@ bool EcSlaveSGDV::readPosition (int32_t &position)
     if (!rPositionCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (&position ,inputPDO + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
+    memcpy (&position ,pBufferIn + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
     slaveMutex.unlock();
 }
 bool EcSlaveSGDV::writeVelocity (int32_t velocity)
@@ -188,7 +176,7 @@ bool EcSlaveSGDV::writeVelocity (int32_t velocity)
     if (!wVelocityCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (outputPDO + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
+    memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
     slaveMutex.unlock();
 }
 bool EcSlaveSGDV::readVelocity (int32_t &velocity)
@@ -196,7 +184,7 @@ bool EcSlaveSGDV::readVelocity (int32_t &velocity)
     if (!rVelocityCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (&velocity ,inputPDO + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
+    memcpy (&velocity ,pBufferIn + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
     slaveMutex.unlock();
 }
 bool EcSlaveSGDV::writeTorque (int16_t torque)
@@ -204,7 +192,7 @@ bool EcSlaveSGDV::writeTorque (int16_t torque)
     if (!wTorqueCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (outputPDO + outputObjects[targetTorqueEntry].offset, &torque ,outputObjects[targetTorqueEntry].byteSize);
+    memcpy (pBufferOut + outputObjects[targetTorqueEntry].offset, &torque ,outputObjects[targetTorqueEntry].byteSize);
     slaveMutex.unlock();
 }
 bool EcSlaveSGDV::readTorque (int16_t &torque)
@@ -212,7 +200,7 @@ bool EcSlaveSGDV::readTorque (int16_t &torque)
     if (!rTorqueCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveMutex.lock();
-    memcpy (&torque ,inputPDO + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
+    memcpy (&torque ,pBufferIn + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
     slaveMutex.unlock();
 }
 
