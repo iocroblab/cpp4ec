@@ -146,20 +146,17 @@ bool EcMaster::configure() throw(EcError)
   int offSetInput = 0;
   offSetOutput = new int[ec_slavecount];
 
-  (*offSetOutput) = 0;
+  offSetOutput[0] = 0;
   for(int i = 0; i < m_drivers.size();i++)
   {
-      m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + *(offSetOutput+i));
+      m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput[i]);
       if(i<2)
       {
-          *(offSetOutput+i+1) = *(offSetOutput+i) + ec_slave[i+1].Obytes;
+          offSetOutput[i+1] = offSetOutput[i] + ec_slave[i+1].Obytes;
           offSetInput  += ec_slave[i+1].Ibytes;
       }
   }
   
-  for(int k=0;k<ec_slavecount;k++)
-      std::cout<<"Offset k "<<k<<" value: "<<*(offSetOutput+k)<<std::endl;
-
   std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
   success = switchState (EC_STATE_SAFE_OP);
   if (!success)
@@ -224,7 +221,7 @@ bool EcMaster::start() throw(EcError)
         commandList = m_drivers[i] ->  start();
         for(int k = 0; k < commandList.size(); k ++)
         {
-            memcpy(outputBuf+*(offSetOutput+i),commandList[k],ec_slave[i].Obytes);
+            memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
             update_ec();
         }
         usleep (10000);  
@@ -297,7 +294,7 @@ bool EcMaster::stop()
     commandList = m_drivers[i] ->  stop();
     for(int k = 0; k < commandList.size(); k ++)
     {
-      memcpy(outputBuf+*(offSetOutput+i),commandList[k],ec_slave[i].Obytes);
+      memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
       update_ec();
     }
     usleep (10000);  
