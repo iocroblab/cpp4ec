@@ -1,29 +1,23 @@
 #include "EcMaster.h"
-#include "realtimetask.h"
 #include "EcSlaveSGDV.h"
 #include "EcUtil.h"
-
+extern "C"
+{
+#include "./EcRTThread/EcRTThread.h"
+}
 #include <sys/mman.h>
 #include <iostream>
 #include <fstream> //Just to verify the time
-
-
-extern "C"
-{
-#include <soem/ethercattype.h>
-#include <soem/ethercatbase.h>
-#include <soem/ethercatmain.h>
-#include <soem/ethercatconfig.h>
-#include <soem/ethercatdc.h>
-#include <soem/ethercatcoe.h>
-#include <soem/ethercatprint.h>
-#include <soem/nicdrv.h>
-#include <soem/ethercatrealtime.h>
-}
-
+//socket header
+#include <rtdm/rtipc.h>
+#include <sched.h>
+//xenomai header
+#include <native/task.h>
+/*
 #define XDDP_PORT_INPUT "EcMaster-xddp-input"
-#define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
+#define XDDP_PORT_OUTPUT "EcMaster-xddp-output"*/
 
+//slaveInfo vars
 char usdo[128];
 char hstr[1024];
 bool printSDO = TRUE;
@@ -34,7 +28,8 @@ namespace cpp4ec
 {
    extern std::mutex masterMutex;
    std::mutex masterMutex;//hay que usarlo en write/read ??-- sino se puede quitar!!  
-   
+   RT_TASK task;  
+
 EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
 {
    //reset del iomap memory
@@ -44,13 +39,21 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
    inputSize = 0;
    outputSize = 0;
    threadFinished = false;
+   pid_t pid;
+   sched_param param,*pparam;
+   param.sched_priority = 0;
+   pparam=&param;
+   sched_getscheduler(pid);
+   sched_setscheduler(pid,SCHED_OTHER,pparam);
 
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
+   
+   
 
    RT_TASK program;
-   rt_print_auto_init (1);
-   rt_task_shadow (&program, "soem-master", 20, T_JOINABLE);
+//    rt_print_auto_init (1);
+   rt_task_shadow (&program, "soem-master", 0, T_JOINABLE);
 }
 
 EcMaster::~EcMaster()
@@ -185,8 +188,9 @@ bool EcMaster::start() throw(EcError)
    int ret;
    
    //Starts a preiodic tasck that sends frames to slaves
-   ec_create_rt_thread(m_cycleTime);
-   
+   rt_task_create (&task, "Send PDO", 8192, 99, 0);
+   rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
+   rt_task_start (&task, &rt_thread, NULL);
    usleep(10000);
    
    //
@@ -304,7 +308,7 @@ bool EcMaster::stop()
   updateThread.join();
   
   // Aturem la tasca periòdica
-  ec_delete_rt_thread();
+  rt_task_delete(&task);
   
   std::cout<<"Master stoped!"<<std::endl;
   return true;

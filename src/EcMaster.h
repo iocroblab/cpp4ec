@@ -3,6 +3,7 @@
 
 #include "EcSlave.h"
 #include "EcSlaveFactory.h"
+#include "EcError.h"
 
 extern "C"
 {
@@ -28,7 +29,7 @@ extern "C"
 #include <mutex> 
 #include <thread>
 
-#include "EcError.h"
+
 
 #define NSEC_PER_SEC 1000000000
 // #define XDDP_PORT_INPUT "EcMaster-xddp-input"
@@ -47,10 +48,9 @@ struct slaveDCspec {
 //     char * outputBuf;
 //     int inputSize, outputSize;
 // 
-    pthread_t nrt;
 
 // template<class T>
-// inline std::string to_string (const T& t, std::ios_base & (*f) (std::ios_base&))
+// inline std::string to_string (const T& t, #include "realtimetask.h"std::ios_base & (*f) (std::ios_base&))
 // {
 //     std::stringstream ss;
 //     ss << f << t;
@@ -156,13 +156,7 @@ private:
     
     int* offSetOutput;
 
-   
-    
-//     pthread_t nrt;
-//     static void cleanup_upon_sig(int sig)
-//     static void update_EcSlaves(void *unused);
     ///realtime stuff
-      
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;

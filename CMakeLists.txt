@@ -21,6 +21,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project(CPP4EC)
 
+
 # BMM version. Defined here but not exported to header files, because it's already defined there
 set( CPP4EC_VERSION 0.0.1 )
 string( REGEX MATCHALL "[0-9]+" CPP4EC_VERSIONS ${CPP4EC_VERSION} )
@@ -34,7 +35,6 @@ find_package(Threads REQUIRED)
 include(FindPkgConfig)
 
 #set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
-ADD_DEFINITIONS(-std=c++11 )
 
 include_directories(${PROJECT_SOURCE_DIR})
 
@@ -66,6 +66,12 @@ if(ENABLE_RT)
    message("Found xenomai native libs : ${XENO_NATIVE_LIBRARIES}" )
    message("--> with LDFLAGS : ${XENO_NATIVE_LDFLAGS}" )
 
+   pkg_check_modules(XENO_RTDM REQUIRED libxenomai_rtdm)
+   message("Found xenomai native includes : ${XENO_RTDM_INCLUDE_DIRS}" )
+   message("--> with CFLAGS : ${XENO_RTDM_CFLAGS}" )
+   message("Found xenomai native libs : ${XENO_RTDM_LIBRARIES}" )
+   message("--> with LDFLAGS : ${XENO_RTDM_LDFLAGS}" )
+
    pkg_check_modules(SOEMRT REQUIRED soemrt)
    message("Found soemrt (soem with realtime patch) and its includes : ${SOEMRT_INCLUDE_DIRS}" )
    message("--> with CFLAGS : ${SOEMRT_CFLAGS}" )
@@ -74,10 +80,12 @@ if(ENABLE_RT)
 
    list(APPEND CPP4EC_CFLAGS ${SOEMRT_CFLAGS})
    list(APPEND CPP4EC_CFLAGS ${XENO_NATIVE_CFLAGS})
+   list(APPEND CPP4EC_CFLAGS ${XENO_RTDM_CFLAGS})
    message("The complete cpp4ec CFLAGS : ${CPP4EC_CFLAGS}" )
 
    list(APPEND CPP4EC_LDFLAGS ${SOEMRT_LDFLAGS})
    list(APPEND CPP4EC_LDFLAGS ${XENO_NATIVE_LDFLAGS})
+   list(APPEND CPP4EC_CFLAGS ${XENO_RTDM_CFLAGS})
    message("The complete cpp4ec LFLAGS : ${CPP4EC_LDFLAGS}" )
 
 else(ENABLE_RT)
