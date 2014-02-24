@@ -13,9 +13,6 @@ extern "C"
 #include <sched.h>
 //xenomai header
 #include <native/task.h>
-/*
-#define XDDP_PORT_INPUT "EcMaster-xddp-input"
-#define XDDP_PORT_OUTPUT "EcMaster-xddp-output"*/
 
 //slaveInfo vars
 char usdo[128];
@@ -23,22 +20,19 @@ char hstr[1024];
 bool printSDO = TRUE;
 bool printMAP = TRUE;
 
-
 namespace cpp4ec
 {
    extern std::mutex masterMutex;
    std::mutex masterMutex;//hay que usarlo en write/read ??-- sino se puede quitar!!  
    RT_TASK task;  
 
-EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
+EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime),inputSize(0),outputSize(0), threadFinished (false), 
+slaveInformation(false)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
-   
-   inputSize = 0;
-   outputSize = 0;
-   threadFinished = false;
+
    pid_t pid;
    sched_param param,*pparam;
    param.sched_priority = 0;
@@ -48,12 +42,8 @@ EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime)
 
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
-   
-   
-
    RT_TASK program;
-//    rt_print_auto_init (1);
-   rt_task_shadow (&program, "soem-master", 0, T_JOINABLE);
+   rt_task_shadow (&program, "EcMaster", 0, T_JOINABLE);
 }
 
 EcMaster::~EcMaster()
@@ -100,7 +90,8 @@ bool EcMaster::preconfigure() throw(EcError)
 	  }
 
 	}
-	slaveInfo();
+	if(slaveInformation)
+	    slaveInfo();
 	//Configure distributed clock
 	//ec_configdc();
 	//Read the state of all slaves
@@ -188,12 +179,11 @@ bool EcMaster::start() throw(EcError)
    int ret;
    
    //Starts a preiodic tasck that sends frames to slaves
-   rt_task_create (&task, "Send PDO", 8192, 99, 0);
+   rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
    rt_task_start (&task, &rt_thread, NULL);
    usleep(10000);
    
-   //
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
       std::cout<<"fail asprintf"<<std::endl;
    
@@ -236,12 +226,7 @@ bool EcMaster::start() throw(EcError)
    return true;
 }
 
-/*
- *
- * This function waits the current state
- * from the xddp port
- **/  
-
+/* This function waits the current state from the xddp port */  
 void EcMaster::update_EcSlaves(void) throw(EcError)
 {
     int ret;
@@ -263,12 +248,7 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     }
 }
    
-/*
- * 
- *This function uses the sockect createdx in the configure to send
- *data to the realtime thread
- **/
-
+/* This function uses the sockect createdx in the configure to send data to the realtime thread */
 void EcMaster::update_ec(void) throw(EcError)
 {
    int ret;

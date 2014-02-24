@@ -25,48 +25,15 @@ extern "C"
 #include <cstdio>
 #include <unistd.h>
 #include <stdint.h>
-
 #include <mutex> 
 #include <thread>
 
-
-
 #define NSEC_PER_SEC 1000000000
-// #define XDDP_PORT_INPUT "EcMaster-xddp-input"
-// #define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
-
-/*Structure to know the activated DC slaves*/
-struct slaveDCspec {
-    unsigned int slaveNumber;
-    bool state;
-    unsigned int cycleTime;
-    unsigned int shift;
-};
-
-//  ///realtime stuff
-//     char * inputBuf;
-//     char * outputBuf;
-//     int inputSize, outputSize;
-// 
-
-// template<class T>
-// inline std::string to_string (const T& t, #include "realtimetask.h"std::ios_base & (*f) (std::ios_base&))
-// {
-//     std::stringstream ss;
-//     ss << f << t;
-//     return ss.str();
-// };
-
-
-
 
 namespace cpp4ec
-{
-
-    
+{    
 class EcMaster
 {
-
 
 public:
     /**
@@ -131,43 +98,41 @@ private:
      *
      * This block contains the private attributes and methods
      */
+    
+     //Master variables
     std::string ethPort;
-    std::thread updateThread;
-    bool threadFinished;
     char * ecPort;
     char m_IOmap[4096];
     int m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
     std::vector<EcSlave*> m_drivers;
-    ec_ODlistt ODlist;
-    ec_OElistt OElist;
-    FILE * pFile;
+    int* offSetOutput;
+    char * inputBuf;
+    char * outputBuf;
+    int inputSize, outputSize;
+    
+    //ethercat switchState function
+    bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
+    
+    //Sockect stuff    
+    bool threadFinished;
     char * devnameOutput;
     char * devnameInput;
     int fdOutput,fdInput;
-    
-    ///Ethercat stuff
-    void slaveInfo();
-    bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
+    std::thread updateThread;
+    void update_EcSlaves(void) throw(EcError);
+
+    //Ethercat slaveinfo stuff
+    bool slaveInformation;
+    FILE * pFile;
+    ec_ODlistt ODlist;
+    ec_OElistt OElist;
+    void slaveInfo(void);
     int si_PDOassign(uint16 slave, uint16 PDOassign, int mapoffset, int bitoffset);
     int si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset);
     int si_map_sdo(int slave);
     int si_map_sii(int slave);
     void si_sdo(int cnt);
-    
-    int* offSetOutput;
-
-    ///realtime stuff
-    char * inputBuf;
-    char * outputBuf;
-    int inputSize, outputSize;
-// 
-//     static pthread_t nrt;
-    void update_EcSlaves(void) throw(EcError);
-    static void cleanup_upon_sig(int sig);
-    
 };
-
-} //endnamespace Vector3d v;
-
+}
 #endif
 
