@@ -1,18 +1,12 @@
 #include "EcSlave.h"
 #include "EcUtil.h"
 
-
 namespace cpp4ec
 {
   EcSlave::EcSlave(ec_slavet* mem_loc) : m_datap(mem_loc), m_name("Slave_" + to_string(m_datap->configadr,
-				     std::hex)), m_slave_nr(m_datap->configadr & 0x0f)
-  {
+				     std::hex)), m_slave_nr(m_datap->configadr & 0x0f){}
 
-  }
-
-  EcSlave::~EcSlave()
-  {
-  }
+  EcSlave::~EcSlave(){}
 
   const std::string& EcSlave::getName() const
   {
@@ -26,12 +20,9 @@ namespace cpp4ec
   
   std::vector<char*> EcSlave::start(){}
   
-  std::vector<char*> EcSlave::stop()
-  {
-  }
+  std::vector<char*> EcSlave::stop(){}
   
   void EcSlave::setPDOBuffer(char * input, char * output){}
-
 
   bool EcSlave::requestState( ec_state state)
   {
@@ -52,7 +43,6 @@ namespace cpp4ec
   ec_state EcSlave::getState()
   {
     return (ec_state)(m_datap->state);
-  }
-  
+  }  
 
 }

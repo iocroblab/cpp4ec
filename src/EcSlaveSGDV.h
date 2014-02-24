@@ -85,9 +85,7 @@ typedef struct
     unsigned int offset;
     unsigned int byteSize;
     std::string type;
-}PDOobject;
-    
-
+}PDOobject;    
 
 namespace cpp4ec
 {
@@ -270,10 +268,7 @@ public:
     * \param psize the size of the param buffer.
     * \param param a pointer to the buffer with the returned value.
     */
-    void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
-    
-    
-    
+    void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param); 
 
 private:
 
@@ -288,7 +283,6 @@ private:
     
     int outputSize;
     int inputSize;
-    
     
     int transmitEntry;
     int recieveEntry;
@@ -314,11 +308,10 @@ private:
     bool rVelocityCapable;
     bool rTorqueCapable;
     
-    
     char* pBufferOut;
     char* pBufferIn;
-    std::vector <parameter> m_params;
 
+    std::vector <parameter> m_params;
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
     std::vector <char*> bufferList;

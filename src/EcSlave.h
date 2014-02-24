@@ -1,11 +1,11 @@
 #ifndef ECSLAVE_H
 #define ECSLAVE_H
 
+#include "EcError.h"
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include "EcError.h"
-//#include "soem_slave_config.hpp"
+#include <stdint.h>
 
 extern "C"
 {
@@ -18,26 +18,6 @@ extern "C"
 #include <soem/ethercatcoe.h>
 #include <soem/ethercatprint.h>
 }
-
-
-
-// template<class T>
-// inline std::string to_string(const T& t, std::ios_base & (*f)(std::ios_base&))
-// {
-//     std::stringstream ss;
-//     ss << f << t;
-//     return ss.str();
-// };
-
-#include <stdint.h>
-
-// //Mask for StatusWord comparison
-// #define SW_NOT_READY_SWICH_ON_MASK 0x4F
-// #define SW_SWITCH_ON_DISABLED_MASK 0x4F
-// #define SW_READY_SWITCH_ON_MASK    0x6F
-// #define SW_SWITCHED_ON_MASK        0x27F
-// #define SW_OPERATION_ENABLED_MASK  0x27F
-
 
 typedef struct
 {

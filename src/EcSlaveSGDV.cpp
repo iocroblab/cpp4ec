@@ -14,15 +14,7 @@
 #include <pugixml.hpp>
 #include <stdint.h>
 #include <stdlib.h> 
-
-/*
-#include <sys/time.h>
-#include <time.h>*/
-
 #include <unistd.h>
-
-
-
 
 namespace cpp4ec
 {
@@ -35,30 +27,22 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
-    rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false)
+    rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false),
+    pBufferOut(NULL),pBufferIn(NULL)
 {
- //  parameter temp;
    m_params.resize(0);
    inputObjects.resize(0);
    outputObjects.resize(0);
    bufferList.resize(0);
-   
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
-
-   pBufferOut = NULL;
-   pBufferIn = NULL;
    
-
-   readXML();
-   
-
+   readXML();  
 }
 
 EcSlaveSGDV::~EcSlaveSGDV()
 {
     for( int i = 0; i < bufferList.size(); i++)
            delete[] bufferList[i];
-            
 }
 
 void EcSlaveSGDV::update()
@@ -83,11 +67,8 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     }
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
-
-
     
     std::cout << getName() << " configured !" <<std::endl;
-    
     
     return true;
 }
