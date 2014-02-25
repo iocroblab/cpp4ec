@@ -11,6 +11,8 @@ extern "C"
 //socket header
 #include <rtdm/rtipc.h>
 #include <sched.h>
+#include <sys/types.h>
+#include <unistd.h>
 //xenomai header
 #include <native/task.h>
 
@@ -22,9 +24,11 @@ bool printMAP = TRUE;
 
 namespace cpp4ec
 {
-   extern std::mutex masterMutex;
-   std::mutex masterMutex;//hay que usarlo en write/read ??-- sino se puede quitar!!  
-   RT_TASK task;  
+   extern std::mutex* slaveMutex;
+   std::mutex* slaveMutex;//hay que usarlo en write/read ??-- sino se puede quitar!!  
+   RT_TASK task;
+   RT_TASK master;
+  
 
 EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime),inputSize(0),outputSize(0), threadFinished (false), 
 slaveInformation(false)
@@ -34,16 +38,16 @@ slaveInformation(false)
       m_IOmap[i] = 0;
 
    pid_t pid;
-   sched_param param,*pparam;
+   pid = getpid();
+   sched_param param;
    param.sched_priority = 0;
-   pparam=&param;
    sched_getscheduler(pid);
-   sched_setscheduler(pid,SCHED_OTHER,pparam);
+   sched_setscheduler(pid,SCHED_OTHER,&param);
 
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
-   RT_TASK program;
-   rt_task_shadow (&program, "EcMaster", 0, T_JOINABLE);
+   rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
+   
 }
 
 EcMaster::~EcMaster()
@@ -177,7 +181,8 @@ bool EcMaster::configure() throw(EcError)
 bool EcMaster::start() throw(EcError)
 {
    int ret;
-   
+   rt_task_set_priority(&master,0);
+
    //Starts a preiodic tasck that sends frames to slaves
    rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
@@ -207,8 +212,11 @@ bool EcMaster::start() throw(EcError)
      std::cout<<"open read input"<<std::endl;
      //    throw(EcError(EcError::FAIL_OPENING_INPUT));
    }
-   
+   sched_param sch;
+   sch.sched_priority = 90;
+   pthread_setschedparam(updateThread.native_handle(), SCHED_OTHER, &sch);
    updateThread = std::thread(&EcMaster::update_EcSlaves,this);
+   
    std::vector<char*> commandList;
    for (int i = 0 ; i < m_drivers.size() ; i++)
    {
@@ -271,6 +279,8 @@ std::vector<EcSlave*> EcMaster::getSlaves()
 
 bool EcMaster::stop()
 {
+  rt_task_set_priority(&master,20);
+
   std::vector<char*> commandList;  
   //Stops slaves
   for (int i = 0 ; i < m_drivers.size() ; i++)
