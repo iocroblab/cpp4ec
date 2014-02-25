@@ -279,7 +279,7 @@ private:
     unsigned int SHIFT;
     unsigned int SHIFTMASTER;
     
-    std::mutex slaveMutex;
+    int m_mutex;
     
     int outputSize;
     int inputSize;

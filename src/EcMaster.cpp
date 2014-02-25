@@ -24,8 +24,10 @@ bool printMAP = TRUE;
 
 namespace cpp4ec
 {
-   extern std::mutex* slaveMutex;
-   std::mutex* slaveMutex;//hay que usarlo en write/read ??-- sino se puede quitar!!  
+   extern std::mutex* slaveInMutex;
+   extern std::mutex* slaveOutMutex;
+   std::mutex* slaveInMutex;//hay que usarlo en write/read ??-- sino se puede quitar!!  
+   std::mutex* slaveOutMutex;
    RT_TASK task;
    RT_TASK master;
   
@@ -94,6 +96,8 @@ bool EcMaster::preconfigure() throw(EcError)
 	  }
 
 	}
+	slaveInMutex = new std::mutex[ec_slavecount];
+	slaveOutMutex = new std::mutex[ec_slavecount];
 	if(slaveInformation)
 	    slaveInfo();
 	//Configure distributed clock
@@ -242,7 +246,11 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     while (!threadFinished) 
     {
 	/* Get the next message from realtime_thread */
+	for (int i = 0; i < ec_slavecount; i++)
+	    slaveInMutex[i].lock();
 	ret = read(fdInput, inputBuf, inputSize);
+	for (int i = 0; i < ec_slavecount; i++)
+	    slaveInMutex[i].unlock();
 	if (ret <= 0)
 	{
 	    perror("read");
@@ -262,7 +270,11 @@ void EcMaster::update_ec(void) throw(EcError)
    int ret;
    
    /* Send a message to realtime_thread */
+   for (int i = 0; i < ec_slavecount; i++)
+       slaveOutMutex[i].lock();
    ret = write(fdOutput,outputBuf,outputSize);
+   for (int i = 0; i < ec_slavecount; i++)
+       slaveOutMutex[i].unlock();
    if(ret<=0)
    {
        perror("write");
@@ -319,6 +331,8 @@ bool EcMaster::reset() throw(EcError)
    delete[] outputBuf;
    //delete[] inputBuf;
    delete[] offSetOutput;
+   delete[] slaveInMutex;
+   delete[] slaveOutMutex;
    ec_close();
    
    std::cout<<"Master reseted!"<<std::endl;
