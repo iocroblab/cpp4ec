@@ -127,6 +127,7 @@ public:
      * \brief Start motors
      * 
      * Switch on the motors.
+     * \return A vector with the secuence of buffer outputs that has to be sent to stop the servos
      * 
      */
      std::vector<char*> start() throw(EcErrorSGDV);
@@ -141,6 +142,8 @@ public:
     
     /**
      * \brief Stop motors
+     * 
+     * \return A vector with the secuence of buffer outputs that has to be sent to stop the servos
      * 
      */
      std::vector<char*> stop() throw(EcErrorSGDV);

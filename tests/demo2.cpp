@@ -31,7 +31,7 @@ int main ()
     {
         ((cpp4ec::EcSlaveSGDV*)drivers[j])->writeVelocity (velocity);
         usleep(1000);
-        master.update_ec();
+        master.update();
     }
                                                       
     usleep(100000);

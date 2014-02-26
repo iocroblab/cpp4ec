@@ -39,8 +39,10 @@ public:
     /**
      * \brief Constructor
      *
+     * \param cycleTime The period of the RT task that send PDO.
+     * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information
      */
-    EcMaster(int cycleTime = 1000000);
+    EcMaster(int cycleTime = 1000000, bool slaveInfo = false);
 
     /**
      *  \brief Destructor
@@ -75,7 +77,7 @@ public:
      *
      * The realtime task for comunication is stopped and the mottors are shutted down.
      */
-    bool stop();
+    bool stop() throw(EcError);
 
     /**
      *  \brief Resets configuration
@@ -85,10 +87,19 @@ public:
     bool reset() throw(EcError);
 
     
-    
+    /**
+     *  \brief Get slaves vector
+     *
+     *	\return the slaves vector.
+     */
     std::vector<EcSlave*> getSlaves();
-
-    void update_ec(void) throw(EcError);
+    
+    /**
+     *  \brief Update the outputs
+     *
+     *	Update the output values. It sends the output PDO to the RT task, to be sent to devices.
+     */
+    void update(void) throw(EcError);
    
 
 

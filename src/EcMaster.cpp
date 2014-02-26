@@ -32,8 +32,8 @@ namespace cpp4ec
    RT_TASK master;
   
 
-EcMaster::EcMaster(int cycleTime) : ethPort ("rteth0"), m_cycleTime(cycleTime),inputSize(0),outputSize(0), threadFinished (false), 
-slaveInformation(false)
+EcMaster::EcMaster(int cycleTime, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime),inputSize(0),outputSize(0), threadFinished (false), 
+slaveInformation(slaveInfo)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -228,7 +228,7 @@ bool EcMaster::start() throw(EcError)
         for(int k = 0; k < commandList.size(); k ++)
         {
             memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
-            update_ec();
+            update();
         }
         usleep (10000);  
    }
@@ -265,7 +265,7 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
 }
    
 /* This function uses the sockect createdx in the configure to send data to the realtime thread */
-void EcMaster::update_ec(void) throw(EcError)
+void EcMaster::update(void) throw(EcError)
 {
    int ret;
    
@@ -289,7 +289,7 @@ std::vector<EcSlave*> EcMaster::getSlaves()
 }
 
 
-bool EcMaster::stop()
+bool EcMaster::stop() throw(EcError)
 {
   rt_task_set_priority(&master,20);
 
@@ -301,7 +301,7 @@ bool EcMaster::stop()
     for(int k = 0; k < commandList.size(); k ++)
     {
       memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
-      update_ec();
+      update();
     }
     usleep (10000);  
   }
