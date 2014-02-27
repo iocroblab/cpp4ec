@@ -16,24 +16,14 @@ extern "C"
 //xenomai header
 #include <native/task.h>
 
-//slaveInfo vars
-char usdo[128];
-char hstr[1024];
-bool printSDO = TRUE;
-bool printMAP = TRUE;
-
 namespace cpp4ec
 {
-   extern std::mutex* slaveInMutex;
-   extern std::mutex* slaveOutMutex;
-   std::mutex* slaveInMutex;//hay que usarlo en write/read ??-- sino se puede quitar!!  
-   std::mutex* slaveOutMutex;
    RT_TASK task;
    RT_TASK master;
   
 
 EcMaster::EcMaster(int cycleTime, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime),inputSize(0),outputSize(0), threadFinished (false), 
-slaveInformation(slaveInfo)
+slaveInformation(slaveInfo), printSDO(true), printMAP(true)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -96,8 +86,8 @@ bool EcMaster::preconfigure() throw(EcError)
 	  }
 
 	}
-	slaveInMutex = new std::mutex[ec_slavecount];
-	slaveOutMutex = new std::mutex[ec_slavecount];
+// 	slaveInMutex = new std::mutex[ec_slavecount];
+// 	slaveOutMutex = new std::mutex[ec_slavecount];
 	if(slaveInformation)
 	    slaveInfo();
 	//Configure distributed clock
@@ -202,7 +192,7 @@ bool EcMaster::start() throw(EcError)
    if (fdOutput < 0)
    {
       perror("open");
-//      throw(EcError(EcError::FAIL_OPENING_OUTPUT));
+      throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
    if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
     std::cout<<"fail asprintf"<<std::endl;
@@ -213,8 +203,7 @@ bool EcMaster::start() throw(EcError)
    if (fdInput < 0)
    {
      perror("open");
-     std::cout<<"open read input"<<std::endl;
-     //    throw(EcError(EcError::FAIL_OPENING_INPUT));
+     throw(EcError(EcError::FAIL_OPENING_INPUT));
    }
    sched_param sch;
    sch.sched_priority = 90;
@@ -246,15 +235,11 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     while (!threadFinished) 
     {
 	/* Get the next message from realtime_thread */
-	for (int i = 0; i < ec_slavecount; i++)
-	    slaveInMutex[i].lock();
 	ret = read(fdInput, inputBuf, inputSize);
-	for (int i = 0; i < ec_slavecount; i++)
-	    slaveInMutex[i].unlock();
+
 	if (ret <= 0)
 	{
 	    perror("read");
-	    std::cout<<"read"<<std::endl;
 //	    throw(EcError(EcError::FAIL_READING));
 	}
 	for(int i = 0; i < m_drivers.size();i++)
@@ -270,11 +255,8 @@ void EcMaster::update(void) throw(EcError)
    int ret;
    
    /* Send a message to realtime_thread */
-   for (int i = 0; i < ec_slavecount; i++)
-       slaveOutMutex[i].lock();
    ret = write(fdOutput,outputBuf,outputSize);
-   for (int i = 0; i < ec_slavecount; i++)
-       slaveOutMutex[i].unlock();
+
    if(ret<=0)
    {
        perror("write");
@@ -309,7 +291,7 @@ bool EcMaster::stop() throw(EcError)
   threadFinished = true; 
   updateThread.join();
   
-  // Aturem la tasca periòdica
+  // delete the periodic task
   rt_task_delete(&task);
   
   std::cout<<"Master stoped!"<<std::endl;
@@ -331,8 +313,8 @@ bool EcMaster::reset() throw(EcError)
    delete[] outputBuf;
    //delete[] inputBuf;
    delete[] offSetOutput;
-   delete[] slaveInMutex;
-   delete[] slaveOutMutex;
+//    delete[] slaveInMutex;
+//    delete[] slaveOutMutex;
    ec_close();
    
    std::cout<<"Master reseted!"<<std::endl;
@@ -359,7 +341,7 @@ bool EcMaster::switchState (ec_state state)
    return reachState;
 }
 
-char* dtype2string(uint16 dtype)
+char* EcMaster::dtype2string(uint16 dtype)
 {
    switch(dtype)
    {
@@ -438,7 +420,7 @@ char* dtype2string(uint16 dtype)
    return hstr;
 }               
 
-char* SDO2string(uint16 slave, uint16 index, uint8 subidx, uint16 dtype)
+char* EcMaster::SDO2string(uint16 slave, uint16 index, uint8 subidx, uint16 dtype)
 {
    int l = sizeof(usdo) - 1, i;
    uint8 *u8;
@@ -775,66 +757,66 @@ int EcMaster::si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset)
 }
 
 int EcMaster::si_map_sii(int slave)
-    {
-	int retVal = 0;
-	int Tsize, outputs_bo, inputs_bo;
+{
+    int retVal = 0;
+    int Tsize, outputs_bo, inputs_bo;
 
-	fprintf(pFile,"PDO mapping according to SII :\n");
+    fprintf(pFile,"PDO mapping according to SII :\n");
 
-	outputs_bo = 0;
-	inputs_bo = 0;
-	/* read the assign RXPDOs */
-	Tsize = si_siiPDO(slave, 1, (int)(ec_slave[slave].outputs - (uint8*)&m_IOmap), outputs_bo );
-	outputs_bo += Tsize;
-	/* read the assign TXPDOs */
-	Tsize = si_siiPDO(slave, 0, (int)(ec_slave[slave].inputs - (uint8*)&m_IOmap), inputs_bo );
-	inputs_bo += Tsize;
-	/* found some I/O bits ? */
-	if ((outputs_bo > 0) || (inputs_bo > 0))
-	    retVal = 1;
-	return retVal;
-    }
+    outputs_bo = 0;
+    inputs_bo = 0;
+    /* read the assign RXPDOs */
+    Tsize = si_siiPDO(slave, 1, (int)(ec_slave[slave].outputs - (uint8*)&m_IOmap), outputs_bo );
+    outputs_bo += Tsize;
+    /* read the assign TXPDOs */
+    Tsize = si_siiPDO(slave, 0, (int)(ec_slave[slave].inputs - (uint8*)&m_IOmap), inputs_bo );
+    inputs_bo += Tsize;
+    /* found some I/O bits ? */
+    if ((outputs_bo > 0) || (inputs_bo > 0))
+	retVal = 1;
+    return retVal;
+}
 
 
 void EcMaster::si_sdo(int cnt)
+{
+    int i, j;
+    
+    ODlist.Entries = 0;
+    memset(&ODlist, 0, sizeof(ODlist));
+    if( ec_readODlist(cnt, &ODlist))
     {
-	int i, j;
-	
-	ODlist.Entries = 0;
-	memset(&ODlist, 0, sizeof(ODlist));
-	if( ec_readODlist(cnt, &ODlist))
+	fprintf(pFile," CoE Object Description found, %d entries.\n",ODlist.Entries);
+	for( i = 0 ; i < ODlist.Entries ; i++)
 	{
-	    fprintf(pFile," CoE Object Description found, %d entries.\n",ODlist.Entries);
-	    for( i = 0 ; i < ODlist.Entries ; i++)
-	    {
-		ec_readODdescription(i, &ODlist); 
-		while(EcatError) fprintf(pFile,"%s", ec_elist2string());
-		fprintf(pFile," Index: %4.4x Datatype: %4.4x Objectcode: %2.2x Name: %s\n",
-		    ODlist.Index[i], ODlist.DataType[i], ODlist.ObjectCode[i], ODlist.Name[i]);
-		memset(&OElist, 0, sizeof(OElist));
-		ec_readOE(i, &ODlist, &OElist);
-		while(EcatError) fprintf(pFile,"%s", ec_elist2string());
-		for( j = 0 ; j < ODlist.MaxSub[i]+1 ; j++)
-		{
-		    if ((OElist.DataType[j] > 0) && (OElist.BitLength[j] > 0))
-		    {
-			fprintf(pFile,"  Sub: %2.2x Datatype: %4.4x Bitlength: %4.4x Obj.access: %4.4x Name: %s\n",
-			    j, OElist.DataType[j], OElist.BitLength[j], OElist.ObjAccess[j], OElist.Name[j]);
-			if ((OElist.ObjAccess[j] & 0x0007))
-			{
-			    fprintf(pFile,"          Value :%s\n", SDO2string(cnt, ODlist.Index[i], j, OElist.DataType[j]));
-			}
-		    }
-		}   
-	    }   
-	}
-	else
-	{
+	    ec_readODdescription(i, &ODlist); 
 	    while(EcatError) fprintf(pFile,"%s", ec_elist2string());
-	}
+	    fprintf(pFile," Index: %4.4x Datatype: %4.4x Objectcode: %2.2x Name: %s\n",
+		ODlist.Index[i], ODlist.DataType[i], ODlist.ObjectCode[i], ODlist.Name[i]);
+	    memset(&OElist, 0, sizeof(OElist));
+	    ec_readOE(i, &ODlist, &OElist);
+	    while(EcatError) fprintf(pFile,"%s", ec_elist2string());
+	    for( j = 0 ; j < ODlist.MaxSub[i]+1 ; j++)
+	    {
+		if ((OElist.DataType[j] > 0) && (OElist.BitLength[j] > 0))
+		{
+		    fprintf(pFile,"  Sub: %2.2x Datatype: %4.4x Bitlength: %4.4x Obj.access: %4.4x Name: %s\n",
+			j, OElist.DataType[j], OElist.BitLength[j], OElist.ObjAccess[j], OElist.Name[j]);
+		    if ((OElist.ObjAccess[j] & 0x0007))
+		    {
+			fprintf(pFile,"          Value :%s\n", SDO2string(cnt, ODlist.Index[i], j, OElist.DataType[j]));
+		    }
+		}
+	    }   
+	}   
     }
+    else
+    {
+	while(EcatError) fprintf(pFile,"%s", ec_elist2string());
+    }
+}
 
-    /*To write data of the found slaves in EtherCATsoemInfo.txt. Usefull to be sure of the slaves' order*/
+/*To write data of the found slaves in EtherCATsoemInfo.txt. Usefull to be sure of the slaves' order*/
 void EcMaster::slaveInfo()
 {
     pFile = fopen ("EtherCATsoemInfo.txt","w");

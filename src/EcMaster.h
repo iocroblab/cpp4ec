@@ -29,6 +29,11 @@ extern "C"
 #include <thread>
 
 #define NSEC_PER_SEC 1000000000
+/**
+ * \example demo.cpp
+ * This is an example of how to use the EcMaster class.
+ * 
+ */
 
 namespace cpp4ec
 {    
@@ -37,10 +42,11 @@ class EcMaster
 
 public:
     /**
-     * \brief Constructor
+     * \brief Constructor 
      *
      * \param cycleTime The period of the RT task that send PDO.
      * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information
+     *    
      */
     EcMaster(int cycleTime = 1000000, bool slaveInfo = false);
 
@@ -137,7 +143,13 @@ private:
     FILE * pFile;
     ec_ODlistt ODlist;
     ec_OElistt OElist;
+    char usdo[128];
+    char hstr[1024];
+    bool printSDO;
+    bool printMAP;
     void slaveInfo(void);
+    char* dtype2string(uint16 dtype);
+    char* SDO2string(uint16 slave, uint16 index, uint8 subidx, uint16 dtype);
     int si_PDOassign(uint16 slave, uint16 PDOassign, int mapoffset, int bitoffset);
     int si_siiPDO(uint16 slave, uint8 t, int mapoffset, int bitoffset);
     int si_map_sdo(int slave);
