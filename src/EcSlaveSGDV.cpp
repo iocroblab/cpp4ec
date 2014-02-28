@@ -56,7 +56,7 @@ void EcSlaveSGDV::update()
     readVelocity (velocity);
     readTorque (torque);
     //signal
-    slaveValues(position,torque, velocity);
+    slaveValues(position,velocity,torque,m_slave_nr);
 
     
 }
