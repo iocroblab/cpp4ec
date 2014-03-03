@@ -3,7 +3,7 @@
 #include "EcUtil.h"
 extern "C"
 {
-#include "./EcRTThread/EcRTThread.h"
+#include "EcRTThread/EcRTThread.h"
 }
 #include <sys/mman.h>
 #include <iostream>

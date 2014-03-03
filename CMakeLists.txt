@@ -94,8 +94,8 @@ endif(ENABLE_RT)
 
 #PUGI_XML
 find_path(PUGI_XML_INCLUDE_DIRS pugixml.hpp
-    PATHS /user/local/include
-          /usr/include)
+    PATHS /usr/include
+	  /user/local/include)
 
 if(PUGI_XML_INCLUDE_DIRS)
   message("Found PUGI_XML_INCLUDE_DIRS  on: ${PUGI_XML_INCLUDE_DIRS}")
@@ -106,9 +106,9 @@ endif(PUGI_XML_INCLUDE_DIRS)
 
 find_library (PUGI_XML_LIBRARIES
                 NAMES pugixml libpugixml
-                PATHS /user/local/lib
-                      /usr/local/lib
-                      /usr/lib)
+                PATHS /usr/lib
+		      /usr/local/lib
+                      /user/local/lib)
 if(PUGI_XML_LIBRARIES)
   message("Found PUGI_XML_LIBRARIES on:" ${PUGI_XML_LIBRARIES})
 else(PUGI_XML_LIBRARIES)
