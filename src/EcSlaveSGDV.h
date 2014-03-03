@@ -16,6 +16,7 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
+#include <boost/signals2/signal.hpp>
 #include <vector>
 #include <iostream>
 #include <mutex> 
@@ -272,6 +273,10 @@ public:
     * \param param a pointer to the buffer with the returned value.
     */
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param); 
+    
+//    void refresh();
+    boost::signals2::signal<void (int , int , int, int)> slaveValues;
+
 
 private:
 
@@ -311,8 +316,15 @@ private:
     bool rVelocityCapable;
     bool rTorqueCapable;
     
+    char* outputBuf;
+    char* inputBuf;
     char* pBufferOut;
     char* pBufferIn;
+    
+
+    
+    std::mutex slaveInMutex;
+    std::mutex slaveOutMutex;
 
     std::vector <parameter> m_params;
     std::vector <PDOobject> inputObjects;
