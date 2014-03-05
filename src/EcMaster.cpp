@@ -314,6 +314,9 @@ bool EcMaster::reset() throw(EcError)
 //    delete[] slaveInMutex;
 //    delete[] slaveOutMutex;
    delete[] ecPort;
+   
+   for (size_t i = 0; i < 4096; i++)
+      m_IOmap[i] = 0;
 
    ec_close();
    
