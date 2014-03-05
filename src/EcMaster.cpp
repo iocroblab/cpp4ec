@@ -32,7 +32,7 @@ slaveInformation(slaveInfo), printSDO(true), printMAP(true)
    pid_t pid;
    pid = getpid();
    sched_param param;
-   param.sched_priority = 0;
+   param.sched_priority = 20;
    sched_getscheduler(pid);
    sched_setscheduler(pid,SCHED_OTHER,&param);
 
@@ -45,8 +45,6 @@ slaveInformation(slaveInfo), printSDO(true), printMAP(true)
 EcMaster::~EcMaster()
 {
    //must clean memory and delete tasks
-   rt_task_delete (&task);
-   delete[] ecPort;
 }
 
 bool EcMaster::preconfigure() throw(EcError)
@@ -120,7 +118,7 @@ bool EcMaster::configure() throw(EcError)
   bool success;
   int32_t wkc, expectedWKC;
   ec_config_map(&m_IOmap);
-  
+
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));  
 
@@ -309,12 +307,17 @@ bool EcMaster::reset() throw(EcError)
 
    for (unsigned int i = 0; i < m_drivers.size(); i++)
          delete m_drivers[i];
-
+   m_drivers.resize(0);      
    delete[] outputBuf;
    //delete[] inputBuf;
    delete[] offSetOutput;
 //    delete[] slaveInMutex;
 //    delete[] slaveOutMutex;
+   delete[] ecPort;
+   
+   for (size_t i = 0; i < 4096; i++)
+      m_IOmap[i] = 0;
+
    ec_close();
    
    std::cout<<"Master reseted!"<<std::endl;
