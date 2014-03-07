@@ -309,7 +309,7 @@ bool EcMaster::reset() throw(EcError)
          delete m_drivers[i];
    m_drivers.resize(0);      
    delete[] outputBuf;
-   //delete[] inputBuf;
+   delete[] inputBuf;
    delete[] offSetOutput;
 //    delete[] slaveInMutex;
 //    delete[] slaveOutMutex;
