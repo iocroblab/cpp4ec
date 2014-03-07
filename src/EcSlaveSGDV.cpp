@@ -49,14 +49,17 @@ void EcSlaveSGDV::update()
     slaveInMutex.lock();
     memcpy(inputBuf,pBufferIn, inputSize);
     slaveInMutex.unlock();
+    
+    uint16_t statusWord;
     int32_t position;
     int32_t velocity;
     int16_t torque;
+    readStatusWord(statusWord);
     readPosition (position);
     readVelocity (velocity);
     readTorque (torque);
     //signal
-    slaveValues(position,velocity,torque,m_slave_nr);
+    slaveValues(m_slave_nr,statusWord,position,velocity,torque);
 
     
 }

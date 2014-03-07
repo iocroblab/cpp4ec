@@ -280,7 +280,7 @@ public:
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param); 
     
 //    void refresh();
-    boost::signals2::signal<void (int , int , int, int)> slaveValues;
+    boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t)> slaveValues;
 
 
 private:
