@@ -61,6 +61,7 @@ typedef enum
    CW_DIASABLE_OP        =  0x07,
    CW_DISABLE_VOLTAGE    =  0x00,
    CW_FAULT_RESET        =  0x80,
+   CW_HALT               =  0x09,  
    //Only for control profile position mode(operational mode 1)
    CW_START_ABS_POSITIONING  =  0x1F,//absolute reference
    CW_START_REL_POSITIONING  =  0x5F,//relative reference
