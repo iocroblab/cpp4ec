@@ -90,12 +90,19 @@ bool EcMaster::preconfigure() throw(EcError)
 	if(slaveInformation)
 	    slaveInfo();
 	//Configure distributed clock
-//	ec_configdc();
+	ec_configdc();
 	//Read the state of all slaves
 	//ec_readstate();
 
 	ec_config_map(&m_IOmap);
-	ec_configdc();
+//	ec_configdc();
+        for (int i = 1; i <=  m_drivers.size(); i++)
+            ec_dcsync0(i,true, SYNC0TIME,0);	
+        
+        rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
+        rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
+        rt_task_start (&task, &rt_thread, NULL);
+
 
     }else{
 	std::cout << "Configuration of slaves failed!!!" << std::endl;
@@ -158,8 +165,8 @@ bool EcMaster::configure() throw(EcError)
     throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
 
   // send one valid process data to make outputs in slaves happy
-  ec_send_processdata();
-  ec_receive_processdata(EC_TIMEOUTRET);
+//  ec_send_processdata();
+//  ec_receive_processdata(EC_TIMEOUTRET);
   
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));
@@ -169,8 +176,8 @@ bool EcMaster::configure() throw(EcError)
   if (!success)
 	throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
   
-  for (int i = 1; i <=  m_drivers.size(); i++)
-      ec_dcsync0(i,true, SYNC0TIME,0);	
+//  for (int i = 1; i <=  m_drivers.size(); i++)
+//      ec_dcsync0(i,true, SYNC0TIME,0);	
   
   std::cout<<"Master configured!!!"<<std::endl;
       
@@ -207,10 +214,10 @@ bool EcMaster::start() throw(EcError)
    rt_task_set_priority(&master,0);
 
    //Starts a preiodic tasck that sends frames to slaves
-   rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
+/*   rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
    rt_task_start (&task, &rt_thread, NULL);
-   usleep(10000);
+*/   usleep(10000);
    
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
       std::cout<<"fail asprintf"<<std::endl;
@@ -308,8 +315,6 @@ bool EcMaster::stop() throw(EcError)
 
   rt_task_set_priority(&master,20);
 
-  for (int i = 1; i <=  m_drivers.size(); i++)
-      ec_dcsync0(i,false, SYNC0TIME,0);	
 
   std::vector<char*> commandList;  
   //Stops slaves
@@ -326,6 +331,8 @@ bool EcMaster::stop() throw(EcError)
   //Stops the NRT thread
   threadFinished = true; 
   updateThread.join();
+  for (int i = 1; i <=  m_drivers.size(); i++)
+      ec_dcsync0(i,false, SYNC0TIME,0);	
   
   // delete the periodic task
   rt_task_delete(&task);
