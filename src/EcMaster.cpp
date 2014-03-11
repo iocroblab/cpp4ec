@@ -15,6 +15,7 @@ extern "C"
 #include <unistd.h>
 //xenomai header
 #include <native/task.h>
+#define SYNC0TIME 1000000
 
 namespace cpp4ec
 {
@@ -89,9 +90,12 @@ bool EcMaster::preconfigure() throw(EcError)
 	if(slaveInformation)
 	    slaveInfo();
 	//Configure distributed clock
-	//ec_configdc();
+//	ec_configdc();
 	//Read the state of all slaves
 	//ec_readstate();
+
+	ec_config_map(&m_IOmap);
+	ec_configdc();
 
     }else{
 	std::cout << "Configuration of slaves failed!!!" << std::endl;
@@ -117,7 +121,8 @@ bool EcMaster::configure() throw(EcError)
 {
   bool success;
   int32_t wkc, expectedWKC;
-  ec_config_map(&m_IOmap);
+ // ec_config_map(&m_IOmap);
+//	ec_configdc();
 
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));  
@@ -163,9 +168,35 @@ bool EcMaster::configure() throw(EcError)
   success = switchState(EC_STATE_OPERATIONAL);
   if (!success)
 	throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
-
+  
+  for (int i = 1; i <=  m_drivers.size(); i++)
+      ec_dcsync0(i,true, SYNC0TIME,0);	
+  
   std::cout<<"Master configured!!!"<<std::endl;
-
+      
+      int value=1,size=2;
+      for (int i = 1; i <=  m_drivers.size(); i++)
+      {
+      size = 2;
+      ec_SDOread(i, 0x1C32, 1, FALSE,&size,&value,EC_TIMEOUTRXM);
+      usleep(1000);
+      std::cout<<"Mode out "<<value;
+      size = 4;
+      ec_SDOread(i, 0x1C32, 2, FALSE,&size,&value,EC_TIMEOUTRXM);
+      std::cout<<" cycle out "<<value;
+      size = 4;
+      ec_SDOread(i, 0x1C32, 3, FALSE,&size,&value,EC_TIMEOUTRXM);
+      std::cout<<" shift  out "<<value<<std::endl;
+      size = 2;
+      ec_SDOread(i, 0x1C33, 1, FALSE,&size,&value,EC_TIMEOUTRXM);
+      std::cout<<"Mode in "<<value;
+      size = 4;
+      ec_SDOread(i, 0x1C33, 2, FALSE,&size,&value,EC_TIMEOUTRXM);
+      std::cout<<" cycle out "<<value;
+      size = 4;
+      ec_SDOread(i, 0x1C33, 3, FALSE,&size,&value,EC_TIMEOUTRXM);
+      std::cout<<" shift in "<<value<<std::endl;
+      }
   return true;
 }
 
@@ -234,7 +265,8 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     {
 	/* Get the next message from realtime_thread */
 	ret = read(fdInput, inputBuf, inputSize);
-
+//	std::cout<<"DC slave "<<ec_DCtime<<std::endl;
+	
 	if (ret <= 0)
 	{
 	    perror("read");
@@ -244,6 +276,8 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
 	{
 	    m_drivers[i] -> update();
 	}
+//	std::cout<<"DC slave2 "<<ec_DCtime<<std::endl;
+	        
     }
 }
    
@@ -271,7 +305,11 @@ std::vector<EcSlave*> EcMaster::getSlaves()
 
 bool EcMaster::stop() throw(EcError)
 {
+
   rt_task_set_priority(&master,20);
+
+  for (int i = 1; i <=  m_drivers.size(); i++)
+      ec_dcsync0(i,false, SYNC0TIME,0);	
 
   std::vector<char*> commandList;  
   //Stops slaves
