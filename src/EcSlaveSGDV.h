@@ -61,8 +61,14 @@ typedef enum
    CW_DIASABLE_OP        =  0x07,
    CW_DISABLE_VOLTAGE    =  0x00,
    CW_FAULT_RESET        =  0x80,
-   //Only for control position mode
-   CW_START_POSITIONING  =  0x1F,
+   CW_HALT               =  0x09,  
+   //Only for control profile position mode(operational mode 1)
+   CW_START_ABS_POSITIONING  =  0x1F,//absolute reference
+   CW_START_REL_POSITIONING  =  0x5F,//relative reference
+   CW_START_QUICK_ABS_POSITIONING  =  0x3F,//start next positioning immediately
+   CW_START_QUICK_REL_POSITIONING  =  0x7F,//start next positioning immediately
+   CW_START_ABS_POSITIONING_WITH_VELOCITY  =  0x21F,//after the previous set-point has been reached
+   CW_START_REL_POSITIONING_WITH_VELOCITY  =  0x25F,//after the previous set-point has been reached
 }EcControlWord;
 
 //StatusWord values SGDV
@@ -275,7 +281,7 @@ public:
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param); 
     
 //    void refresh();
-    boost::signals2::signal<void (int , int , int, int)> slaveValues;
+    boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t)> slaveValues;
 
 
 private:
