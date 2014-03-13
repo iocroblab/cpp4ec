@@ -87,21 +87,14 @@ bool EcMaster::preconfigure() throw(EcError)
 	}
 // 	slaveInMutex = new std::mutex[ec_slavecount];
 // 	slaveOutMutex = new std::mutex[ec_slavecount];
+
 	if(slaveInformation)
 	    slaveInfo();
 	//Configure distributed clock
 	ec_configdc();
-	//Read the state of all slaves
-	//ec_readstate();
-
+	//Configure IOmap
 	ec_config_map(&m_IOmap);
-//	ec_configdc();
-        for (int i = 1; i <=  m_drivers.size(); i++)
-            ec_dcsync0(i,true, SYNC0TIME,0);	
-        
-        rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
-        rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-        rt_task_start (&task, &rt_thread, NULL);
+
 
 
     }else{
@@ -128,8 +121,6 @@ bool EcMaster::configure() throw(EcError)
 {
   bool success;
   int32_t wkc, expectedWKC;
- // ec_config_map(&m_IOmap);
-//	ec_configdc();
 
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));  
@@ -152,7 +143,7 @@ bool EcMaster::configure() throw(EcError)
   for(int i = 0; i < m_drivers.size();i++)
   {
       m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput[i]);
-      if(i<2)
+      if(i < (m_drivers.size()-1))
       {
           offSetOutput[i+1] = offSetOutput[i] + ec_slave[i+1].Obytes;
           offSetInput  += ec_slave[i+1].Ibytes;
@@ -164,10 +155,13 @@ bool EcMaster::configure() throw(EcError)
   if (!success)
     throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
 
-  // send one valid process data to make outputs in slaves happy
-//  ec_send_processdata();
-//  ec_receive_processdata(EC_TIMEOUTRET);
-  
+  for (int i = 1; i <=  m_drivers.size(); i++)
+       ec_dcsync0(i,true, SYNC0TIME,0);	
+        
+  rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
+  rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
+  rt_task_start (&task, &rt_thread, NULL);
+
   if(EcatError)
     throw(EcError(EcError::ECAT_ERROR));
 
@@ -176,34 +170,8 @@ bool EcMaster::configure() throw(EcError)
   if (!success)
 	throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
   
-//  for (int i = 1; i <=  m_drivers.size(); i++)
-//      ec_dcsync0(i,true, SYNC0TIME,0);	
-  
   std::cout<<"Master configured!!!"<<std::endl;
       
-      int value=1,size=2;
-      for (int i = 1; i <=  m_drivers.size(); i++)
-      {
-      size = 2;
-      ec_SDOread(i, 0x1C32, 1, FALSE,&size,&value,EC_TIMEOUTRXM);
-      usleep(1000);
-      std::cout<<"Mode out "<<value;
-      size = 4;
-      ec_SDOread(i, 0x1C32, 2, FALSE,&size,&value,EC_TIMEOUTRXM);
-      std::cout<<" cycle out "<<value;
-      size = 4;
-      ec_SDOread(i, 0x1C32, 3, FALSE,&size,&value,EC_TIMEOUTRXM);
-      std::cout<<" shift  out "<<value<<std::endl;
-      size = 2;
-      ec_SDOread(i, 0x1C33, 1, FALSE,&size,&value,EC_TIMEOUTRXM);
-      std::cout<<"Mode in "<<value;
-      size = 4;
-      ec_SDOread(i, 0x1C33, 2, FALSE,&size,&value,EC_TIMEOUTRXM);
-      std::cout<<" cycle out "<<value;
-      size = 4;
-      ec_SDOread(i, 0x1C33, 3, FALSE,&size,&value,EC_TIMEOUTRXM);
-      std::cout<<" shift in "<<value<<std::endl;
-      }
   return true;
 }
 
@@ -272,8 +240,6 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     {
 	/* Get the next message from realtime_thread */
 	ret = read(fdInput, inputBuf, inputSize);
-//	std::cout<<"DC slave "<<ec_DCtime<<std::endl;
-	
 	if (ret <= 0)
 	{
 	    perror("read");
@@ -283,7 +249,6 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
 	{
 	    m_drivers[i] -> update();
 	}
-//	std::cout<<"DC slave2 "<<ec_DCtime<<std::endl;
 	        
     }
 }
