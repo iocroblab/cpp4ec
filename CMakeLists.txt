@@ -29,12 +29,13 @@ LIST( GET CPP4EC_VERSIONS 0 CPP4EC_VERSION_MAJOR)
 LIST( GET CPP4EC_VERSIONS 1 CPP4EC_VERSION_MINOR)
 LIST( GET CPP4EC_VERSIONS 2 CPP4EC_VERSION_PATCH)
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
+
 # Some example programs use "libpthread"
 # http://stackoverflow.com/questions/1620918/cmake-and-libpthread
 find_package(Threads REQUIRED)
 include(FindPkgConfig)
 
-#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
@@ -93,28 +94,29 @@ else(ENABLE_RT)
 endif(ENABLE_RT)
 
 #PUGI_XML
-find_path(PUGI_XML_INCLUDE_DIRS pugixml.hpp
-    PATHS /usr/include
-	  /user/local/include)
-
-if(PUGI_XML_INCLUDE_DIRS)
-  message("Found PUGI_XML_INCLUDE_DIRS  on: ${PUGI_XML_INCLUDE_DIRS}")
-  include_directories(${PUGI_XML_INCLUDE_DIRS})
-else(PUGI_XML_INCLUDE_DIRS)
-  message(SEND_ERROR "Not found PUGI_XML_INCLUDE_DIRS")
-endif(PUGI_XML_INCLUDE_DIRS)
-
-find_library (PUGI_XML_LIBRARIES
-                NAMES pugixml libpugixml
-                PATHS /usr/lib
-		      /usr/local/lib
-                      /user/local/lib)
-if(PUGI_XML_LIBRARIES)
-  message("Found PUGI_XML_LIBRARIES on:" ${PUGI_XML_LIBRARIES})
-else(PUGI_XML_LIBRARIES)
-  message(SEND_ERROR "Not found PUGI_XML_LIBRARIES")
-endif(PUGI_XML_LIBRARIES)
-
+find_package(PugiXML REQUIRED)
+# find_path(PUGI_XML_INCLUDE_DIRS pugixml.hpp
+#     PATHS /usr/include
+# 	  /user/local/include)
+#
+# if(PUGI_XML_INCLUDE_DIRS)
+#   message("Found PUGI_XML_INCLUDE_DIRS  on: ${PUGI_XML_INCLUDE_DIRS}")
+#   include_directories(${PUGI_XML_INCLUDE_DIRS})
+# else(PUGI_XML_INCLUDE_DIRS)
+#   message(SEND_ERROR "Not found PUGI_XML_INCLUDE_DIRS")
+# endif(PUGI_XML_INCLUDE_DIRS)
+#
+# find_library (PUGI_XML_LIBRARIES
+#                 NAMES pugixml libpugixml
+#                 PATHS /usr/lib
+# 		      /usr/local/lib
+#                       /user/local/lib)
+# if(PUGI_XML_LIBRARIES)
+#   message("Found PUGI_XML_LIBRARIES on:" ${PUGI_XML_LIBRARIES})
+# else(PUGI_XML_LIBRARIES)
+#   message(SEND_ERROR "Not found PUGI_XML_LIBRARIES")
+# endif(PUGI_XML_LIBRARIES)
+#
 
 add_subdirectory(src)
 add_subdirectory(tests)
