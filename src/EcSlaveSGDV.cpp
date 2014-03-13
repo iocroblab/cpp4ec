@@ -14,13 +14,12 @@ namespace cpp4ec
 {
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
-    useDC (true), SYNC0TIME (1000000), SHIFT (125000),SHIFTMASTER (1000000), PDOerrorsTolerance (9),
-    recieveEntry(0),transmitEntry(0), 
+    recieveEntry(0),transmitEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),outputBuf(NULL),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
-    rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false),
-    pBufferOut(NULL),pBufferIn(NULL),m_mutex(m_slave_nr-1),inputBuf(NULL),outputBuf(NULL)
+    rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false)
+    
 {
    m_params.resize(0);
    inputObjects.resize(0);
@@ -59,11 +58,8 @@ void EcSlaveSGDV::update()
     readVelocity (velocity);
     readTorque (torque);
     //signal
-    slaveValues(m_slave_nr,statusWord,position,velocity,torque);
-
-    
+    slaveValues(m_slave_nr,statusWord,position,velocity,torque);    
 }
-
 
 const std::string& EcSlaveSGDV::getName() const
 {
@@ -83,8 +79,8 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
     inputBuf = new char[inputSize];
-    outputBuf = new char[outputSize];
-    memset(outputBuf,0, outputSize);
+//     outputBuf = new char[outputSize];
+//     memset(outputBuf,0, outputSize);
     memset(inputBuf,0, inputSize);
 
 
@@ -122,6 +118,13 @@ std::vector<char*> EcSlaveSGDV::start() throw(EcErrorSGDV)
   return bufferList;
 }
 
+void EcSlaveSGDV::setDC(unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV)
+{
+    ec_dcsync0(m_slave_nr,true, sync0Time, sync0Shift);
+}
+
+
+
 void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
 {
     pBufferIn=input;
@@ -133,7 +136,7 @@ std::vector<char*> EcSlaveSGDV::stop() throw(EcErrorSGDV)
   for( int i = 0; i < bufferList.size(); i++)
       delete[] bufferList[i];
   delete[] inputBuf;
-  delete[] outputBuf;
+//   delete[] outputBuf;
       
   bufferList.resize(0);
   char * temp1 = new char[outputSize];

@@ -23,8 +23,8 @@ namespace cpp4ec
    RT_TASK master;
   
 
-EcMaster::EcMaster(int cycleTime, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime),inputSize(0),outputSize(0), threadFinished (false), 
-slaveInformation(slaveInfo), printSDO(true), printMAP(true)
+EcMaster::EcMaster(int cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), slaveInformation(slaveInfo),
+inputSize(0),outputSize(0), threadFinished (false),  printSDO(true), printMAP(true)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -91,7 +91,8 @@ bool EcMaster::preconfigure() throw(EcError)
 	if(slaveInformation)
 	    slaveInfo();
 	//Configure distributed clock
-	ec_configdc();
+	if(m_useDC)
+	    ec_configdc();
 	//Configure IOmap
 	ec_config_map(&m_IOmap);
 
@@ -154,9 +155,12 @@ bool EcMaster::configure() throw(EcError)
   success = switchState (EC_STATE_SAFE_OP);
   if (!success)
     throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
-
-  for (int i = 1; i <=  m_drivers.size(); i++)
-       ec_dcsync0(i,true, SYNC0TIME,0);	
+  
+  if (m_useDC)
+  {
+      for (int i = 0; i <  m_drivers.size(); i++)
+	  m_drivers[i] -> setDC(m_cycleTime, 0);
+  }
         
   rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
   rt_task_set_periodic (&task, TM_NOW, m_cycleTime);

@@ -22,6 +22,9 @@ namespace cpp4ec
   
   std::vector<char*> EcSlave::stop(){}
   
+  void EcSlave::setDC(unsigned int sync0Time, unsigned int sync0Shift){}
+
+  
   void EcSlave::setPDOBuffer(char * input, char * output){}
 
   bool EcSlave::requestState( ec_state state)

@@ -48,7 +48,7 @@ public:
      * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information
      *    
      */
-    EcMaster(int cycleTime = 1000000, bool slaveInfo = false);
+    EcMaster(int cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
 
     /**
      *  \brief Destructor
@@ -121,11 +121,13 @@ private:
     char * ecPort;
     char m_IOmap[4096];
     int m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
+    bool m_useDC;
     std::vector<EcSlave*> m_drivers;
     int* offSetOutput;
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
+    
     
     //ethercat switchState function
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
