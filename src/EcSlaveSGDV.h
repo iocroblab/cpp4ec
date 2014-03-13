@@ -154,6 +154,14 @@ public:
      * 
      */
      std::vector<char*> stop() throw(EcErrorSGDV);
+     
+     /**
+     * \brief Set DC
+     * 
+     * \return Configure the sync0 event
+     * 
+     */
+     void setDC(unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV);
 
     /**
      * \brief Sets locations Buffer
@@ -285,21 +293,18 @@ public:
 
 
 private:
-
-    //Variables used for the properties
-    bool useDC;
-    unsigned int PDOerrorsTolerance;
-    unsigned int SYNC0TIME;
-    unsigned int SHIFT;
-    unsigned int SHIFTMASTER;
-    
-    int m_mutex;
+//     unsigned int sync0Time;
+//     unsigned int sync0Shift;
     
     int outputSize;
     int inputSize;
     
     int transmitEntry;
     int recieveEntry;
+    char* outputBuf;
+    char* inputBuf;
+    char* pBufferOut;
+    char* pBufferIn;
     
     void readXML() throw(EcErrorSGDV);
     bool addPDOobject(std::string PDOentry,int value, int subindex);
@@ -321,13 +326,6 @@ private:
     bool rPositionCapable;
     bool rVelocityCapable;
     bool rTorqueCapable;
-    
-    char* outputBuf;
-    char* inputBuf;
-    char* pBufferOut;
-    char* pBufferIn;
-    
-
     
     std::mutex slaveInMutex;
     std::mutex slaveOutMutex;

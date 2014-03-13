@@ -95,6 +95,12 @@ public:
     virtual ec_state getState();
     
     /**
+    * \brief Set the Distributed clock
+    *   
+    */
+    virtual void setDC(unsigned int sync0Time, unsigned int sync0Shift);
+    
+    /**
     * \brief Set PDO buffer
     *   
     */
