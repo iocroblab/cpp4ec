@@ -34,7 +34,7 @@ LIST( GET CPP4EC_VERSIONS 2 CPP4EC_VERSION_PATCH)
 find_package(Threads REQUIRED)
 include(FindPkgConfig)
 
-#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMakeModules)
+#set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
 
 include_directories(${PROJECT_SOURCE_DIR})
 
