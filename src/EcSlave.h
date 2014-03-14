@@ -2,8 +2,8 @@
 #define ECSLAVE_H
 
 #include "EcError.h"
-#include <iostream>
-#include <sstream>
+// #include <iostream>
+// #include <sstream>
 #include <vector>
 #include <stdint.h>
 
@@ -98,7 +98,7 @@ public:
     * \brief Set the Distributed clock
     *   
     */
-    virtual void setDC(unsigned int sync0Time, unsigned int sync0Shift);
+    virtual void setDC(bool active, unsigned int sync0Time, unsigned int sync0Shift);
     
     /**
     * \brief Set PDO buffer

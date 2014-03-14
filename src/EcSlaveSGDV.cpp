@@ -1,20 +1,20 @@
 #include "EcSlaveSGDV.h"
 #include "EcUtil.h"
 
-#include <sys/mman.h>
 #include "EcSlaveSGDV.h"
 #include "EcSlaveFactory.h"
 
 #include <pugixml.hpp>
-#include <stdint.h>
-#include <stdlib.h> 
-#include <unistd.h>
+// #include <sys/mman.h>
+// #include <stdint.h>
+// #include <stdlib.h> 
+// #include <unistd.h>
 
 namespace cpp4ec
 {
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
-    recieveEntry(0),transmitEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),outputBuf(NULL),
+    recieveEntry(0),transmitEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
@@ -36,12 +36,6 @@ EcSlaveSGDV::~EcSlaveSGDV()
            delete[] bufferList[i];
     
 }
-// void EcSlaveSGDV::update()
-// {
-//     slaveInMutex.lock();
-//     memcpy(pBufferOut,outputBuf, outputSize);
-//     slaveInMutex.unlock();
-// }
     
 void EcSlaveSGDV::update()
 {
@@ -79,8 +73,6 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
     inputBuf = new char[inputSize];
-//     outputBuf = new char[outputSize];
-//     memset(outputBuf,0, outputSize);
     memset(inputBuf,0, inputSize);
 
 
@@ -118,12 +110,10 @@ std::vector<char*> EcSlaveSGDV::start() throw(EcErrorSGDV)
   return bufferList;
 }
 
-void EcSlaveSGDV::setDC(unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV)
+void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV)
 {
-    ec_dcsync0(m_slave_nr,true, sync0Time, sync0Shift);
+    ec_dcsync0(m_slave_nr, active, sync0Time, sync0Shift);
 }
-
-
 
 void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
 {
@@ -136,7 +126,6 @@ std::vector<char*> EcSlaveSGDV::stop() throw(EcErrorSGDV)
   for( int i = 0; i < bufferList.size(); i++)
       delete[] bufferList[i];
   delete[] inputBuf;
-//   delete[] outputBuf;
       
   bufferList.resize(0);
   char * temp1 = new char[outputSize];
@@ -300,8 +289,6 @@ void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 	  temp.param = strtol (param.child_value(),NULL,0);
 	  addPDOobject(PDOentry,temp.param,temp.subindex);
 	}
-	
-	
 	else
 	 throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
     }
@@ -406,9 +393,7 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
 	recieveEntry += 1;
     }
 	
-}
-    
-    
+}    
     
 void EcSlaveSGDV::setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param)
 {
@@ -419,6 +404,7 @@ void EcSlaveSGDV::getSGDVObject(uint16_t index, uint8_t subindex, int *psize, vo
 {
   ec_SDOread(m_slave_nr, index, subindex, FALSE,psize,param,EC_TIMEOUTRXM);
 }
+
 
 namespace {
 cpp4ec::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)

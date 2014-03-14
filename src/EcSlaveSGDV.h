@@ -18,7 +18,7 @@ extern "C"
 
 #include <boost/signals2/signal.hpp>
 #include <vector>
-#include <iostream>
+// #include <iostream>
 #include <mutex> 
 
 //PDO objects
@@ -158,10 +158,14 @@ public:
      /**
      * \brief Set DC
      * 
-     * \return Configure the sync0 event
+     * Configure the sync0 event
+     * 
+     * \param active true to active DC, false to disconect.
+     * \param sync0Time the cycle time of the sync0 event
+     * \param sync0Shift the shifted time of the sync0 event  
      * 
      */
-     void setDC(unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV);
+     void setDC(bool active, unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV);
 
     /**
      * \brief Sets locations Buffer

@@ -15,7 +15,6 @@ extern "C"
 #include <unistd.h>
 //xenomai header
 #include <native/task.h>
-#define SYNC0TIME 1000000
 
 namespace cpp4ec
 {
@@ -85,9 +84,7 @@ bool EcMaster::preconfigure() throw(EcError)
 	  }
 
 	}
-// 	slaveInMutex = new std::mutex[ec_slavecount];
-// 	slaveOutMutex = new std::mutex[ec_slavecount];
-
+	
 	if(slaveInformation)
 	    slaveInfo();
 	//Configure distributed clock
@@ -95,8 +92,6 @@ bool EcMaster::preconfigure() throw(EcError)
 	    ec_configdc();
 	//Configure IOmap
 	ec_config_map(&m_IOmap);
-
-
 
     }else{
 	std::cout << "Configuration of slaves failed!!!" << std::endl;
@@ -116,7 +111,6 @@ bool EcMaster::preconfigure() throw(EcError)
   std::cout<<"Master preconfigured!!!"<<std::endl;
   return true;
 }
-
 
 bool EcMaster::configure() throw(EcError)
 {
@@ -159,7 +153,7 @@ bool EcMaster::configure() throw(EcError)
   if (m_useDC)
   {
       for (int i = 0; i <  m_drivers.size(); i++)
-	  m_drivers[i] -> setDC(m_cycleTime, 0);
+	  m_drivers[i] -> setDC(true, m_cycleTime, 0);
   }
         
   rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
@@ -182,14 +176,7 @@ bool EcMaster::configure() throw(EcError)
 
 bool EcMaster::start() throw(EcError)
 {
-   int ret;
    rt_task_set_priority(&master,0);
-
-   //Starts a preiodic tasck that sends frames to slaves
-/*   rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
-   rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-   rt_task_start (&task, &rt_thread, NULL);
-*/   usleep(10000);
    
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
       std::cout<<"fail asprintf"<<std::endl;
@@ -260,11 +247,9 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
 /* This function uses the sockect createdx in the configure to send data to the realtime thread */
 void EcMaster::update(void) throw(EcError)
 {
-   int ret;
-   
+   int ret;   
    /* Send a message to realtime_thread */
    ret = write(fdOutput,outputBuf,outputSize);
-
    if(ret<=0)
    {
        perror("write");
@@ -272,18 +257,15 @@ void EcMaster::update(void) throw(EcError)
    }
 }
 
-
 std::vector<EcSlave*> EcMaster::getSlaves()
 {
     return m_drivers;
 }
 
-
 bool EcMaster::stop() throw(EcError)
 {
 
   rt_task_set_priority(&master,20);
-
 
   std::vector<char*> commandList;  
   //Stops slaves
@@ -300,40 +282,38 @@ bool EcMaster::stop() throw(EcError)
   //Stops the NRT thread
   threadFinished = true; 
   updateThread.join();
-  for (int i = 1; i <=  m_drivers.size(); i++)
-      ec_dcsync0(i,false, SYNC0TIME,0);	
-  
-  // delete the periodic task
-  rt_task_delete(&task);
   
   std::cout<<"Master stoped!"<<std::endl;
   return true;
 }
 
-
 bool EcMaster::reset() throw(EcError)
 {
-   bool success;
+   if (m_useDC)
+   {
+       for (int i = 0; i <  m_drivers.size(); i++)
+	  m_drivers[i] -> setDC(false, m_cycleTime, 0);
+   }
+   // delete the periodic task
+   rt_task_delete(&task);
    
-   success = switchState (EC_STATE_INIT);
+   bool success = switchState (EC_STATE_INIT);
    if (!success)
       throw(EcError(EcError::FAIL_SWITCHING_STATE_INIT));
 
    for (unsigned int i = 0; i < m_drivers.size(); i++)
          delete m_drivers[i];
    m_drivers.resize(0);      
+   
    delete[] outputBuf;
    delete[] inputBuf;
    delete[] offSetOutput;
-//    delete[] slaveInMutex;
-//    delete[] slaveOutMutex;
    delete[] ecPort;
    
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
 
-   ec_close();
-   
+   ec_close();   
    std::cout<<"Master reseted!"<<std::endl;
 
    return true;
