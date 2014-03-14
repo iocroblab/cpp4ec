@@ -34,7 +34,15 @@ const char* EcError::what() const throw()
      case ECAT_ERROR:
        return ec_elist2string();
        break;
-
+       
+     case FAIL_EC_INIT:
+	 return std::string("Error: Could not initialize master ").c_str();
+	 break;
+	 
+     case FAIL_EC_CONFIG_INIT: 
+	 return std::string("Error: Configuration of slaves failed ").c_str();
+	 break;
+    
      case   FAIL_SWITCHING_STATE_INIT:
        state=EC_STATE_INIT;
        for (int i = 1; i <= ec_slavecount; i++)

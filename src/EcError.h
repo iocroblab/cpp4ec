@@ -13,8 +13,11 @@ class EcError/*: public exception*/
 {
 public:
 
-  enum {
+  enum 
+  {
     ECAT_ERROR,
+    FAIL_EC_INIT,
+    FAIL_EC_CONFIG_INIT,
     FAIL_SWITCHING_STATE_INIT,
     FAIL_SWITCHING_STATE_PRE_OP,
     FAIL_SWITCHING_STATE_SAFE_OP,

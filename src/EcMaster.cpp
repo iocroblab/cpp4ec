@@ -47,130 +47,103 @@ EcMaster::~EcMaster()
    //must clean memory and delete tasks
 }
 
-bool EcMaster::preconfigure() throw(EcError)
+bool EcMaster::configure() throw(EcError)
 {
-  bool success;
-  int size = ethPort.size();
-  ecPort = new char[size];
-  strcpy (ecPort, ethPort.c_str());  
+    bool success;
+    int size = ethPort.size();
+    ecPort = new char[size];
+    strcpy (ecPort, ethPort.c_str());  
 
-  // initialise SOEM, bind socket to ifname
-  if (ec_init(ecPort) > 0)
-  {
+    // initialise SOEM, bind socket to ifname
+    if (!(ec_init(ecPort) > 0))
+	throw(EcError(EcError::FAIL_EC_INIT));
+    
     std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
-
+    
     //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
-    if (ec_config_init(FALSE) > 0)
+    if (!(ec_config_init(FALSE) > 0))
+	throw(EcError(EcError::FAIL_EC_CONFIG_INIT));
+  
+    std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
+    std::cout << "Request PRE-OPERATIONAL state for all slaves"<< std::endl;
+
+    success = switchState (EC_STATE_PRE_OP);
+    if (!success)
+	throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
+
+    for (int i = 1; i <= ec_slavecount; i++)
     {
-	std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
-	std::cout << "Request PRE-OPERATIONAL state for all slaves"<< std::endl;
+	EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
+	if (!driver)
+	    	throw(EcError(EcError::FAIL_CREATING_DRIVER));
 
-	success = switchState (EC_STATE_PRE_OP);
-	if (!success)
-	  throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
-
-	for (int i = 1; i <= ec_slavecount; i++)
-	{
-	  EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
-	  if (driver)
-	  {
-	    m_drivers.push_back(driver);
-	    std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
-	    driver -> configure();
-       
-	  }else{
-	    std::cout << "Could not create driver for "<< ec_slave[i].name << std::endl;
-	    throw( EcError (EcError::FAIL_CREATING_DRIVER));
-	  }
-
-	}
-	
-	if(slaveInformation)
-	    slaveInfo();
-	//Configure distributed clock
-	if(m_useDC)
-	    ec_configdc();
-	//Configure IOmap
-	ec_config_map(&m_IOmap);
-
-    }else{
-	std::cout << "Configuration of slaves failed!!!" << std::endl;
-	if(EcatError)
-	    throw(EcError(EcError::ECAT_ERROR));
-	return false;
-
+	m_drivers.push_back(driver);
+	std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
+	driver -> configure();
     }
+    
+    if(slaveInformation)
+	slaveInfo();
+    //Configure distributed clock
+    if(m_useDC)
+	ec_configdc();
+    //Configure IOmap
+    ec_config_map(&m_IOmap);
+
+    if(EcatError)
+	throw(EcError(EcError::ECAT_ERROR));  
+
+    //Calulating the buffers size
+    for(int i = 1; i <= ec_slavecount; i++)
+    {
+	inputSize += ec_slave[i].Ibytes;
+	outputSize += ec_slave[i].Obytes;
+    }
+    outputBuf = new char [outputSize];
+    inputBuf = new char[inputSize];
+    memset(outputBuf,0, outputSize);
+    memset(inputBuf,0, inputSize);
+
+    int offSetInput = 0;
+    offSetOutput = new int[ec_slavecount];
+
+    offSetOutput[0] = 0;
+    for(int i = 0; i < m_drivers.size();i++)
+    {
+	m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput[i]);
+	if(i < (m_drivers.size()-1))
+	{
+	    offSetOutput[i+1] = offSetOutput[i] + ec_slave[i+1].Obytes;
+	    offSetInput  += ec_slave[i+1].Ibytes;
+	}
+    }
+    
+    std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
+    success = switchState (EC_STATE_SAFE_OP);
+    if (!success)
+	throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
+    
+    if (m_useDC)
+    {
+	for (int i = 0; i <  m_drivers.size(); i++)
+	    m_drivers[i] -> setDC(true, m_cycleTime, 0);
+    }
+	    
+    rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
+    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
+    rt_task_start (&task, &rt_thread, NULL);
+
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));
 
-  }else{
-    std::cout << "Could not initialize master on " << ethPort.c_str() << std::endl;
-    return false;
-  }  
-  
-  std::cout<<"Master preconfigured!!!"<<std::endl;
-  return true;
-}
-
-bool EcMaster::configure() throw(EcError)
-{
-  bool success;
-  int32_t wkc, expectedWKC;
-
-  if(EcatError)
-    throw(EcError(EcError::ECAT_ERROR));  
-
-  //Calulating the buffers size
-  for(int i = 1; i <= ec_slavecount; i++)
-  {
-      inputSize += ec_slave[i].Ibytes;
-      outputSize += ec_slave[i].Obytes;
-  }
-  outputBuf = new char [outputSize];
-  inputBuf = new char[inputSize];
-  memset(outputBuf,0, outputSize);
-  memset(inputBuf,0, inputSize);
-
-  int offSetInput = 0;
-  offSetOutput = new int[ec_slavecount];
-
-  offSetOutput[0] = 0;
-  for(int i = 0; i < m_drivers.size();i++)
-  {
-      m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput[i]);
-      if(i < (m_drivers.size()-1))
-      {
-          offSetOutput[i+1] = offSetOutput[i] + ec_slave[i+1].Obytes;
-          offSetInput  += ec_slave[i+1].Ibytes;
-      }
-  }
-  
-  std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
-  success = switchState (EC_STATE_SAFE_OP);
-  if (!success)
-    throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
-  
-  if (m_useDC)
-  {
-      for (int i = 0; i <  m_drivers.size(); i++)
-	  m_drivers[i] -> setDC(true, m_cycleTime, 0);
-  }
-        
-  rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
-  rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-  rt_task_start (&task, &rt_thread, NULL);
-
-  if(EcatError)
-    throw(EcError(EcError::ECAT_ERROR));
-
-  std::cout << "Request OPERATIONAL state for all slaves" << std::endl;
-  success = switchState(EC_STATE_OPERATIONAL);
-  if (!success)
-	throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
-  
-  std::cout<<"Master configured!!!"<<std::endl;
-      
-  return true;
+    std::cout << "Request OPERATIONAL state for all slaves" << std::endl;
+    success = switchState(EC_STATE_OPERATIONAL);
+    if (!success)
+	    throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
+    
+    std::cout<<"Master configured!!!"<<std::endl;
+	
+    return true;
 }
 
 

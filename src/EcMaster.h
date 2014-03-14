@@ -55,13 +55,6 @@ public:
      */
     ~EcMaster();
 
-    /**
-     *  \brief preConfiguration
-     *
-     * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
-     *
-     */
-    bool preconfigure() throw(EcError);
 
     /**
      *  \brief Configuration

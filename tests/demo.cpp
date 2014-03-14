@@ -7,8 +7,6 @@ int main ()
   cpp4ec::EcMaster master;
   try
   {
-    std::cout<<"trying"<<std::endl;
-    master.preconfigure();
     master.configure();
     master.start();
     usleep(3000000);
@@ -17,7 +15,6 @@ int main ()
   }
   catch (EcError& e)
   {
-    std::cout<<"Exeption"<<std::endl;
     std::cout<<e.what()<<std::endl;
   }
     
