@@ -34,6 +34,7 @@ EcSlaveSGDV::~EcSlaveSGDV()
 {
     for( int i = 0; i < bufferList.size(); i++)
            delete[] bufferList[i];
+    delete[] inputBuf;
     
 }
     
@@ -74,7 +75,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
-
+    
 
 
     std::cout << getName() << " configured !" <<std::endl;
@@ -87,6 +88,10 @@ std::vector<char*> EcSlaveSGDV::start() throw(EcErrorSGDV)
   char * temp1 = new char[outputSize];
   char * temp2 = new char[outputSize];
   char * temp3 = new char[outputSize];
+
+  for( int i = 0; i < bufferList.size(); i++)
+      delete[] bufferList[i];
+  bufferList.resize(0);
   
   writeControlWord(CW_SHUTDOWN);
   slaveOutMutex.lock();
@@ -106,7 +111,7 @@ std::vector<char*> EcSlaveSGDV::start() throw(EcErrorSGDV)
   memcpy(temp3,pBufferOut,outputSize);
   slaveOutMutex.unlock();
   bufferList.push_back(temp3);
-  
+
   return bufferList;
 }
 
@@ -125,7 +130,6 @@ std::vector<char*> EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
   for( int i = 0; i < bufferList.size(); i++)
       delete[] bufferList[i];
-  delete[] inputBuf;
       
   bufferList.resize(0);
   char * temp1 = new char[outputSize];
