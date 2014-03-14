@@ -7,16 +7,17 @@
 
 int main ()
 {
-  cpp4ec::EcMaster master;
+  cpp4ec::EcMaster master(1000000,true);// 1ms using DC
   std::vector<cpp4ec::EcSlave*> drivers;
+  int32_t velocity;
+   
   try
   {
     master.configure();
-    master.start(); 
     drivers=master.getSlaves();
-    int32_t velocity;
+    
+    master.start(); 
     velocity = 50000;
-
     for (int j = 0; j<3; j++)
     {
         ((cpp4ec::EcSlaveSGDV*)drivers[j])->writeVelocity (velocity);
@@ -24,7 +25,22 @@ int main ()
         master.update();
     }    
     usleep(5000000);    
-    master.stop();  
+    master.stop();
+    
+    usleep(1000000);
+    
+    velocity = -50000;
+    master.start();
+    for (int j = 0; j<3; j++)
+    {
+        ((cpp4ec::EcSlaveSGDV*)drivers[j])->writeVelocity (velocity);
+        usleep(1000);
+        master.update();
+    }
+    usleep(5000000);    
+    master.stop();                                
+        
+          
     master.reset(); 
   }
   catch (EcError& e)

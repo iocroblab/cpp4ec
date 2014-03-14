@@ -255,7 +255,10 @@ bool EcMaster::stop() throw(EcError)
   //Stops the NRT thread
   threadFinished = true; 
   updateThread.join();
-  
+
+  close(fdInput);
+  close(fdOutput);
+
   std::cout<<"Master stoped!"<<std::endl;
   return true;
 }
