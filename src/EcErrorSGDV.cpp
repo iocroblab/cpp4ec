@@ -14,29 +14,6 @@ const char* EcErrorSGDV::what() const throw()
 //   const char * error;
   switch(getErrorCode())
    {
-    case ECAT_ERROR:
-    case FAIL_SWITCHING_STATE_INIT:
-    case FAIL_SWITCHING_STATE_PRE_OP:
-    case FAIL_SWITCHING_STATE_SAFE_OP:
-    case FAIL_SWITCHING_STATE_OPERATIONAL:
-    case FAIL_CREATING_DRIVER:     
-//     case FAIL_SOCKET_OUTPUT:
-//     case FAIL_SOCKET_INPUT:
-//     case FAIL_SETSOCKOPT_OUTPUT:
-//     case FAIL_SETSOCKOPT_INPUT:
-//     case FAIL_BINDING:
-//     case FAIL_CONNECTING:
-//     case FAIL_GETTING_PEERNAME_INPUT:
-//     case FAIL_RECIEVING:
-//     case FAIL_SENDING:
-//     case FAIL_OPENING_OUTPUT:
-//     case FAIL_WRITING:
-//     case FAIL_OPENING_INPUT:
-//     case FAIL_READING:
-      errormessage = EcError::what();
-      return (std::string(errormessage)+slave_name).c_str();
-      break;
-      
     case XML_STRUCTURE_ERROR:
       return (std::string("Error: Wrong XML structure. ")+slave_name).c_str();
       break;
@@ -66,7 +43,8 @@ const char* EcErrorSGDV::what() const throw()
       break;
       
     default:
-      return (std::string("Error: Invalid error code or unexpected error. ")+slave_name).c_str();
+      errormessage = EcError::what();
+      return (std::string(errormessage)+slave_name).c_str();
       break;
    }
 }
