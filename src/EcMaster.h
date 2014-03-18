@@ -45,7 +45,8 @@ public:
      * \brief Constructor 
      *
      * \param cycleTime The period of the RT task that send PDO.
-     * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information
+     * \param useDC if true the slaves use DC synchronization.
+     * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information.
      *    
      */
     EcMaster(int cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
