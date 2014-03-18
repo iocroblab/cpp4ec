@@ -110,59 +110,21 @@ const char* EcError::what() const throw()
      case FAIL_CREATING_DRIVER:
 
        return std::string("Error: Failed creating driver").c_str();
-       break;
+       break;       
        
-       
-     case FAIL_SOCKET_OUTPUT:
-       return std::string("Error: Failed creating output socket").c_str();
-       break;
-	       
-       
-    case FAIL_SOCKET_INPUT:
-        return std::string("Error: Failed creating input socket").c_str();
-        break;
-       
-    case FAIL_SETSOCKOPT_OUTPUT:
-        return std::string("Error: Failed setting options of the output socket").c_str();
-        break;
-	
-    case FAIL_SETSOCKOPT_INPUT:
-	return std::string("Error: Failed setting options of the input socket").c_str();
-        break;
-		
-    case FAIL_BINDING:
-	return std::string("Error: Failed binding").c_str();
-        break;
-	
-    case FAIL_CONNECTING:
-	return std::string("Error: Failed connecting").c_str();
-        break;
-	
-    case FAIL_GETTING_PEERNAME_INPUT:
-	return std::string("Error: Failed getting peer name input").c_str();
-        break;
-	
-    case FAIL_RECIEVING:
-	return std::string("Error: Failed recieving").c_str();
-        break;
-	
-    case FAIL_SENDING:
-	return std::string("Error: Failed sending").c_str();
-        break;
-	
-    case FAIL_OPENING_OUTPUT:
+     case FAIL_OPENING_OUTPUT:
 	return std::string("Error: Failed opening output socket").c_str();
         break;
 	
-    case FAIL_WRITING:
+     case FAIL_WRITING:
 	return std::string("Error: Failed writing on the output socket").c_str();
         break;
 	
-    case FAIL_OPENING_INPUT:
+     case FAIL_OPENING_INPUT:
 	return std::string("Error: Failed reading the input socket").c_str();
         break;
 	
-    case FAIL_READING:
+     case FAIL_READING:
 	return std::string("Error: Failed reading from the intput socket").c_str();
         break;
 

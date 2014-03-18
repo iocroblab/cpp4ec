@@ -18,7 +18,6 @@ extern "C"
 
 #include <boost/signals2/signal.hpp>
 #include <vector>
-// #include <iostream>
 #include <mutex> 
 
 //PDO objects
@@ -297,18 +296,15 @@ public:
 
 
 private:
-//     unsigned int sync0Time;
-//     unsigned int sync0Shift;
     
     int outputSize;
     int inputSize;
     
     int transmitEntry;
-    int recieveEntry;
-    char* outputBuf;
-    char* inputBuf;
+    int recieveEntry;    
     char* pBufferOut;
-    char* pBufferIn;
+    char* pBufferIn;  
+    char* inputBuf;
     
     void readXML() throw(EcErrorSGDV);
     bool addPDOobject(std::string PDOentry,int value, int subindex);

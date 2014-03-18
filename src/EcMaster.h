@@ -132,6 +132,8 @@ private:
     int fdOutput,fdInput;
     std::thread updateThread;
     void update_EcSlaves(void) throw(EcError);
+    
+    int unusedVariable;
 
     //Ethercat slaveinfo stuff
     bool slaveInformation;

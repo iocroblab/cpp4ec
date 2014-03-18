@@ -22,8 +22,8 @@ namespace cpp4ec
    RT_TASK master;
   
 
-EcMaster::EcMaster(int cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), slaveInformation(slaveInfo),
-inputSize(0),outputSize(0), threadFinished (false),  printSDO(true), printMAP(true)
+EcMaster::EcMaster(int cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), 
+inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)

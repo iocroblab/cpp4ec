@@ -14,7 +14,7 @@ namespace cpp4ec
 {
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
-    recieveEntry(0),transmitEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
+    transmitEntry(0), recieveEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
@@ -26,7 +26,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    outputObjects.resize(0);
    bufferList.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
-   
+
    readXML();  
 }
 
@@ -75,8 +75,6 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
-    
-
 
     std::cout << getName() << " configured !" <<std::endl;
     
@@ -149,11 +147,8 @@ std::vector<char*> EcSlaveSGDV::stop() throw(EcErrorSGDV)
 bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 {
     if(entry < 0 || entry >= outputObjects.size())
-    {
-        std::cout<<"entry "<<entry<<std::endl;
-       	std::cout<<"outputsize "<<outputObjects.size()<<std::endl;
-       	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
-    }
+	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
+    
     //write on the desired position of the PDO
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
@@ -170,7 +165,6 @@ bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
     slaveInMutex.unlock();
 }
 
-
 bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
 {
     if (!wControlWordCapable)
@@ -179,15 +173,16 @@ bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
     memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
     slaveOutMutex.unlock();
 }
+
 bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
 {
     if (!rStatusWordCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveInMutex.lock();
     memcpy (&statusWord ,inputBuf + inputObjects[statusWordEntry].offset, inputObjects[statusWordEntry].byteSize);
-    slaveInMutex.unlock();
-    
+    slaveInMutex.unlock();    
 } 
+
 bool EcSlaveSGDV::writePosition (int32_t position)
 {
     if (!wPositionCapable)
@@ -196,6 +191,7 @@ bool EcSlaveSGDV::writePosition (int32_t position)
     memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
     slaveOutMutex.unlock();
 }
+
 bool EcSlaveSGDV::readPosition (int32_t &position)
 {
     if (!rPositionCapable)
@@ -204,6 +200,7 @@ bool EcSlaveSGDV::readPosition (int32_t &position)
     memcpy (&position ,inputBuf + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
     slaveInMutex.unlock();
 }
+
 bool EcSlaveSGDV::writeVelocity (int32_t velocity)
 {
     if (!wVelocityCapable)
@@ -212,6 +209,7 @@ bool EcSlaveSGDV::writeVelocity (int32_t velocity)
     memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
     slaveOutMutex.unlock();
 }
+
 bool EcSlaveSGDV::readVelocity (int32_t &velocity)
 {
     if (!rVelocityCapable)
@@ -228,6 +226,7 @@ bool EcSlaveSGDV::writeTorque (int16_t torque)
     memcpy (pBufferOut + outputObjects[targetTorqueEntry].offset, &torque ,outputObjects[targetTorqueEntry].byteSize);
     slaveOutMutex.unlock();
 }
+
 bool EcSlaveSGDV::readTorque (int16_t &torque)
 {
     if (!rTorqueCapable)
@@ -396,6 +395,7 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
 	outputObjects.push_back(temp);
 	recieveEntry += 1;
     }
+    return true;
 	
 }    
     
