@@ -110,7 +110,11 @@ const char* EcError::what() const throw()
      case FAIL_CREATING_DRIVER:
 
        return std::string("Error: Failed creating driver").c_str();
-       break;       
+       break;
+       
+     case FAIL_OUTPUT_LABEL:
+	return std::string("Error: Failed setting the output device label").c_str();
+        break;
        
      case FAIL_OPENING_OUTPUT:
 	return std::string("Error: Failed opening output socket").c_str();
@@ -118,6 +122,10 @@ const char* EcError::what() const throw()
 	
      case FAIL_WRITING:
 	return std::string("Error: Failed writing on the output socket").c_str();
+        break;
+	
+     case FAIL_INPUT_LABEL:
+	return std::string("Error: Failed setting the input device label").c_str();
         break;
 	
      case FAIL_OPENING_INPUT:

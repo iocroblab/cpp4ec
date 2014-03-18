@@ -152,7 +152,7 @@ bool EcMaster::start() throw(EcError)
    rt_task_set_priority(&master,0);
    
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
-      std::cout<<"fail asprintf"<<std::endl;
+       throw(EcError(EcError::FAIL_OUTPUT_LABEL));
    
    fdOutput = open(devnameOutput, O_WRONLY);
    free(devnameOutput);
@@ -163,7 +163,7 @@ bool EcMaster::start() throw(EcError)
       throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
    if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
-    std::cout<<"fail asprintf"<<std::endl;
+       throw(EcError(EcError::FAIL_INPUT_LABEL));
               
    fdInput = open(devnameInput, O_RDONLY);
    free(devnameInput);
