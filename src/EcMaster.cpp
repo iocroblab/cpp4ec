@@ -23,7 +23,7 @@ namespace cpp4ec
    RT_TASK master;
   
 
-EcMaster::EcMaster(int cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), 
+EcMaster::EcMaster(unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), 
 inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true)
 {
    //reset del iomap memory
@@ -129,11 +129,10 @@ bool EcMaster::configure() throw(EcError)
 	for (int i = 0; i <  m_drivers.size(); i++)
 	    m_drivers[i] -> setDC(true, m_cycleTime, 0);
     }
-	    
     rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
     rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
     rt_task_start (&task, &rt_thread, NULL);
-
+    
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));
 
