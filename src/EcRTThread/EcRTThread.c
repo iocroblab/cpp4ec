@@ -12,6 +12,9 @@
 #include <execinfo.h>
 //socket header
 #include <rtdm/rtipc.h>
+#include <native/timer.h>
+
+#define timestampSize 8
 
 void rt_thread(void *unused)
 {
@@ -20,9 +23,9 @@ void rt_thread(void *unused)
    struct rtipc_port_label plabel_in, plabel_out;
    struct sockaddr_ipc saddr_in, saddr_out;
 
-   struct timespec ts;
-   struct timeval tv;
    socklen_t addrlen;
+   
+   unsigned long timestamp;
 
    int ret_in, ret_out, s_input, s_output, nRet;
    int inputSize = 0, outputSize = 0;
@@ -30,8 +33,8 @@ void rt_thread(void *unused)
    int i;
    for( i = 1; i <= ec_slavecount; i++)
    {
-      inputSize = inputSize + ec_slave[i].Ibytes;
-      outputSize = outputSize + ec_slave[i].Obytes;
+      inputSize = inputSize + ec_slave[i].Ibytes  + timestampSize;
+      outputSize = outputSize + ec_slave[i].Obytes  + timestampSize;
    }
 
    char * rtinputbuf = (char*) malloc(inputSize*(sizeof(char)));
@@ -144,13 +147,16 @@ void rt_thread(void *unused)
           nRet=ec_send_processdata();
           //make some check of sending data
           nRet=ec_receive_processdata(EC_TIMEOUTRET);
+	  timestamp = rt_timer_read();
+
 
 	    int offSet = 0;
 	    int i;
 	    for (i = 1; i<=ec_slavecount; i++)
 	    {
 		memcpy (rtinputbuf + offSet ,ec_slave[i].inputs, ec_slave[i].Ibytes);
-		offSet = offSet + ec_slave[i].Ibytes;
+		memcpy (rtinputbuf + offSet + timestampSize, &timestamp, timestampSize);
+		offSet = offSet + ec_slave[i].Ibytes  + timestampSize;
 	    }
 
 

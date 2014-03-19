@@ -5,16 +5,15 @@
 #include "EcSlaveFactory.h"
 
 #include <pugixml.hpp>
-// #include <sys/mman.h>
-// #include <stdint.h>
-// #include <stdlib.h> 
-// #include <unistd.h>
+
+#define timestampSize 8
+
 
 namespace cpp4ec
 {
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
-    transmitEntry(0), recieveEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
+    outputSize(0), inputSize(0), transmitEntry(0), recieveEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
@@ -44,16 +43,18 @@ void EcSlaveSGDV::update()
     memcpy(inputBuf,pBufferIn, inputSize);
     slaveInMutex.unlock();
     
+    unsigned long time;    
     uint16_t statusWord;
     int32_t position;
     int32_t velocity;
     int16_t torque;
+    readTimestamp(time);
     readStatusWord(statusWord);
     readPosition (position);
     readVelocity (velocity);
     readTorque (torque);
     //signal
-    slaveValues(m_slave_nr,statusWord,position,velocity,torque);    
+    slaveValues(m_slave_nr,statusWord,position,velocity,torque,time);    
 }
 
 const std::string& EcSlaveSGDV::getName() const
@@ -71,7 +72,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR,m_slave_nr,getName()));
 
     }
-    inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
+    inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize + timestampSize;
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
@@ -143,6 +144,14 @@ std::vector<char*> EcSlaveSGDV::stop() throw(EcErrorSGDV)
     
   return bufferList;
 }
+
+bool EcSlaveSGDV::readTimestamp (unsigned long& time)
+{
+    slaveInMutex.lock();
+    memcpy (&time, inputBuf + inputSize - timestampSize, timestampSize);
+    slaveInMutex.unlock();
+}
+    
 
 bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 {

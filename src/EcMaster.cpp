@@ -15,6 +15,7 @@ extern "C"
 #include <unistd.h>
 //xenomai header
 #include <native/task.h>
+#define timestampSize 8 //8 bytes to represent the time
 
 namespace cpp4ec
 {
@@ -96,7 +97,7 @@ bool EcMaster::configure() throw(EcError)
     //Calulating the buffers size
     for(int i = 1; i <= ec_slavecount; i++)
     {
-	inputSize += ec_slave[i].Ibytes;
+	inputSize += ec_slave[i].Ibytes + timestampSize;
 	outputSize += ec_slave[i].Obytes;
     }
     outputBuf = new char [outputSize];
@@ -114,7 +115,7 @@ bool EcMaster::configure() throw(EcError)
 	if(i < (m_drivers.size()-1))
 	{
 	    offSetOutput[i+1] = offSetOutput[i] + ec_slave[i+1].Obytes;
-	    offSetInput  += ec_slave[i+1].Ibytes;
+	    offSetInput  += ec_slave[i+1].Ibytes  + timestampSize;
 	}
     }
     

@@ -5,6 +5,7 @@
 #include "EcSlaveFactory.h"
 #include "EcError.h"
 
+
 extern "C"
 {
 #include <soem/ethercattype.h>
