@@ -10,6 +10,7 @@ int main ()
   cpp4ec::EcMaster master;// 1ms using DC
   std::vector<cpp4ec::EcSlave*> drivers;
   int32_t velocity;
+  unsigned long time = 0;
    
   try
   {
@@ -21,9 +22,10 @@ int main ()
     for (int j = 0; j<3; j++)
     {
         ((cpp4ec::EcSlaveSGDV*)drivers[j])->writeVelocity (velocity);
-        usleep(1000);
-        master.update();
-    }    
+        ((cpp4ec::EcSlaveSGDV*)drivers[j])->readTimestamp (time);
+        std::cout<<"timestamp "<<time<<std::endl;
+    }
+    master.update();    
     usleep(5000000);    
     master.stop();
 //    master.reset();
@@ -38,9 +40,8 @@ int main ()
     for (int j = 0; j<3; j++)
     {
         ((cpp4ec::EcSlaveSGDV*)drivers[j])->writeVelocity (velocity);
-        usleep(1000);
-        master.update();
     }    
+    master.update();
     usleep(5000000);    
     master.stop();
     master.reset();

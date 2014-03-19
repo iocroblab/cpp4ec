@@ -155,7 +155,7 @@ void rt_thread(void *unused)
 	    for (i = 1; i<=ec_slavecount; i++)
 	    {
 		memcpy (rtinputbuf + offSet ,ec_slave[i].inputs, ec_slave[i].Ibytes);
-		memcpy (rtinputbuf + offSet + timestampSize, &timestamp, timestampSize);
+		memcpy (rtinputbuf + offSet + ec_slave[i].Ibytes, &timestamp, timestampSize);
 		offSet = offSet + ec_slave[i].Ibytes  + timestampSize;
 	    }
 
