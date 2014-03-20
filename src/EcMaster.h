@@ -32,6 +32,7 @@ extern "C"
 #define NSEC_PER_SEC 1000000000
 /**
  * \example demo.cpp
+ * \example demo2.cpp
  * This is an example of how to use the EcMaster class.
  * 
  */

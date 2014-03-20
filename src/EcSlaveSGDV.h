@@ -29,6 +29,7 @@ typedef enum
     TARGET_TORQUE 	= 0x6071,
 }EcRecieveObjects;
 
+
 typedef enum
 {
     STATUS_WORD 	= 0x6041,
@@ -199,7 +200,7 @@ public:
     /**
     * \brief Write on the Controlword object
     * 
-    * It's an specific function to write on the Controlword object (0x6040).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to write on the Controlword object (0x6040). If this object is not mapped in the PDO, then an error will happen.
     * \param controlWord the desired value of the Controlword object .
     * 
     */
@@ -208,7 +209,7 @@ public:
     /**
     * \brief Read the Statusword object
     * 
-    * It's an specific function to read the Statusword object (0x6041).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to read the Statusword object (0x6041). If this object is not mapped in the PDO, then an error will happen.
     * \param statusWord return the value of the Statusword object .
     * 
     */
@@ -217,7 +218,7 @@ public:
     /**
     * \brief Write on the position object
     * 
-    * It's an specific function to write on the Target Position object (0x607A).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to write on the Target Position object (0x607A). If this object is not mapped in the PDO, then an error will happen.
     * \param postion the desired value of the Target Position object.
     * 
     */
@@ -226,7 +227,7 @@ public:
     /**
     * \brief Read the position object
     * 
-    * It's an specific function to read the Position Actual Value object (0x6064).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to read the Position Actual Value object (0x6064). If this object is not mapped in the PDO, then an error will happen.
     * \param position return the value of the Position Actual Value object .
     * 
     */
@@ -235,7 +236,7 @@ public:
     /**
     * \brief Write on the velocity object
     * 
-    * It's an specific function to write on the Target Velocity object (0x60FF).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to write on the Target Velocity object (0x60FF). If this object is not mapped in the PDO, then an error will happen.
     * \param velocity the desired value of the Target Velocity object.
     * 
     */
@@ -244,7 +245,7 @@ public:
     /**
     * \brief Read the velocity object
     * 
-    * It's an specific function to read the Velocity Actual Value object (0x606C).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to read the Velocity Actual Value object (0x606C). If this object is not mapped in the PDO, then an error will happen.
     * \param velocity return the value of the Velocity Actual Value object .
     * 
     */
@@ -253,7 +254,7 @@ public:
     /**
     * \brief Write on the torque object
     * 
-    * It's an specific function to write on the Target Torque object (0x6071).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to write on the Target Torque object (0x6071). If this object is not mapped in the PDO, then an error will happen.
     * \param torque the desired value of the Target Torque object.
     * 
     */
@@ -262,12 +263,20 @@ public:
     /**
     * \brief Read the torque object
     * 
-    * It's an specific function to read the Torque Actual Value object (0x6077).If this object is not mapped in the PDO, then an error will happen.
+    * It's an specific function to read the Torque Actual Value object (0x6077). If this object is not mapped in the PDO, then an error will happen.
     * \param torque return the value of the Torque Actual Value object .
     * 
     */
     bool readTorque (int16_t &torque);
     
+    /**
+    * \brief Read the actual timestamp
+    * 
+    * Reads the timestamp of the last PDO readed.
+    * \param time return the value of the actual timestamp.
+    * 
+    */
+    bool readTimestamp (unsigned long& time);
     /**
     * \brief Set an SGDV object
     * 
@@ -291,9 +300,16 @@ public:
     */
     void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param); 
     
-//    void refresh();
+    
+     /**
+    * \brief A signal to emit information
+    * 
+    * Is a function designed to send the important data of the slave. Whatever component that is conected to this signal
+    * can recieve the slavenumber, statusWord, Position, Velocity, Torque and timestamp of each slave.
+    * 
+    */
     boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t, unsigned long)> slaveValues;
-    bool readTimestamp (unsigned long& time);
+   
 
 
 

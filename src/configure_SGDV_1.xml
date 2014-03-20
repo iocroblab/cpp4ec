@@ -32,21 +32,6 @@
     <param name = "size" type="integer"> 4 </param>
     <param name = "value" type="integer"> 150 </param>
   </structure>   
-<!--  <structure>
-    <param name = "description" type="string">Min Position Limit [mdeg] </param>
-    <param name = "name" type="string">MinPos</param>  
-    <param name = "index" type="integer"> 0x607D </param>
-    <param name = "subindex" type="integer"> 1 </param>
-    <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer"> -80000 </param>  
-  </structure>  
-  <structure>
-    <param name = "description" type="string">Max Position Limit [mdeg] </param>
-    <param name = "name" type="string">MaxPos</param> 
-    <param name = "index" type="integer"> 0x607D </param>
-    <param name = "subindex" type="integer"> 2 </param>
-    <param name = "size" type="integer"> 4 </param>
-    <param name = "value" type="integer"> 80000 </param>-->
   <structure>
     <param name = "description" type="string">Profile velocity [mdeg/s]</param>
     <param name = "name" type="string"> Pvel</param>

@@ -38,17 +38,34 @@ namespace cpp4ec
 class EcSlaveFactory
 {
 public:
+    /**
+     * \brief Makes an instance of the class
+     */
     static EcSlaveFactory& Instance()
     {
         static EcSlaveFactory soem_driver_factory;
         return soem_driver_factory;
     }
-
+    
+    /**
+     * \brief A callback function
+     */
     typedef EcSlave* (*CreateDriverCallBack)(ec_slavet*);
-
+    
+    
+    /**
+     * \brief Register the driver
+     */
     bool registerDriver(std::string name, CreateDriverCallBack createFn);
-
+    
+    /**
+     * \brief Create a driver
+     */
     EcSlave* createDriver(ec_slavet* mem_loc);
+    
+    /**
+     * \brief Display the drivers
+     */
     void displayAvailableDrivers();
 
 private:
