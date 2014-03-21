@@ -33,7 +33,7 @@ typedef struct
 namespace cpp4ec
 {
 /**
-* \brief EcSlave
+* \brief Class EcSlave
 * 
 * The EcSlave is a base class designed as a template for ethercat slaves.  
 */  
@@ -107,11 +107,11 @@ public:
     virtual void setPDOBuffer(char * input, char * output);
 
 protected:
-    EcSlave(ec_slavet* mem_loc);
+    EcSlave(ec_slavet* mem_loc);/**<  The constructor */
 
-    ec_slavet* m_datap;
-    std::string m_name;
-    unsigned int m_slave_nr;
+    ec_slavet* m_datap; /**<  A pointer to the soem slave information */
+    std::string m_name; /**<  The slave name */
+    unsigned int m_slave_nr; /**<  The slave number */
 };
 }
 #endif

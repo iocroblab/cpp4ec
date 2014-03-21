@@ -5,7 +5,11 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-
+/**
+ * \brief Class EcError.
+ * 
+ * The class EcError creates an exeption when an error occurs on the EcMaster.  
+ */
 class EcError/*: public exception*/
 {
 public:

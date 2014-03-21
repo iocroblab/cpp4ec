@@ -3,6 +3,11 @@
 
 #include "EcError.h"
 
+/**
+ * \brief Class EcErrorSGDV.
+ * 
+ * The class EcErrorSGDV create exeptions when an error occurs on the EcSlaveSGDV.  
+ */
 class EcErrorSGDV: public EcError
 {
 public:

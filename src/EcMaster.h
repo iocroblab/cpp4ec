@@ -30,15 +30,18 @@ extern "C"
 #include <thread>
 
 #define NSEC_PER_SEC 1000000000
-/**
- * \example demo.cpp
- * \example demo2.cpp
- * This is an example of how to use the EcMaster class.
- * 
- */
+
+
 
 namespace cpp4ec
-{    
+{
+/**
+ * 
+ * \brief Class EcMaster.
+ * 
+ * The EcMaster is the manager of the EtherCat state machine and communications.These are examples of how to use the EcMaster class:
+ * 
+ */
 class EcMaster
 {
 
@@ -102,6 +105,14 @@ public:
      *	Update the output values. It sends the output PDO to the RT task, to be sent to devices.
      */
     void update(void) throw(EcError);
+    
+    /**
+     * 
+     * \example demo.cpp
+     *  
+     * \example demo2.cpp
+     * 
+     */
    
 
 

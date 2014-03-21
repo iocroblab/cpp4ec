@@ -34,7 +34,11 @@
 
 namespace cpp4ec
 {
-
+/**
+* \brief Class EcSlaveFactory
+* 
+* This class create an instance of the slave classes detected on the net.   
+*/  
 class EcSlaveFactory
 {
 public:

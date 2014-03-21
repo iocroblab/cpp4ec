@@ -97,7 +97,7 @@ typedef struct
 namespace cpp4ec
 {
 /**
- * \brief EcSlaveSGDV.
+ * \brief Class EcSlaveSGDV.
  * 
  * The class EcSlaveSGDV configures and controls the SGDV motors.  
  */
