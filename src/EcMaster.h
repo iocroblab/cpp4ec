@@ -108,7 +108,7 @@ public:
     
     /**
      * 
-     * \example demo.cpp
+     * \example demo1.cpp
      *  
      * \example demo2.cpp
      * 

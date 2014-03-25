@@ -71,6 +71,9 @@ bool EcMaster::configure() throw(EcError)
     success = switchState (EC_STATE_PRE_OP);
     if (!success)
 	throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
+    
+    std::cout << "PRE-OPERATIONAL state reached"<< std::endl;
+
 
     for (int i = 1; i <= ec_slavecount; i++)
     {
@@ -124,6 +127,7 @@ bool EcMaster::configure() throw(EcError)
     if (!success)
 	throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
     
+    std::cout << "SAFE-OPERATIONAL state reached"<< std::endl;
     if (m_useDC)
     {
 	for (int i = 0; i <  m_drivers.size(); i++)
@@ -140,7 +144,7 @@ bool EcMaster::configure() throw(EcError)
     success = switchState(EC_STATE_OPERATIONAL);
     if (!success)
 	    throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
-    
+    std::cout << "OPERATIONAL state reached" << std::endl;
     std::cout<<"Master configured!!!"<<std::endl;
 	
     return true;
@@ -789,10 +793,10 @@ void EcMaster::si_sdo(int cnt)
     }
 }
 
-/*To write data of the found slaves in EtherCATsoemInfo.txt. Usefull to be sure of the slaves' order*/
+/*To write data of the found slaves in SlaveInfo.txt. Usefull to be sure of the slaves' order*/
 void EcMaster::slaveInfo()
 {
-    pFile = fopen ("EtherCATsoemInfo.txt","w");
+    pFile = fopen ("SlaveInfo.txt","w");
     ec_configdc();
 
     int cnt, i, j, nSM;
@@ -860,7 +864,7 @@ void EcMaster::slaveInfo()
     
     fclose (pFile);
 	    
-    std::cout << "Slaves Info has been written to EtherCATsoemInfo.txt" << std::endl;
+    std::cout << "Slaves Info has been written to SlaveInfo.txt" << std::endl;
 			
 }
     

@@ -219,7 +219,7 @@ public:
     * \brief Write on the position object
     * 
     * It's an specific function to write on the Target Position object (0x607A). If this object is not mapped in the PDO, then an error will happen.
-    * \param postion the desired value of the Target Position object.
+    * \param position the desired value of the Target Position object.
     * 
     */
     bool writePosition (int32_t position);
