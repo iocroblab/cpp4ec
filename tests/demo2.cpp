@@ -3,8 +3,8 @@
  *
  * Usage : demo2 
  *
- * This demo is designed for three SGDV servo. The demo set one positive velocity in one direction
- * for 5 seconds and then the oposit velocity during 5 seconds more.
+ * This demo is designed for three SGDV servos. The demo set one positive velocity in one direction
+ * for 5 seconds and then the opposit velocity during 5 seconds more.
  * 
  */
 
