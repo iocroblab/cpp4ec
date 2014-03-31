@@ -79,7 +79,8 @@ bool EcMaster::configure() throw(EcError)
     {
 	EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
 	if (!driver)
-	    	throw(EcError(EcError::FAIL_CREATING_DRIVER));
+	    std::cout<<"Error: Failed creating driver"<<std::endl;
+	    	//throw(EcError(EcError::FAIL_CREATING_DRIVER));
 
 	m_drivers.push_back(driver);
 	std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
