@@ -191,7 +191,7 @@ bool EcMaster::start() throw(EcError)
             memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
             update();
         }
-        usleep (10000);  
+        usleep (100000);  
    }
   
    std::cout<<"Master started!!!"<<std::endl;
@@ -254,7 +254,7 @@ bool EcMaster::stop() throw(EcError)
       memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
       update();
     }
-    usleep (10000);  
+    usleep (100000);  
   }
   //Stops the NRT thread
   threadFinished = true; 
