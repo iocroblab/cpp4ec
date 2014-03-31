@@ -112,6 +112,10 @@ public:
      *  
      * \example demo2.cpp
      * 
+     * \example demo3.cpp
+     *
+     * \example demo4.cpp
+     * 
      */
    
 

@@ -1,5 +1,5 @@
 /* 
- * Example code for writing velocities on SGDV servos
+ * Example code for writing position on SGDV servos.
  *
  * Usage : demo3 
  *

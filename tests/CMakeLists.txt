@@ -11,4 +11,6 @@ target_link_libraries(demo2 cpp4ec_dynamic)
 add_executable(demo3 demo3.cpp)
 target_link_libraries(demo3 cpp4ec_dynamic)
 
+add_executable(demo4 demo4.cpp)
+target_link_libraries(demo4 cpp4ec_dynamic)
 
