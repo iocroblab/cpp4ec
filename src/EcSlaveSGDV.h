@@ -20,71 +20,55 @@ extern "C"
 #include <vector>
 #include <mutex> 
 
-//PDO objects
-typedef enum
-{
-    CONTROL_WORD 	= 0x6040,
-    TARGET_POSITION 	= 0x607A,
-    TARGET_VELOCITY 	= 0x60FF,
-    TARGET_TORQUE 	= 0x6071,
-}EcRecieveObjects;
 
-
-typedef enum
-{
-    STATUS_WORD 	= 0x6041,
-    ACTUAL_POSITION 	= 0x6064,
-    ACTUAL_VELOCITY 	= 0x606C,
-    ACTUAL_TORQUE 	= 0x6077,
-}EcTransmitObjects;
 
 //PDO Entries
-typedef enum
-{
-    FIRST_ENTRY, // first = 0
-    SECOND_ENTRY,
-    THIRD_ENTRY,
-    FOURTH_ENTRY,
-    FIFTH_ENTRY,
-    SIXTH_ENTRY,
-    SEVENTH_ENTRY,
-    EIGHTH_ENTRY,
-}EcPDOEntry;
-
-//ControlWord commands SGDV
-typedef enum
-{
-   CW_QUICK_STOP         =  0x02,
-   CW_SHUTDOWN           =  0x06,
-   CW_SWITCH_ON          =  0x07,
-   CW_ENABLE_OP          =  0x0F,
-   CW_DIASABLE_OP        =  0x07,
-   CW_DISABLE_VOLTAGE    =  0x00,
-   CW_FAULT_RESET        =  0x80,
-   CW_HALT               =  0x09,  
-   //Only for control profile position mode(operational mode 1)
-   CW_START_ABS_POSITIONING  =  0x1F,//absolute reference
-   CW_START_REL_POSITIONING  =  0x5F,//relative reference
-   CW_START_QUICK_ABS_POSITIONING  =  0x3F,//start next positioning immediately
-   CW_START_QUICK_REL_POSITIONING  =  0x7F,//start next positioning immediately
-   CW_START_ABS_POSITIONING_WITH_VELOCITY  =  0x21F,//after the previous set-point has been reached
-   CW_START_REL_POSITIONING_WITH_VELOCITY  =  0x25F,//after the previous set-point has been reached
-}EcControlWord;
-
-//StatusWord values SGDV
-typedef enum
-{
-   SW_NOT_READY_SWICH_ON   =   0x00,
-   SW_SWITCH_ON_DISABLED   =   0x40,
-   SW_READY_SWITCH_ON      =   0x31,
-   SW_SWITCHED_ON          =   0x33,
-   SW_OPERATION_ENABLED    =   0x37,
-   SW_QUICK_STOP_ACTIVE    =   0x07,
-   SW_FAULT                =   0x08,
-   SW_FAULT_RACTION_ACTIVE =   0x0F,
-   SW_HIGH_MASK            = 0x00FF,
-   SW_LOW_MASK             = 0xFF00,
-}EcStatusWord;
+// typedef enum
+// {
+//     FIRST_ENTRY, // first = 0
+//     SECOND_ENTRY,
+//     THIRD_ENTRY,
+//     FOURTH_ENTRY,
+//     FIFTH_ENTRY,
+//     SIXTH_ENTRY,
+//     SEVENTH_ENTRY,
+//     EIGHTH_ENTRY,
+// }EcPDOEntry;
+// 
+// //ControlWord commands SGDV
+// typedef enum
+// {
+//    CW_QUICK_STOP         =  0x02,
+//    CW_SHUTDOWN           =  0x06,
+//    CW_SWITCH_ON          =  0x07,
+//    CW_ENABLE_OP          =  0x0F,
+//    CW_DIASABLE_OP        =  0x07,
+//    CW_DISABLE_VOLTAGE    =  0x00,
+//    CW_FAULT_RESET        =  0x80,
+//    CW_HALT               =  0x09,  
+//    //Only for control profile position mode(operational mode 1)
+//    CW_START_ABS_POSITIONING  =  0x1F,//absolute reference
+//    CW_START_REL_POSITIONING  =  0x5F,//relative reference
+//    CW_START_QUICK_ABS_POSITIONING  =  0x3F,//start next positioning immediately
+//    CW_START_QUICK_REL_POSITIONING  =  0x7F,//start next positioning immediately
+//    CW_START_ABS_POSITIONING_WITH_VELOCITY  =  0x21F,//after the previous set-point has been reached
+//    CW_START_REL_POSITIONING_WITH_VELOCITY  =  0x25F,//after the previous set-point has been reached
+// }EcControlWord;
+// 
+// //StatusWord values SGDV
+// typedef enum
+// {
+//    SW_NOT_READY_SWICH_ON   =   0x00,
+//    SW_SWITCH_ON_DISABLED   =   0x40,
+//    SW_READY_SWITCH_ON      =   0x31,
+//    SW_SWITCHED_ON          =   0x33,
+//    SW_OPERATION_ENABLED    =   0x37,
+//    SW_QUICK_STOP_ACTIVE    =   0x07,
+//    SW_FAULT                =   0x08,
+//    SW_FAULT_RACTION_ACTIVE =   0x0F,
+//    SW_HIGH_MASK            = 0x00FF,
+//    SW_LOW_MASK             = 0xFF00,
+// }EcStatusWord;
 
 typedef struct
 {
@@ -104,6 +88,66 @@ namespace cpp4ec
 class EcSlaveSGDV: public EcSlave
 {
 public:
+    //PDO Entries
+    /**
+     * The index of the PDO entries
+     */
+    typedef enum
+    {
+	FIRST_ENTRY, 	
+	SECOND_ENTRY,	
+	THIRD_ENTRY,	
+	FOURTH_ENTRY,	
+	FIFTH_ENTRY,
+	SIXTH_ENTRY,	
+	SEVENTH_ENTRY,	
+	EIGHTH_ENTRY,	
+    } EcPDOEntry;
+    
+     /**
+     * The ControlWord values. The positioning words are only used in the profile position mode (operational mode = 1).
+     */
+    typedef enum
+    {
+	CW_QUICK_STOP         =  0x02,
+	CW_SHUTDOWN           =  0x06, 
+	CW_SWITCH_ON          =  0x07,
+	CW_ENABLE_OP          =  0x0F, 
+	CW_DIASABLE_OP        =  0x07,
+	CW_DISABLE_VOLTAGE    =  0x00,
+	CW_FAULT_RESET        =  0x80, 
+	CW_HALT               =  0x09, 
+	CW_START_ABS_POSITIONING  =  0x1F,	 /**< Start the next positioning after the current positioning completes
+						     (target reached). The target position is an absolute value */
+	CW_START_REL_POSITIONING  =  0x5F,	 /**< Start the next positioning after the current positioning completes
+						     (target reached). The target position is a relative value */
+	CW_START_QUICK_ABS_POSITIONING  =  0x3F, /**< Start next positioning immediately. The target position is an absolute value */
+	CW_START_QUICK_REL_POSITIONING  =  0x7F, /**< Start next positioning immediately. The target position is a relative value */
+	CW_START_ABS_POSITIONING_WITH_VELOCITY  =  0x21F, /**< Positioning with current profile velocity up to the 
+								current set-point is proceeded and then next positioning will be applied.
+								The target position is an absolute value */
+	CW_START_REL_POSITIONING_WITH_VELOCITY  =  0x25F, /**< Positioning with current profile velocity up to the 
+								current set-point is proceeded and then next positioning will be applied.
+								The target position is a relative value */
+    } EcControlWord;
+
+     /**
+     * The StatusWord  values
+     */
+    typedef enum
+    {
+	SW_NOT_READY_SWICH_ON   =   0x00,
+	SW_SWITCH_ON_DISABLED   =   0x40,
+	SW_READY_SWITCH_ON      =   0x31,
+	SW_SWITCHED_ON          =   0x33,
+	SW_OPERATION_ENABLED    =   0x37,
+	SW_QUICK_STOP_ACTIVE    =   0x07,
+	SW_FAULT                =   0x08,
+	SW_FAULT_RACTION_ACTIVE =   0x0F,
+	SW_HIGH_MASK            = 0x00FF,
+	SW_LOW_MASK             = 0xFF00,
+    } EcStatusWord;
+    
     /**
      * \brief Constructor
      * 
@@ -309,6 +353,7 @@ public:
     * 
     */
     boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t, unsigned long)> slaveValues;
+    
    
 
 
@@ -352,6 +397,24 @@ private:
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
     std::vector <char*> bufferList;
+    
+    //PDO objects
+    typedef enum
+    {
+	CONTROL_WORD 		= 0x6040,
+	TARGET_POSITION 	= 0x607A,
+	TARGET_VELOCITY 	= 0x60FF,
+	TARGET_TORQUE 		= 0x6071,
+    }EcRecieveObjects;
+
+
+    typedef enum
+    {
+	STATUS_WORD 		= 0x6041,
+	ACTUAL_POSITION 	= 0x6064,
+	ACTUAL_VELOCITY 	= 0x606C,
+	ACTUAL_TORQUE 		= 0x6077,
+    }EcTransmitObjects;
 };
 }
 #endif

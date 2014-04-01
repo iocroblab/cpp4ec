@@ -43,12 +43,12 @@ int main ()
     /* Send the desired ControlWord to start the next positioning, the servos starts positioning when the bit 4 
      * of the control word change from 0 to 1. The specified position is considered a relative position */
     for (int j = 0; j < drivers.size(); j++)
-        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (CW_START_REL_POSITIONING);
+        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (cpp4ec::EcSlaveSGDV::CW_START_REL_POSITIONING);
     master.update();
     
     /* Set the bit 4 to 0 to be able to start a new positioning */    
     for (int j = 0; j < drivers.size(); j++)
-        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (CW_START_REL_POSITIONING-16);
+        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (cpp4ec::EcSlaveSGDV::CW_START_REL_POSITIONING-16);
     master.update();    
  
     usleep(3000000);
@@ -62,12 +62,12 @@ int main ()
 
     /* The specified position is considered an absolute position */
     for (int j = 0; j < drivers.size(); j++)
-        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (CW_START_ABS_POSITIONING);
+        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (cpp4ec::EcSlaveSGDV::CW_START_ABS_POSITIONING);
     master.update();
     
     /* Set the bit 4 to 0 to be able to start a new positioning */    
     for (int j = 0; j < drivers.size(); j++)
-        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (CW_START_ABS_POSITIONING-16);
+        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writeControlWord (cpp4ec::EcSlaveSGDV::CW_START_ABS_POSITIONING-16);
     master.update();    
  
     usleep(3000000);

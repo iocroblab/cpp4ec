@@ -42,7 +42,7 @@ int main ()
      * In the PDO mapping the velocity is set in the third entry. 
      */
     for (int j = 0; j < drivers.size(); j++)
-	((cpp4ec::EcSlaveSGDV*) drivers[j]) -> writePDO (THIRD_ENTRY,velocity);
+	((cpp4ec::EcSlaveSGDV*) drivers[j]) -> writePDO (cpp4ec::EcSlaveSGDV::THIRD_ENTRY,velocity);
     
     /* The PDO outputs are updated, so they are sent to the RT thread. The velocities are sent to the slaves */
     master.update();    
@@ -51,7 +51,7 @@ int main ()
     /* Stops the platform */    
     velocity = 0;
     for (int j = 0; j < drivers.size(); j++)
-        ((cpp4ec::EcSlaveSGDV*) drivers[j]) -> writePDO (THIRD_ENTRY,velocity);
+        ((cpp4ec::EcSlaveSGDV*) drivers[j]) -> writePDO (cpp4ec::EcSlaveSGDV::THIRD_ENTRY,velocity);
     
     /* The PDO outputs are updated, so they are sent to the RT thread. The velocities are sent to the slaves */
     master.update();    
@@ -60,17 +60,17 @@ int main ()
     int8_t mode = 1;
     /* Change the Operation mode to 1 (profile position mode)*/
     for (int j = 0; j < drivers.size(); j++)
-	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO (FIFTH_ENTRY, mode);
+	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO (cpp4ec::EcSlaveSGDV::FIFTH_ENTRY, mode);
 
     std::cout<<"The slaves' position are: ";
     for (int j = 0; j < drivers.size(); j++)
     {
 	/*Read the position actual value that is in the second entry of the transmit PDO */
-	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> readPDO (SECOND_ENTRY, position);
+	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> readPDO (cpp4ec::EcSlaveSGDV::SECOND_ENTRY, position);
 	/* We set this position in the opposit sense to return to the initial position
 	 * This demo works in realtive reference
 	 */
-	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO(SECOND_ENTRY,-position);
+	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO(cpp4ec::EcSlaveSGDV::SECOND_ENTRY,-position);
         std::cout<<(int)position<<" ";
     }
     std::cout<<" millidegrees"<<std::endl;
@@ -80,11 +80,11 @@ int main ()
     
     /* Send the desired ControlWord to start moving*/
     for (int j = 0; j < drivers.size(); j++)
-        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO(FIRST_ENTRY,CW_START_REL_POSITIONING);
+        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO(cpp4ec::EcSlaveSGDV::FIRST_ENTRY,cpp4ec::EcSlaveSGDV::CW_START_REL_POSITIONING);
   
     master.update(); 
     for (int j = 0; j < drivers.size(); j++)
-        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO(FIRST_ENTRY,CW_START_REL_POSITIONING-16);
+        ((cpp4ec::EcSlaveSGDV*)drivers[j]) -> writePDO(cpp4ec::EcSlaveSGDV::FIRST_ENTRY,cpp4ec::EcSlaveSGDV::CW_START_REL_POSITIONING-16);
   
     master.update();
     usleep(5000000);
@@ -93,7 +93,7 @@ int main ()
     for (int j = 0; j < drivers.size(); j++)
     {
 	/*Read the position actual value that is in the second entry of the transmit PDO */
-	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> readPDO (SECOND_ENTRY, position);
+	((cpp4ec::EcSlaveSGDV*)drivers[j]) -> readPDO (cpp4ec::EcSlaveSGDV::SECOND_ENTRY, position);
 	std::cout<<(int)position<<" ";
     }
     std::cout<<" millidegrees"<<std::endl;
