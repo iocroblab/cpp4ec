@@ -2,6 +2,10 @@
  * Example code for writing velocities on SGDV servos
  *
  * Usage : demo2 
+ *	   - In the configure_SGDV_n.xml must be selected operational mode 3. If it is chossed another one
+ *	     might do strange things even with the cyclic velocity mode = 9.
+ * 	   - In the profile velcity mode parameters like profile acceleration or deceleration can be changed
+ * 	     to fit user necessities.
  *
  * This demo is designed for three SGDV servos. The demo set one positive velocity in one direction
  * for 5 seconds and then the opposit velocity during 5 seconds more.
