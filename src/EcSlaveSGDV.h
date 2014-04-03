@@ -372,6 +372,7 @@ private:
     bool readXML() throw(EcErrorSGDV);
     bool addPDOobject(std::string PDOentry,int value, int subindex);
     void loadDefaultPDO();
+    void loadParameters();
     
     int controlWordEntry;
     int targetPositionEntry;

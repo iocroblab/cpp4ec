@@ -27,6 +27,10 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    bufferList.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
    
+   if(!readXML() | !setParameters)
+       loadParameters();
+   
+   
    if(!readXML() | !PDOmapping)
        loadDefaultPDO();
 
@@ -453,23 +457,283 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
 
 void EcSlaveSGDV::loadDefaultPDO()
 {
-    //1601
-    outputObjects.resize(2);
-    wControlWordCapable = true; 
-    outputObjects[0].offset = 0;
-    outputObjects[0].byteSize = 2;
-    wPositionCapable = true;
-    outputObjects[1].offset = 2;
-    outputObjects[1].byteSize = 4;
-    //1A01
-    inputObjects.resize(2);
-    rStatusWordCapable = true;  
-    inputObjects[0].offset = 0;
-    inputObjects[0].byteSize = 2;
-    rPositionCapable = true;
-    inputObjects[1].offset = 2;
-    inputObjects[1].byteSize = 4;
+   parameter temp;
+   
+   //1.Disable the assignment of the Sync manager and PDO   
+   temp.description = "Disable";
+   temp.index = 0x1C12;
+   temp.subindex = 0x00;
+   temp.name = "Sync Manager PDO Assignment";
+   temp.size = 1;
+   temp.param = 0;
+   m_params.push_back(temp);
+   
+   temp.description = "Disable";
+   temp.index = 0x1C13;
+   temp.subindex = 0x00;
+   temp.name = "Sync Manager PDO Assignment";
+   temp.size = 1;
+   temp.param = 0;
+   m_params.push_back(temp);
+   
+   //2.Set all the mapping entry in PDO mapping objects   
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
+   temp.subindex = 0x00;
+   temp.name = "Number of objects";
+   temp.size = 1;
+   temp.param = 0;
+   m_params.push_back(temp);
+   
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
+   temp.subindex = 0x01;
+   temp.name = "Control Word ";
+   temp.size = 4;
+   temp.param = 0x60400010;
+   m_params.push_back(temp);
+  
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
+   temp.subindex = 0x02;
+   temp.name = "Target Position ";
+   temp.size = 4;
+   temp.param = 0x607A0020;
+   m_params.push_back(temp);
 
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
+   temp.subindex = 0x03;
+   temp.name = "Target Velovity ";
+   temp.size = 4;
+   temp.param = 0x60FF0020;
+   m_params.push_back(temp);
+
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600; 
+   temp.subindex = 0x04;
+   temp.name = "Target Torque ";
+   temp.size = 4; 
+   temp.param = 0x60710010;
+   m_params.push_back(temp);
+                     
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600; 
+   temp.subindex = 0x05;
+   temp.name = "Mode of Operation ";
+   temp.size = 4; 
+   temp.param = 0x60600008;
+   m_params.push_back(temp);
+                                             
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00;
+   temp.subindex = 0x00;
+   temp.name = "Number of objects";
+   temp.size = 1;
+   temp.param = 0;
+   m_params.push_back(temp);
+   
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00;
+   temp.subindex = 0x01;
+   temp.name = "Status Word";
+   temp.size = 4;
+   temp.param = 0x60410010;
+   m_params.push_back(temp);
+   
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00;
+   temp.subindex = 0x02;
+   temp.name = "Position Actual Value";
+   temp.size = 4;
+   temp.param = 0x60640020;
+   m_params.push_back(temp);
+   
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00;
+   temp.subindex = 0x03;
+   temp.name = "Velocity Actual Value";
+   temp.size = 4;
+   temp.param = 0x606C0020;
+   m_params.push_back(temp);
+   
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00; 
+   temp.subindex = 0x04;
+   temp.name = "Torque Actual Value";
+   temp.size = 4; 
+   temp.param = 0x60770010;
+   m_params.push_back(temp);
+   
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00; 
+   temp.subindex = 0x05;
+   temp.name = "Error Code";
+   temp.size = 4; 
+   temp.param = 0x603F0010;
+   m_params.push_back(temp);
+                                  
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00; 
+   temp.subindex = 0x06;
+   temp.name = "Mode of Operation Display";
+   temp.size = 4; 
+   temp.param = 0x60610008;
+   m_params.push_back(temp);
+   
+   //3.Set the number of mapping entries in PDO mapping objects 
+   temp.description = "Receive PDO Mapping";
+   temp.index = 0x1600;
+   temp.subindex = 0x00;
+   temp.name = "Number of objects";
+   temp.size = 1;
+   temp.param = 5;
+   m_params.push_back(temp);
+   
+   temp.description = "Transmit PDO Mapping";
+   temp.index = 0x1A00;
+   temp.subindex = 0x00;
+   temp.name = "Number of objects";
+   temp.size = 1;
+   temp.param = 6;
+   m_params.push_back(temp);
+   
+   //4.Set the assignment of the Sync manager and PDO    
+   temp.description = "Assing";
+   temp.index = 0x1C12;
+   temp.subindex = 0x01;
+   temp.name = "Sync Manager PDO Assignment";
+   temp.size = 2;
+   temp.param = 0x1600;
+   m_params.push_back(temp);
+   
+   temp.description = "Assing";
+   temp.index = 0x1C13;
+   temp.subindex = 0x01;
+   temp.name = "Sync Manager PDO Assignment";
+   temp.size = 2;
+   temp.param = 0x1A00;
+   m_params.push_back(temp);
+   
+   //5.Enable the assignment of the Sync manager and PDO.
+   temp.description = "Enable";
+   temp.index = 0x1C12;
+   temp.subindex = 0x00;
+   temp.name = "Sync Manager PDO Assignment";
+   temp.size = 1;
+   temp.param = 1;
+   m_params.push_back(temp);
+   
+   temp.description = "Enable";
+   temp.index = 0x1C13;
+   temp.subindex = 0x00;
+   temp.name = "Sync Manager PDO Assignment";
+   temp.size = 1;
+   temp.param = 1;
+   m_params.push_back(temp);
+   
+   inputObjects.resize(6);
+   inputObjects[0].offset = 0;
+   inputObjects[0].byteSize = 2;
+   inputObjects[1].byteSize = 4;
+   inputObjects[2].byteSize = 4;
+   inputObjects[3].byteSize = 2;
+   inputObjects[4].byteSize = 2;
+   inputObjects[5].byteSize = 1;   
+   rStatusWordCapable = true;
+   rPositionCapable = true;
+   rVelocityCapable = true;
+   rTorqueCapable = true;
+   controlWordEntry = 0;
+   targetPositionEntry = 1;
+   targetVelocityEntry = 2;
+   targetTorqueEntry = 3;
+
+   for(int i = 1; i < inputObjects.size(); i++)
+       inputObjects[i].offset = inputObjects[i-1].offset + inputObjects[i-1].byteSize;
+   
+   statusWordEntry = 0;
+   actualPositionEntry = 1;
+   actualVelocityEntry = 2;
+   actualTorqueEntry = 3;
+   outputObjects.resize(5);
+   outputObjects[0].offset = 0;
+   outputObjects[0].byteSize = 2;
+   outputObjects[1].byteSize = 4;
+   outputObjects[2].byteSize = 4;
+   outputObjects[3].byteSize = 2;
+   outputObjects[4].byteSize = 1;
+   wControlWordCapable= true;
+   wPositionCapable = true;
+   wVelocityCapable = true;
+   wTorqueCapable = true;
+   
+   for(int i = 1; i < outputObjects.size(); i++)
+       outputObjects[i].offset = outputObjects[i-1].offset + outputObjects[i-1].byteSize;
+   
+
+}
+
+void EcSlaveSGDV::loadParameters()
+{
+   parameter temp;
+   //setting parameters 
+   temp.description = "Modes of Operation";
+   temp.index = 0x6060;
+   temp.subindex = 0x00;
+   temp.name = "OpMode";
+   temp.size = 1;
+   temp.param = 1;
+   m_params.push_back(temp);
+   
+   temp.description = "Profile velocity [mdeg/s]";
+   temp.index = 0x6081;
+   temp.subindex = 0x00;
+   temp.name = "Pvel";
+   temp.size = 4;
+   temp.param = 150000;
+   m_params.push_back(temp);
+   
+   temp.description = "Max. Profile velocity [mdeg/s]";
+   temp.index = 0x607F;
+   temp.subindex = 0x00;
+   temp.name = "MaxVel";
+   temp.size = 4;
+   temp.param = 200000;
+   m_params.push_back(temp);
+
+   temp.description = "Profile acceleration";
+   temp.index = 0x6083;
+   temp.subindex = 0x00;
+   temp.name = "Pacc";
+   temp.size = 4;
+   temp.param = 150;
+   m_params.push_back(temp);
+                       
+   temp.description = "Profile deceleration";
+   temp.index = 0x6084;
+   temp.subindex = 0x00;
+   temp.name = "Pdec";
+   temp.size = 4;
+   temp.param = 150;
+   m_params.push_back(temp);
+   
+   //Torque parameters (mode = 4)
+   temp.description = "Max Torque";
+   temp.index = 0x6072;
+   temp.subindex = 0x00;
+   temp.name = "MaxTorq";
+   temp.size = 2;
+   temp.param = 1000;
+   m_params.push_back(temp);
+   
+   temp.description = "Torque Slope";
+   temp.index = 0x6087;
+   temp.subindex = 0x00;
+   temp.name = "TSlope";
+   temp.size = 4;
+   temp.param = 100;
+   m_params.push_back(temp);
 }
     
 void EcSlaveSGDV::setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param)
