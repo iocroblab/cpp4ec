@@ -391,7 +391,7 @@ private:
     bool rPositionCapable;
     bool rVelocityCapable;
     bool rTorqueCapable;
-    bool setParameters;
+    bool parameterSetting;
     bool PDOmapping;
     
     std::mutex slaveInMutex;

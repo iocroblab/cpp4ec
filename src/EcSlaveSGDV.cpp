@@ -18,7 +18,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
     rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false),
-    setParameters(false), PDOmapping(false)
+    parameterSetting(false), PDOmapping(false)
     
 {
    m_params.resize(0);
@@ -27,7 +27,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    bufferList.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
    
-   if(!readXML() | !setParameters)
+   if(!readXML() | !parameterSetting)
        loadParameters();
    
    
@@ -269,9 +269,9 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
   for (pugi::xml_node type = configuration.first_child(); type; type = type.next_sibling())
   {
       std::string typeName = type.name();
-      if( typeName == "setParameters")
+      if( typeName == "parameterSetting")
       {
-	  setParameters = true;
+	  parameterSetting = true;
 	  for(pugi::xml_node parameter = type.first_child(); parameter; parameter = parameter.next_sibling())
 	  {
 	      for(pugi::xml_node param = parameter.first_child(); param; param = param.next_sibling())

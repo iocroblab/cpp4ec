@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
   <!--  Set the parameters by SDO -->
-  <setParameters>
+  <parameterSetting>
     <parameter>
       <description>Modes of operation </description>
       <name>OpMode</name>
@@ -58,7 +58,7 @@
       <size> 4 </size>
       <value> 100 </value>
     </parameter>
-  </setParameters>
+  </parameterSetting>
   <!--  PDO Mapping-->
   <PDOmapping>
     <!--  1.Disable the assignment of the Sync manager and PDO   -->
