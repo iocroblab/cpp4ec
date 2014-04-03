@@ -369,8 +369,9 @@ private:
     char* pBufferIn;  
     char* inputBuf;
     
-    void readXML() throw(EcErrorSGDV);
+    bool readXML() throw(EcErrorSGDV);
     bool addPDOobject(std::string PDOentry,int value, int subindex);
+    void loadDefaultPDO();
     
     int controlWordEntry;
     int targetPositionEntry;
@@ -389,6 +390,8 @@ private:
     bool rPositionCapable;
     bool rVelocityCapable;
     bool rTorqueCapable;
+    bool setParameters;
+    bool PDOmapping;
     
     std::mutex slaveInMutex;
     std::mutex slaveOutMutex;

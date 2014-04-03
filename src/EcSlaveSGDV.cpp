@@ -17,7 +17,8 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
-    rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false)
+    rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false),
+    setParameters(false), PDOmapping(false)
     
 {
    m_params.resize(0);
@@ -25,8 +26,10 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    outputObjects.resize(0);
    bufferList.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
+   
+   if(!readXML() | !PDOmapping)
+       loadDefaultPDO();
 
-   readXML();  
 }
 
 EcSlaveSGDV::~EcSlaveSGDV()
@@ -245,71 +248,105 @@ bool EcSlaveSGDV::readTorque (int16_t &torque)
     slaveInMutex.unlock();
 }
 
-void EcSlaveSGDV::readXML() throw(EcErrorSGDV)
+bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 {
   parameter temp;  
   std::string xml_name = "configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
   pugi::xml_document doc;
   pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
   if (!result)
-    throw(EcErrorSGDV(EcErrorSGDV::XML_NOT_FOUND_ERROR,m_slave_nr,getName()));  
+    return false;  
   
-  pugi::xml_node parameters = doc.first_child();
-  for (pugi::xml_node structure = parameters.first_child(); structure; structure = structure.next_sibling())
+  pugi::xml_node configuration = doc.first_child();
+  for (pugi::xml_node type = configuration.first_child(); type; type = type.next_sibling())
   {
-    for (pugi::xml_node param = structure.first_child(); param; param = param.next_sibling())
-    {
-        std::string type = std::string(param.attribute("type").value());
-	std::string PDOentry = std::string(param.attribute("PDOentry").value());
-	std::string name = std::string(param.attribute("name").value());
-	
-      	if (name ==  "description")
-	{
-	  if (type != "string")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
-	  temp.description = param.child_value();
-	 
-	}
-	else if (name ==  "name")
-	{
-	  if (type != "string")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
-	    temp.name = param.child_value();
-	}
-	else if (name == "index")
-	{
-	  if (type != "integer")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));	  
-	  temp.index = (int16_t) strtol (param.child_value(),NULL,0);          
-	}
-	else if (name ==  "subindex")
-	{
-	  if (type != "integer")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
-	  temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
-	}
-	else if (name ==  "size")
-	{
-	  if (type != "integer")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));	  
-	  temp.size = (int8_t) strtol (param.child_value(),NULL,0);
-	}
-	else if (name ==  "value")
-	{
-	  if (type != "integer")
-	    throw(EcErrorSGDV(EcErrorSGDV::XML_TYPE_ERROR,m_slave_nr,getName()));
-	  temp.param = strtol (param.child_value(),NULL,0);
-	  addPDOobject(PDOentry,temp.param,temp.subindex);
-	}
-	else
-	 throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
-    }
-    m_params.push_back(temp);
+      std::string typeName = type.name();
+      if( typeName == "setParameters")
+      {
+	  setParameters = true;
+	  for(pugi::xml_node parameter = type.first_child(); parameter; parameter = parameter.next_sibling())
+	  {
+	      for(pugi::xml_node param = parameter.first_child(); param; param = param.next_sibling())
+	      {
+	      
+		  std::string name = param.name();
+		  if (name ==  "description")
+		  {
+		      temp.description = param.child_value();
+		  }else if (name ==  "name")
+		  {
+		      temp.name = param.child_value();
+		  }
+		  else if (name == "index")
+		  {
+			temp.index = (int16_t) strtol (param.child_value(),NULL,0);          
+		  }
+		  else if (name ==  "subindex")
+		  {
+		      temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
+		  }
+		  else if (name ==  "size")
+		  {
+		      temp.size = (int8_t) strtol (param.child_value(),NULL,0);
+		  }
+		  else if (name ==  "value")
+		  {
+		      temp.param = strtol (param.child_value(),NULL,0);
+		  }else{
+		      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
+		  }
+	      }
+	      m_params.push_back(temp);
+	  }
+      }else if(typeName == "PDOmapping")
+      {
+	  PDOmapping = true;
+	  for(pugi::xml_node parameter = type.first_child(); parameter; parameter = parameter.next_sibling())
+	  {
+	      for(pugi::xml_node param = parameter.first_child(); param; param = param.next_sibling())
+	      {
+		  std::string name = param.name();
+		  if (name ==  "description")
+		  {
+		      temp.description = param.child_value();
+		  }else if (name ==  "name")
+		  {
+		      temp.name = param.child_value();
+		  }
+		  else if (name == "index")
+		  {
+			temp.index = (int16_t) strtol (param.child_value(),NULL,0);          
+		  }
+		  else if (name ==  "subindex")
+		  {
+		      temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
+		  }
+		  else if (name ==  "size")
+		  {
+		      temp.size = (int8_t) strtol (param.child_value(),NULL,0);
+		  }
+		  else if (name ==  "value")
+		  {
+		      temp.param = strtol (param.child_value(),NULL,0);
+		      std::string PDOentry = std::string(param.attribute("PDOentry").value());
+		      addPDOobject(PDOentry,temp.param,temp.subindex);
+		  }else{
+		      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
+		  }
+	      }
+	      m_params.push_back(temp);
+	  }
+	  if(outputObjects.size() <= 0)
+	    throw(EcErrorSGDV(EcErrorSGDV::OUTPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+	  if(inputObjects.size() <= 0)
+	    throw(EcErrorSGDV(EcErrorSGDV::INPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+      }else{
+	  throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
+      }
+      return true;
   }
-  if(outputObjects.size() <= 0)
-      throw(EcErrorSGDV(EcErrorSGDV::OUTPUT_OBJECTS_ERROR,m_slave_nr,getName()));
-  if(inputObjects.size() <= 0)
-      throw(EcErrorSGDV(EcErrorSGDV::INPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+  
+
 
 }
 
@@ -406,7 +443,28 @@ bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
     }
     return true;
 	
-}    
+}
+
+void EcSlaveSGDV::loadDefaultPDO()
+{
+    //1601
+    outputObjects.resize(2);
+    wControlWordCapable = true; 
+    outputObjects[0].offset = 0;
+    outputObjects[0].byteSize = 2;
+    wPositionCapable = true;
+    outputObjects[1].offset = 2;
+    outputObjects[1].byteSize = 4;
+    //1A01
+    inputObjects.resize(2);
+    rStatusWordCapable = true;  
+    inputObjects[0].offset = 0;
+    inputObjects[0].byteSize = 2;
+    rPositionCapable = true;
+    inputObjects[1].offset = 2;
+    inputObjects[1].byteSize = 4;
+
+}
     
 void EcSlaveSGDV::setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param)
 {
