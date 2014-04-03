@@ -47,15 +47,19 @@ void EcSlaveSGDV::update()
     slaveInMutex.unlock();
     
     unsigned long time;    
-    uint16_t statusWord;
-    int32_t position;
-    int32_t velocity;
-    int16_t torque;
+    uint16_t statusWord =0;
+    int32_t position = 0;
+    int32_t velocity = 0;
+    int16_t torque = 0;
     readTimestamp(time);
-    readStatusWord(statusWord);
-    readPosition (position);
-    readVelocity (velocity);
-    readTorque (torque);
+    if(rStatusWordCapable)
+	readStatusWord(statusWord);
+    if(rPositionCapable)
+	readPosition (position);
+    if(rVelocityCapable)
+	readVelocity (velocity);
+    if(rTorqueCapable)
+	readTorque (torque);
     //signal
     slaveValues(m_slave_nr,statusWord,position,velocity,torque,time);    
 }
