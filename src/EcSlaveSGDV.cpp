@@ -347,8 +347,10 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
       }else{
 	  throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
       }
-      return true;
+      
   }
+  
+  return true;
   
 
 
