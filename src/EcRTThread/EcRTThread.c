@@ -34,7 +34,7 @@ void rt_thread(void *unused)
    for( i = 1; i <= ec_slavecount; i++)
    {
       inputSize = inputSize + ec_slave[i].Ibytes  + timestampSize;
-      outputSize = outputSize + ec_slave[i].Obytes  + timestampSize;
+      outputSize = outputSize + ec_slave[i].Obytes;
    }
 
    char * rtinputbuf = (char*) malloc(inputSize*(sizeof(char)));
