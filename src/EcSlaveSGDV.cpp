@@ -27,15 +27,16 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    bufferList.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
    
-   if(!readXML() | !parameterSetting)
+   
+   bool xml = readXML();
+
+   if(!xml | !parameterSetting)
        loadParameters();
    
-   
-   if(!readXML() | !PDOmapping)
+   if(!xml | !PDOmapping)
        loadDefaultPDO();
 
 }
-
 EcSlaveSGDV::~EcSlaveSGDV()
 {
     for( int i = 0; i < bufferList.size(); i++)
