@@ -189,7 +189,7 @@ bool EcMaster::start() throw(EcError)
         commandList = m_drivers[i] ->  start();
         for(int k = 0; k < commandList.size(); k ++)
         {
-            memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
+            memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i+1].Obytes);
             update();
         }
         usleep (100000);  
@@ -252,7 +252,7 @@ bool EcMaster::stop() throw(EcError)
     commandList = m_drivers[i] ->  stop();
     for(int k = 0; k < commandList.size(); k ++)
     {
-      memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i].Obytes);
+      memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i+1].Obytes);
       update();
     }
     usleep (100000);  
