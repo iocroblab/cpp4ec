@@ -737,7 +737,7 @@ void EcSlaveSGDV::loadParameters()
    m_params.push_back(temp);
 }
     
-void EcSlaveSGDV::setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param)
+void EcSlaveSGDV::setSGDVObject(uint16_t index, uint8_t subindex, int psize, void * param)
 {
   ec_SDOwrite(m_slave_nr, index, subindex, FALSE,psize,param,EC_TIMEOUTRXM);
 }

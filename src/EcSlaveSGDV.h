@@ -21,55 +21,6 @@ extern "C"
 #include <mutex> 
 
 
-
-//PDO Entries
-// typedef enum
-// {
-//     FIRST_ENTRY, // first = 0
-//     SECOND_ENTRY,
-//     THIRD_ENTRY,
-//     FOURTH_ENTRY,
-//     FIFTH_ENTRY,
-//     SIXTH_ENTRY,
-//     SEVENTH_ENTRY,
-//     EIGHTH_ENTRY,
-// }EcPDOEntry;
-// 
-// //ControlWord commands SGDV
-// typedef enum
-// {
-//    CW_QUICK_STOP         =  0x02,
-//    CW_SHUTDOWN           =  0x06,
-//    CW_SWITCH_ON          =  0x07,
-//    CW_ENABLE_OP          =  0x0F,
-//    CW_DIASABLE_OP        =  0x07,
-//    CW_DISABLE_VOLTAGE    =  0x00,
-//    CW_FAULT_RESET        =  0x80,
-//    CW_HALT               =  0x09,  
-//    //Only for control profile position mode(operational mode 1)
-//    CW_START_ABS_POSITIONING  =  0x1F,//absolute reference
-//    CW_START_REL_POSITIONING  =  0x5F,//relative reference
-//    CW_START_QUICK_ABS_POSITIONING  =  0x3F,//start next positioning immediately
-//    CW_START_QUICK_REL_POSITIONING  =  0x7F,//start next positioning immediately
-//    CW_START_ABS_POSITIONING_WITH_VELOCITY  =  0x21F,//after the previous set-point has been reached
-//    CW_START_REL_POSITIONING_WITH_VELOCITY  =  0x25F,//after the previous set-point has been reached
-// }EcControlWord;
-// 
-// //StatusWord values SGDV
-// typedef enum
-// {
-//    SW_NOT_READY_SWICH_ON   =   0x00,
-//    SW_SWITCH_ON_DISABLED   =   0x40,
-//    SW_READY_SWITCH_ON      =   0x31,
-//    SW_SWITCHED_ON          =   0x33,
-//    SW_OPERATION_ENABLED    =   0x37,
-//    SW_QUICK_STOP_ACTIVE    =   0x07,
-//    SW_FAULT                =   0x08,
-//    SW_FAULT_RACTION_ACTIVE =   0x0F,
-//    SW_HIGH_MASK            = 0x00FF,
-//    SW_LOW_MASK             = 0xFF00,
-// }EcStatusWord;
-
 typedef struct
 {
     std::string name;
@@ -331,7 +282,7 @@ public:
     * \param param a buffer with the desired value.
     * 
     */
-    void setSGDVOject(uint16_t index, uint8_t subindex, int psize, void * param);
+    void setSGDVObject(uint16_t index, uint8_t subindex, int psize, void * param);
     
     /**
     * \brief Set an SGDV object
