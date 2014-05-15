@@ -260,7 +260,8 @@ bool EcMaster::stop() throw(EcError)
   //Stops the NRT thread
   threadFinished = true; 
   updateThread.join();
-
+  threadFinished = false; 
+  
   close(fdInput);
   close(fdOutput);
 
