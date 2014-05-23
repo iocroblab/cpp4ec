@@ -95,13 +95,17 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
 
   writeControlWord(CW_SHUTDOWN);
   updateMaster();
+  usleep(1000);
   
   writeControlWord(CW_SWITCH_ON);
   updateMaster();
+  usleep(1000);
   
   // Enable movement
   writeControlWord(CW_ENABLE_OP);
   updateMaster();
+  usleep(1000);
+  
 }
 
 void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV)
@@ -120,9 +124,11 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 
   writeControlWord(CW_SHUTDOWN);
   updateMaster();
+  usleep(1000);
     
   writeControlWord(CW_QUICK_STOP);
   updateMaster();
+  usleep(1000);
 }
 
 bool EcSlaveSGDV::readTimestamp (unsigned long& time)
