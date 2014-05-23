@@ -24,7 +24,6 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    m_params.resize(0);
    inputObjects.resize(0);
    outputObjects.resize(0);
-   bufferList.resize(0);
    m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
    
    
@@ -39,10 +38,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 }
 EcSlaveSGDV::~EcSlaveSGDV()
 {
-    for( int i = 0; i < bufferList.size(); i++)
-           delete[] bufferList[i];
-    delete[] inputBuf;
-    
+    delete[] inputBuf;    
 }
     
 void EcSlaveSGDV::update()
@@ -94,36 +90,18 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     return true;
 }
 
-std::vector<char*> EcSlaveSGDV::start() throw(EcErrorSGDV)
+void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
-  char * temp1 = new char[outputSize];
-  char * temp2 = new char[outputSize];
-  char * temp3 = new char[outputSize];
 
-  for( int i = 0; i < bufferList.size(); i++)
-      delete[] bufferList[i];
-  bufferList.resize(0);
-  
   writeControlWord(CW_SHUTDOWN);
-  slaveOutMutex.lock();
-  memcpy(temp1,pBufferOut,outputSize);
-  slaveOutMutex.unlock();
-  bufferList.push_back(temp1);
+  updateMaster();
   
   writeControlWord(CW_SWITCH_ON);
-  slaveOutMutex.lock();
-  memcpy(temp2,pBufferOut,outputSize);
-  slaveOutMutex.unlock();
-  bufferList.push_back(temp2);
+  updateMaster();
   
   // Enable movement
   writeControlWord(CW_ENABLE_OP);
-  slaveOutMutex.lock();
-  memcpy(temp3,pBufferOut,outputSize);
-  slaveOutMutex.unlock();
-  bufferList.push_back(temp3);
-
-  return bufferList;
+  updateMaster();
 }
 
 void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV)
@@ -137,24 +115,14 @@ void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
     pBufferOut=output;
 }
 
-std::vector<char*> EcSlaveSGDV::stop() throw(EcErrorSGDV)
+void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
-  for( int i = 0; i < bufferList.size(); i++)
-      delete[] bufferList[i];
-      
-  bufferList.resize(0);
-  char * temp1 = new char[outputSize];
-  char * temp2 = new char[outputSize];
-      
+
   writeControlWord(CW_SHUTDOWN);
-  memcpy(temp1,pBufferOut,outputSize);
-  bufferList.push_back(temp1);
+  updateMaster();
     
   writeControlWord(CW_QUICK_STOP);
-  memcpy(temp2,pBufferOut,outputSize);
-  bufferList.push_back(temp2);
-    
-  return bufferList;
+  updateMaster();
 }
 
 bool EcSlaveSGDV::readTimestamp (unsigned long& time)

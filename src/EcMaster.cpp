@@ -5,17 +5,23 @@ extern "C"
 {
 #include "EcRTThread/EcRTThread.h"
 }
+
 #include <sys/mman.h>
 #include <iostream>
 #include <fstream> //Just to verify the time
+
 //socket header
 #include <rtdm/rtipc.h>
 #include <sched.h>
 #include <sys/types.h>
 #include <unistd.h>
+
 //xenomai header
 #include <native/task.h>
 #define timestampSize 8 //8 bytes to represent the time
+
+#include <boost/thread.hpp>
+
 
 namespace cpp4ec
 {
@@ -86,9 +92,12 @@ bool EcMaster::configure() throw(EcError)
 	std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
 	driver -> configure();
     }
+
+    for (int i = 0; i < m_drivers.size(); i++)
+        m_drivers[i]-> updateMaster.connect(boost::bind(&EcMaster::update,this));
     
     if(slaveInformation)
-	slaveInfo();
+    slaveInfo();
     //Configure distributed clock
     if(m_useDC)
 	ec_configdc();
@@ -183,18 +192,9 @@ bool EcMaster::start() throw(EcError)
    pthread_setschedparam(updateThread.native_handle(), SCHED_OTHER, &sch);
    updateThread = std::thread(&EcMaster::update_EcSlaves,this);
    
-   std::vector<char*> commandList;
    for (int i = 0 ; i < m_drivers.size() ; i++)
-   {
-        commandList = m_drivers[i] ->  start();
-        for(int k = 0; k < commandList.size(); k ++)
-        {
-            memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i+1].Obytes);
-            update();
-        }
-        usleep (100000);  
-   }
-  
+       m_drivers[i] ->  start();
+
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
@@ -214,10 +214,9 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
 	    perror("read");
 //	    throw(EcError(EcError::FAIL_READING));
 	}
+
 	for(int i = 0; i < m_drivers.size();i++)
-	{
 	    m_drivers[i] -> update();
-	}
 	        
     }
 }
@@ -245,18 +244,10 @@ bool EcMaster::stop() throw(EcError)
 
   rt_task_set_priority(&master,20);
 
-  std::vector<char*> commandList;  
   //Stops slaves
   for (int i = 0 ; i < m_drivers.size() ; i++)
-  {
-    commandList = m_drivers[i] ->  stop();
-    for(int k = 0; k < commandList.size(); k ++)
-    {
-      memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i+1].Obytes);
-      update();
-    }
-    usleep (100000);  
-  }
+      m_drivers[i] ->  stop();
+
   //Stops the NRT thread
   threadFinished = true; 
   updateThread.join();

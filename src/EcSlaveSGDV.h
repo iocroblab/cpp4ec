@@ -16,7 +16,7 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
-#include <boost/signals2/signal.hpp>
+//#include <boost/signals2/signal.hpp>
 #include <vector>
 #include <mutex> 
 
@@ -132,7 +132,7 @@ public:
      * \return A vector with the secuence of buffer outputs that has to be sent to stop the servos
      * 
      */
-     std::vector<char*> start() throw(EcErrorSGDV);
+     void start() throw(EcErrorSGDV);
     
     /**
      * \brief Update the data
@@ -148,7 +148,7 @@ public:
      * \return A vector with the secuence of buffer outputs that has to be sent to stop the servos
      * 
      */
-     std::vector<char*> stop() throw(EcErrorSGDV);
+     void stop() throw(EcErrorSGDV);
      
      /**
      * \brief Set DC
@@ -351,7 +351,6 @@ private:
     std::vector <parameter> m_params;
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
-    std::vector <char*> bufferList;
     
     //PDO objects
     typedef enum
