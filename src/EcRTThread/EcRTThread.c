@@ -22,20 +22,13 @@ void rt_thread(void *unused)
 
    struct rtipc_port_label plabel_in, plabel_out;
    struct sockaddr_ipc saddr_in, saddr_out;
-
-   socklen_t addrlen;
-   
    unsigned long timestamp;
-
    int ret_in, ret_out, s_input, s_output, nRet;
    int inputSize = 0, outputSize = 0;
-
    int i;
-   for( i = 1; i <= ec_slavecount; i++)
-   {
-      inputSize = inputSize + ec_slave[i].Ibytes  + timestampSize;
-      outputSize = outputSize + ec_slave[i].Obytes;
-   }
+
+   inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
+   outputSize = ec_slave[0].Obytes;
 
    char * rtinputbuf = (char*) malloc(inputSize*(sizeof(char)));
    char * rtoutputbuf = (char*) malloc(outputSize*(sizeof(char)));
@@ -60,13 +53,12 @@ void rt_thread(void *unused)
     s_output = rt_dev_socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
     s_input =  rt_dev_socket(AF_RTIPC, SOCK_DGRAM, IPCPROTO_XDDP);
 
+    if (s_output < 0)
+      perror("socket");
 
-    if (s_output < 0) {
+    if (s_input < 0)
       perror("socket");
-    }
-    if (s_input < 0) {
-      perror("socket");
-    }
+
     /*
      * Set a port label. This name will be registered when
      * binding, in addition to the port number (if given).
@@ -75,9 +67,8 @@ void rt_thread(void *unused)
     ret_out = rt_dev_setsockopt(s_output, SOL_XDDP, XDDP_LABEL, &plabel_out, sizeof(plabel_out));
     if (ret_out)
     {
-    //  perror("setsockopt");
+        //  perror("setsockopt");
     }
-
 
     /*
      * Set a port label. This name will be used to find the peer
@@ -85,10 +76,9 @@ void rt_thread(void *unused)
      */
     strcpy(plabel_in.label, XDDP_PORT_INPUT);
     ret_in = rt_dev_setsockopt(s_input, SOL_XDDP, XDDP_LABEL,&plabel_in, sizeof(plabel_in));
-    if (ret_in)
-    {
+    if (ret_in)    
       perror("setsockopt");
-    }
+
     /*
      * Bind the socket to the port, to setup a proxy to channel
      * traffic to/from the Linux domain. Assign that port a label,
@@ -110,9 +100,7 @@ void rt_thread(void *unused)
     saddr_out.sipc_port = -1;
     ret_out = rt_dev_bind(s_output, (struct sockaddr *)&saddr_out, sizeof(saddr_out));
     if (ret_out)
-    {
       perror("bind");
-    }
 
     /*
      * Input socket from RT to NRT
@@ -123,10 +111,11 @@ void rt_thread(void *unused)
     saddr_in.sipc_port = -1; /* Tell XDDP to search by label. */
     ret_in = rt_dev_bind(s_input, (struct sockaddr *)&saddr_in, sizeof(saddr_in));
     if (ret_in)
-    {
-      perror("bind");
-    }
-       for (;;) {
+        perror("bind");
+
+       for (;;)
+       {
+
           /* Get packets relayed by the regular thread */
           ret_out = rt_dev_recvfrom(s_output, rtoutputbuf, outputSize, MSG_DONTWAIT, NULL, 0);
           if (ret_out <= 0)
@@ -135,35 +124,33 @@ void rt_thread(void *unused)
              // perror("recvfrom");
              //nothing to do, no new data transferred
           }else{
-             //received some data from the buffer
-             int offSet = 0;
-	     int i;
-             for ( i = 1; i<=ec_slavecount; i++)
-		{
-		    memcpy (ec_slave[i].outputs, rtoutputbuf + offSet, ec_slave[i].Obytes);
-		    offSet = offSet + ec_slave[i].Obytes;
-		}
+              //received some data from the buffer
+              memcpy (ec_slave[0].outputs, rtoutputbuf , ec_slave[0].Obytes);
           }
+
           nRet=ec_send_processdata();
-          //make some check of sending data
+          if(nRet == 0)
+              rt_printf("Send failed");
+
           nRet=ec_receive_processdata(EC_TIMEOUTRET);
-	  timestamp = rt_timer_read();
+          if(nRet == 0)
+              rt_printf("Recieve failed");
+
+          timestamp = rt_timer_read();
 
 
-	    int offSet = 0;
-	    int i;
-	    for (i = 1; i<=ec_slavecount; i++)
-	    {
-		memcpy (rtinputbuf + offSet ,ec_slave[i].inputs, ec_slave[i].Ibytes);
-		memcpy (rtinputbuf + offSet + ec_slave[i].Ibytes, &timestamp, timestampSize);
-		offSet = offSet + ec_slave[i].Ibytes  + timestampSize;
-	    }
-
+          int offSet = 0;
+          for (i = 1; i <= ec_slavecount; i++)
+          {
+            memcpy (rtinputbuf + offSet ,ec_slave[i].inputs, ec_slave[i].Ibytes);
+            memcpy (rtinputbuf + offSet + ec_slave[i].Ibytes, &timestamp, timestampSize);
+            offSet = offSet + ec_slave[i].Ibytes  + timestampSize;
+          }
 
           ret_in = rt_dev_sendto(s_input, rtinputbuf, inputSize, 0, NULL, 0);
-           if(ret_in != inputSize)
+          if(ret_in != inputSize)
           {
-           // perror("sendto");
+               // perror("sendto");
           }
 
           rt_task_wait_period(NULL);

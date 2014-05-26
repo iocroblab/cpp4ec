@@ -134,7 +134,6 @@ private:
     unsigned long m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
     bool m_useDC;
     std::vector<EcSlave*> m_drivers;
-    int* offSetOutput;
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
