@@ -93,7 +93,7 @@
       <index> 0x1600</index>
       <subindex> 0x01 </subindex>
       <size> 4 </size>
-      <value PDOentry="recieve"> 0x60400010 </value>
+      <value> 0x60400010 </value>
     </parameter>
     <parameter>
       <description>Receive PDO Mapping</description>
@@ -101,7 +101,7 @@
       <index> 0x1600</index>
       <subindex> 0x02 </subindex>
       <size> 4 </size>
-      <value PDOentry="recieve"> 0x607A0020 </value>
+      <value> 0x607A0020 </value>
     </parameter>
     <parameter>
       <description>Receive PDO Mapping</description>
@@ -109,7 +109,7 @@
       <index> 0x1600</index>
       <subindex> 0x03 </subindex>
       <size> 4 </size>
-      <value PDOentry="recieve"> 0x60FF0020 </value>
+      <value> 0x60FF0020 </value>
     </parameter>
     <parameter>
       <description>Receive PDO Mapping</description>
@@ -117,7 +117,7 @@
       <index> 0x1600</index>
       <subindex> 0x04 </subindex>
       <size> 4 </size>
-      <value PDOentry="recieve">0x60710010</value>
+      <value>0x60710010</value>
     </parameter>
     <parameter>
       <description>Receive PDO Mapping</description>
@@ -125,7 +125,7 @@
       <index> 0x1600</index>
       <subindex> 0x05 </subindex>
       <size> 4 </size>
-      <value PDOentry="recieve">0x60600008</value>
+      <value>0x60600008</value>
     </parameter>
     <parameter>
       <description>Transmit PDO Mapping</description>
@@ -141,7 +141,7 @@
       <index> 0x1A00</index>
       <subindex> 0x01 </subindex>
       <size> 4 </size>
-      <value PDOentry="transmit">0x60410010</value>
+      <value>0x60410010</value>
     </parameter>
     <parameter>
       <description>Transmit PDO Mapping</description>
@@ -149,7 +149,7 @@
       <index> 0x1A00</index>
       <subindex> 0x02 </subindex>
       <size> 4 </size>
-      <value PDOentry="transmit">0x60640020</value>
+      <value>0x60640020</value>
     </parameter>
     <parameter>
       <description>Transmit PDO Mapping</description>
@@ -157,7 +157,7 @@
       <index> 0x1A00</index>
       <subindex> 0x03 </subindex>
       <size> 4 </size>
-      <value PDOentry="transmit">0x606C0020</value>
+      <value>0x606C0020</value>
     </parameter>
     <parameter>
       <description>Transmit PDO Mapping</description>
@@ -165,7 +165,7 @@
       <index> 0x1A00</index>
       <subindex> 0x04 </subindex>
       <size> 4 </size>
-      <value PDOentry="transmit">0x60770010</value>
+      <value>0x60770010</value>
     </parameter>
     <parameter>
       <description>Transmit PDO Mapping</description>
@@ -173,7 +173,7 @@
       <index> 0x1A00</index>
       <subindex> 0x05 </subindex>
       <size> 4 </size>
-      <value PDOentry="transmit">0x603F0010</value>
+      <value>0x603F0010</value>
     </parameter>
     <parameter>
       <description>Transmit PDO Mapping</description>
@@ -181,7 +181,7 @@
       <index> 0x1A00</index>
       <subindex> 0x06 </subindex>
       <size> 4 </size>
-      <value PDOentry="transmit">0x60610008</value>
+      <value>0x60610008</value>
     </parameter>
     <!--  3.Set the number of mapping entries in PDO mapping objects-->
     <parameter>

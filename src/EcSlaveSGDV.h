@@ -24,8 +24,10 @@ extern "C"
 typedef struct
 {
     std::string name;
+    unsigned int index;
     unsigned int offset;
     unsigned int byteSize;
+    unsigned int entry;
     std::string type;
 }PDOobject;    
 
@@ -52,7 +54,7 @@ public:
 	FIFTH_ENTRY,
 	SIXTH_ENTRY,	
 	SEVENTH_ENTRY,	
-	EIGHTH_ENTRY,	
+    EIGHTH_ENTRY
     } EcPDOEntry;
     
      /**
@@ -314,16 +316,16 @@ private:
     int outputSize;
     int inputSize;
     
-    int transmitEntry;
-    int recieveEntry;    
     char* pBufferOut;
     char* pBufferIn;  
     char* inputBuf;
     
     bool readXML() throw(EcErrorSGDV);
-    bool addPDOobject(std::string PDOentry,int value, int subindex);
+    bool enableSpecificFunctions();
     void loadDefaultPDO();
     void loadParameters();
+    void si_PDOassign(uint16 slave, uint16 PDOassign);
+
     
     int controlWordEntry;
     int targetPositionEntry;

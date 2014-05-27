@@ -13,7 +13,7 @@ namespace cpp4ec
 {
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
-    outputSize(0), inputSize(0), transmitEntry(0), recieveEntry(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
+    outputSize(0), inputSize(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
@@ -80,10 +80,15 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR,m_slave_nr,getName()));
 
     }
-    inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize + timestampSize;
+    si_PDOassign(m_slave_nr,0x1C12);//sync manager for outputs
+    si_PDOassign(m_slave_nr,0x1C13);//sync manager for inputs
+    enableSpecificFunctions();
+
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
+    inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize + timestampSize;
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
+
 
     std::cout << getName() << " configured !" <<std::endl;
     
@@ -92,6 +97,7 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 
 void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
+
 
   writeControlWord(CW_SHUTDOWN);
   updateMaster();
@@ -185,6 +191,8 @@ bool EcSlaveSGDV::writePosition (int32_t position)
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
     slaveOutMutex.unlock();
+    std::cout<<"postition "<<(int)position<<" offset "<<outputObjects[targetPositionEntry].offset
+            <<" size "<<outputObjects[targetPositionEntry].byteSize<<std::endl;
 }
 
 bool EcSlaveSGDV::readPosition (int32_t &position)
@@ -280,7 +288,7 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 		  }
 	      }
 	      m_params.push_back(temp);
-	  }
+      }
       }else if(typeName == "PDOmapping")
       {
 	  PDOmapping = true;
@@ -310,19 +318,14 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 		  }
 		  else if (name ==  "value")
 		  {
-		      temp.param = strtol (param.child_value(),NULL,0);
-		      std::string PDOentry = std::string(param.attribute("PDOentry").value());
-		      addPDOobject(PDOentry,temp.param,temp.subindex);
+              temp.param = strtol (param.child_value(),NULL,0);
 		  }else{
 		      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
 		  }
 	      }
 	      m_params.push_back(temp);
-	  }
-	  if(outputObjects.size() <= 0)
-	    throw(EcErrorSGDV(EcErrorSGDV::OUTPUT_OBJECTS_ERROR,m_slave_nr,getName()));
-	  if(inputObjects.size() <= 0)
-	    throw(EcErrorSGDV(EcErrorSGDV::INPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+      }
+
       }else{
 	  throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
       }
@@ -335,97 +338,85 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 
 }
 
-bool EcSlaveSGDV::addPDOobject (std::string PDOentry, int value, int subindex)
+bool EcSlaveSGDV::enableSpecificFunctions ()
 {
-    if ( ((PDOentry != "transmit") && (PDOentry != "recieve")) || subindex == 0 )
+    if(outputObjects.size() <= 0)
+      throw(EcErrorSGDV(EcErrorSGDV::OUTPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+    if(inputObjects.size() <= 0)
+      throw(EcErrorSGDV(EcErrorSGDV::INPUT_OBJECTS_ERROR,m_slave_nr,getName()));
+
+    for( int i = 0; i < inputObjects.size();i++)
     {
-	return false;
+        switch (inputObjects[i].index)
+        {
+            case STATUS_WORD:
+            statusWordEntry = i;
+            rStatusWordCapable = true;
+            //std::cout<<"STATUS_WORD "<<i<<std::endl;
+
+            break;
+
+            case ACTUAL_POSITION:
+            actualPositionEntry = i;
+            rPositionCapable = true;
+            //std::cout<<"ACTUAL_POSITION "<<i<<std::endl;
+            break;
+
+            case ACTUAL_VELOCITY:
+            actualVelocityEntry = i;
+            rVelocityCapable = true;
+            //std::cout<<"ACTUAL_VELOCITY "<<i<<std::endl;
+            break;
+
+            case ACTUAL_TORQUE:
+            actualTorqueEntry = i;
+            rTorqueCapable = true;
+            //std::cout<<"ACTUAL_TORQUE "<<i<<std::endl;
+            break;
+
+            default:
+            break;
+        }
     }
-    int mask1 = 0xFFFF0000;
-    int mask2 = 0x0000FFFF;
-    int objectNumber = (value & mask1) >> 16;
-    int objectSize = (value & mask2)/8;
-    if (PDOentry == "transmit")
+
+    for( int i = 0; i < outputObjects.size();i++)
     {
-	PDOobject temp;
-	if(transmitEntry>0)
-	{
-	  temp.offset = inputObjects[transmitEntry-1].offset + inputObjects[transmitEntry-1].byteSize;
- 	}else{
-          temp.offset = 0;
-	}
-	temp.byteSize = objectSize;
-	
-	switch (objectNumber)
-	{
-	    case STATUS_WORD:
-		statusWordEntry = transmitEntry;
-		rStatusWordCapable = true;  
-		break;
-		
-	    case ACTUAL_POSITION:
-		actualPositionEntry=transmitEntry;
-		rPositionCapable = true; 
-		break;
-		
-	    case ACTUAL_VELOCITY:
-		actualVelocityEntry = transmitEntry;
-		rVelocityCapable = true;
-		break;
-		
-	    case ACTUAL_TORQUE:
-		actualTorqueEntry=transmitEntry;
-		rTorqueCapable = true;
-		break;
-		
-	    default:
-		break;
-		
-	}
-	inputObjects.push_back(temp);	
-	transmitEntry += 1;
+        switch (outputObjects[i].index)
+        {
+            case CONTROL_WORD:
+            controlWordEntry = i;
+            wControlWordCapable = true;
+            //std::cout<<"CONTROL_WORD "<<i<<std::endl;
+
+            break;
+
+            case TARGET_POSITION:
+            targetPositionEntry = i;
+            wPositionCapable = true;
+            //std::cout<<"TARGET_POSITION "<<i<<std::endl;
+
+            break;
+
+            case TARGET_VELOCITY:
+            targetVelocityEntry = i;
+            wVelocityCapable = true;
+            //std::cout<<"TARGET_VELOCITY "<<i<<std::endl;
+
+            break;
+
+            case TARGET_TORQUE:
+            targetTorqueEntry = i;
+            wTorqueCapable = true;
+            //std::cout<<"TARGET_TORQUE "<<i<<std::endl;
+
+            break;
+
+            default:
+            break;
+
+        }
     }
-    
-    if (PDOentry == "recieve")
-    {
-	PDOobject temp;
-	if(recieveEntry>0)
-	{
-	  temp.offset = outputObjects[recieveEntry-1].offset + outputObjects[recieveEntry-1].byteSize;
-        }else{ 	
-          temp.offset = 0;
-	}
-	temp.byteSize = objectSize;
-	
-	switch (objectNumber)
-	{
-	    case CONTROL_WORD:
-		controlWordEntry = recieveEntry;
-		wControlWordCapable = true;  
-		break;
-		
-	    case TARGET_POSITION:
-		targetPositionEntry = recieveEntry;
-		wPositionCapable = true;
-		break;
-		
-	    case TARGET_VELOCITY:
-		targetVelocityEntry = recieveEntry;
-		wVelocityCapable = true;
-		break;
-		
-	    case TARGET_TORQUE:
-		targetTorqueEntry = recieveEntry;
-		wTorqueCapable = true;
-		break;
-		
-	    default:
-		break;
-		
-	}
-	outputObjects.push_back(temp);
-	recieveEntry += 1;
-    }
+
     return true;
 	
 }
@@ -434,7 +425,7 @@ void EcSlaveSGDV::loadDefaultPDO()
 {
    parameter temp;
    
-   //1.Disable the assignment of the Sync manager and PDO   
+   //1.Disable the assignment of the Sync manager and PDO
    temp.description = "Disable";
    temp.index = 0x1C12;
    temp.subindex = 0x00;
@@ -450,7 +441,7 @@ void EcSlaveSGDV::loadDefaultPDO()
    temp.size = 1;
    temp.param = 0;
    m_params.push_back(temp);
-   
+
    //2.Set all the mapping entry in PDO mapping objects   
    temp.description = "Receive PDO Mapping";
    temp.index = 0x1600;
@@ -572,14 +563,14 @@ void EcSlaveSGDV::loadDefaultPDO()
    temp.size = 1;
    temp.param = 6;
    m_params.push_back(temp);
-   
+
    //4.Set the assignment of the Sync manager and PDO    
    temp.description = "Assing";
    temp.index = 0x1C12;
    temp.subindex = 0x01;
    temp.name = "Sync Manager PDO Assignment";
    temp.size = 2;
-   temp.param = 0x1600;
+   temp.param = 0x1601;
    m_params.push_back(temp);
    
    temp.description = "Assing";
@@ -587,7 +578,7 @@ void EcSlaveSGDV::loadDefaultPDO()
    temp.subindex = 0x01;
    temp.name = "Sync Manager PDO Assignment";
    temp.size = 2;
-   temp.param = 0x1A00;
+   temp.param = 0x1A01;
    m_params.push_back(temp);
    
    //5.Enable the assignment of the Sync manager and PDO.
@@ -606,46 +597,8 @@ void EcSlaveSGDV::loadDefaultPDO()
    temp.size = 1;
    temp.param = 1;
    m_params.push_back(temp);
-   
-   inputObjects.resize(6);
-   inputObjects[0].offset = 0;
-   inputObjects[0].byteSize = 2;
-   inputObjects[1].byteSize = 4;
-   inputObjects[2].byteSize = 4;
-   inputObjects[3].byteSize = 2;
-   inputObjects[4].byteSize = 2;
-   inputObjects[5].byteSize = 1;   
-   rStatusWordCapable = true;
-   rPositionCapable = true;
-   rVelocityCapable = true;
-   rTorqueCapable = true;
-   controlWordEntry = 0;
-   targetPositionEntry = 1;
-   targetVelocityEntry = 2;
-   targetTorqueEntry = 3;
 
-   for(int i = 1; i < inputObjects.size(); i++)
-       inputObjects[i].offset = inputObjects[i-1].offset + inputObjects[i-1].byteSize;
-   
-   statusWordEntry = 0;
-   actualPositionEntry = 1;
-   actualVelocityEntry = 2;
-   actualTorqueEntry = 3;
-   outputObjects.resize(5);
-   outputObjects[0].offset = 0;
-   outputObjects[0].byteSize = 2;
-   outputObjects[1].byteSize = 4;
-   outputObjects[2].byteSize = 4;
-   outputObjects[3].byteSize = 2;
-   outputObjects[4].byteSize = 1;
-   wControlWordCapable= true;
-   wPositionCapable = true;
-   wVelocityCapable = true;
-   wTorqueCapable = true;
-   
-   for(int i = 1; i < outputObjects.size(); i++)
-       outputObjects[i].offset = outputObjects[i-1].offset + outputObjects[i-1].byteSize;
-   
+
 
 }
 
@@ -721,7 +674,87 @@ void EcSlaveSGDV::getSGDVObject(uint16_t index, uint8_t subindex, int *psize, vo
   ec_SDOread(m_slave_nr, index, subindex, FALSE,psize,param,EC_TIMEOUTRXM);
 }
 
+void EcSlaveSGDV::si_PDOassign(uint16 slave, uint16 PDOassign)
+{
+    uint16 idxloop, nidx, subidxloop, rdat, idx, subidx;
+    uint8 subcnt;
+    int wkc, bsize = 0, rdl;
+    int32 rdat2;
+    uint8 bitlen, obj_subidx;
+    uint16 obj_idx;
 
+    rdl = sizeof(rdat); rdat = 0;
+    /* read PDO assign subindex 0 ( = number of PDO's) */
+    wkc = ec_SDOread(slave, PDOassign, 0x00, FALSE, &rdl, &rdat, EC_TIMEOUTRXM);
+    rdat = etohs(rdat);
+    bool outputMapping = false, inputMapping = false;
+    if(PDOassign == 0x1C12)//sync manager for outputs
+        outputMapping = true;
+    if(PDOassign == 0x1C13)//sync manager for inputs
+        inputMapping = true;
+
+    /* positive result from slave ? */
+    if ((wkc > 0) && (rdat > 0))
+    {
+    /* number of available sub indexes */
+    nidx = rdat;
+    bsize = 0;
+    /* read all PDO's */
+    for (idxloop = 1; idxloop <= nidx; idxloop++)
+    {
+        rdl = sizeof(rdat); rdat = 0;
+        /* read PDO assign */
+        wkc = ec_SDOread(slave, PDOassign, (uint8)idxloop, FALSE, &rdl, &rdat, EC_TIMEOUTRXM);
+        /* result is index of PDO */
+        idx = etohl(rdat);
+        std::cout<<"PDO assigned "<<idx<<std::endl;
+        if (idx > 0)
+        {
+        rdl = sizeof(subcnt); subcnt = 0;
+        /* read number of subindexes of PDO */
+        wkc = ec_SDOread(slave,idx, 0x00, FALSE, &rdl, &subcnt, EC_TIMEOUTRXM);
+        subidx = subcnt;
+        /* for each subindex */
+        for (subidxloop = 1; subidxloop <= subidx; subidxloop++)
+        {
+            PDOobject temp;
+
+            rdl = sizeof(rdat2); rdat2 = 0;
+            /* read SDO that is mapped in PDO */
+            wkc = ec_SDOread(slave, idx, (uint8)subidxloop, FALSE, &rdl, &rdat2, EC_TIMEOUTRXM);
+            rdat2 = etohl(rdat2);
+            /* extract bitlength of SDO */
+            bitlen = LO_BYTE(rdat2);
+            bsize += bitlen;
+            obj_idx = (uint16)(rdat2 >> 16);
+            obj_subidx = (uint8)((rdat2 >> 8) & 0x000000ff);
+            temp.index = obj_idx;
+            temp.byteSize = bitlen/8;
+            temp.entry = subidxloop;
+
+            if(outputMapping)
+            {
+                if(outputObjects.size()==0)
+                    temp.offset = 0;
+                else
+                    temp.offset = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
+                outputObjects.push_back(temp);
+
+            }
+            if(inputMapping)
+            {
+                if(inputObjects.size()==0)
+                    temp.offset = 0;
+                else
+                    temp.offset = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
+                inputObjects.push_back(temp);
+
+            }
+        };
+        };
+    };
+    };
+}
 namespace {
 cpp4ec::EcSlave* createEcSlaveSGDV(ec_slavet* mem_loc)
 {
