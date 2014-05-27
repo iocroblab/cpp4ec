@@ -31,6 +31,9 @@ int main ()
   try
   {
     drivers.resize(0);
+    
+    master.preconfigure();
+    
     master.configure();
     drivers = master.getSlaves();
   

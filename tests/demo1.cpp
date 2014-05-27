@@ -20,6 +20,8 @@ int main ()
   
   try
   {
+    master.preconfigure();
+        
     /* The master and slaves are configured  */
     master.configure();
     /* The master and slaves are started  */  

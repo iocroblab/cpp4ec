@@ -68,6 +68,8 @@ public:
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
      *
      */
+    bool preconfigure() throw(EcError);
+
     bool configure() throw(EcError);
 
     /**
@@ -137,7 +139,8 @@ private:
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
-    
+    bool SGDVconnected;
+
     
     //ethercat switchState function
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached

@@ -98,19 +98,18 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
 
-
   writeControlWord(CW_SHUTDOWN);
   updateMaster();
-  usleep(1000);
+  usleep(100000);
   
   writeControlWord(CW_SWITCH_ON);
   updateMaster();
-  usleep(1000);
+  usleep(100000);
   
   // Enable movement
   writeControlWord(CW_ENABLE_OP);
   updateMaster();
-  usleep(1000);
+  usleep(100000);
   
 }
 
@@ -130,11 +129,11 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 
   writeControlWord(CW_SHUTDOWN);
   updateMaster();
-  usleep(1000);
+  usleep(100000);
     
   writeControlWord(CW_QUICK_STOP);
   updateMaster();
-  usleep(1000);
+  usleep(100000);
 }
 
 bool EcSlaveSGDV::readTimestamp (unsigned long& time)
@@ -173,6 +172,7 @@ bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
     slaveOutMutex.unlock();
+
 }
 
 bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
@@ -191,8 +191,7 @@ bool EcSlaveSGDV::writePosition (int32_t position)
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
     slaveOutMutex.unlock();
-    std::cout<<"postition "<<(int)position<<" offset "<<outputObjects[targetPositionEntry].offset
-            <<" size "<<outputObjects[targetPositionEntry].byteSize<<std::endl;
+
 }
 
 bool EcSlaveSGDV::readPosition (int32_t &position)
@@ -318,7 +317,7 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 		  }
 		  else if (name ==  "value")
 		  {
-              temp.param = strtol (param.child_value(),NULL,0);
+                      temp.param = strtol (param.child_value(),NULL,0);
 		  }else{
 		      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
 		  }
@@ -570,7 +569,7 @@ void EcSlaveSGDV::loadDefaultPDO()
    temp.subindex = 0x01;
    temp.name = "Sync Manager PDO Assignment";
    temp.size = 2;
-   temp.param = 0x1601;
+   temp.param = 0x1600;
    m_params.push_back(temp);
    
    temp.description = "Assing";
@@ -578,7 +577,7 @@ void EcSlaveSGDV::loadDefaultPDO()
    temp.subindex = 0x01;
    temp.name = "Sync Manager PDO Assignment";
    temp.size = 2;
-   temp.param = 0x1A01;
+   temp.param = 0x1A00;
    m_params.push_back(temp);
    
    //5.Enable the assignment of the Sync manager and PDO.
@@ -707,7 +706,6 @@ void EcSlaveSGDV::si_PDOassign(uint16 slave, uint16 PDOassign)
         wkc = ec_SDOread(slave, PDOassign, (uint8)idxloop, FALSE, &rdl, &rdat, EC_TIMEOUTRXM);
         /* result is index of PDO */
         idx = etohl(rdat);
-        std::cout<<"PDO assigned "<<idx<<std::endl;
         if (idx > 0)
         {
         rdl = sizeof(subcnt); subcnt = 0;

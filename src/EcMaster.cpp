@@ -30,7 +30,7 @@ namespace cpp4ec
   
 
 EcMaster::EcMaster(unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), 
-inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true)
+    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -54,7 +54,7 @@ EcMaster::~EcMaster()
    //must clean memory and delete tasks
 }
 
-bool EcMaster::configure() throw(EcError)
+bool EcMaster::preconfigure() throw(EcError)
 {
     bool success;
     int size = ethPort.size();
@@ -90,33 +90,62 @@ bool EcMaster::configure() throw(EcError)
 
         m_drivers.push_back(driver);
         std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
-        driver -> configure();
+        //driver -> configure();
+    }
+    //The SGDV slave works different from the standard soem sequence
+    //so it is detected to modify the structure
+    for (int i = 0; i < m_drivers.size(); i++)
+    {
+        std::string sgdvName = "SGDV";
+        std::string slaveName = m_drivers[i]-> getName();
+        if(slaveName.compare(0,4,sgdvName) == 0)
+            SGDVconnected = true;
     }
 
     for (int i = 0; i < m_drivers.size(); i++)
         m_drivers[i]-> updateMaster.connect(boost::bind(&EcMaster::update,this));
-    
+}
+
+bool EcMaster::configure() throw(EcError)
+{
+    bool success;
+    for (int i = 0; i < m_drivers.size(); i++)
+        m_drivers[i] -> configure();
+
     if(slaveInformation)
         slaveInfo();
-    //Configure distributed clock
-    if(m_useDC)
-        ec_configdc();
     //Configure IOmap
     ec_config_map(&m_IOmap);
+    //Configure DC
+    if (m_useDC)
+    {
+        ec_configdc();
+        for (int i = 0; i <  m_drivers.size(); i++)
+            m_drivers[i] -> setDC(true, m_cycleTime, 0);
+    }
+    /* The SGDV slave need to activate the cyclic communication
+     * just after of activating the distributed clocks
+     */
+    if(SGDVconnected)
+    {
+
+        rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
+        rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
+        rt_task_start (&task, &rt_thread, NULL);
+    }
 
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
 
-    //Calulating the buffers size
-    inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
+    //Create master buffers
     outputSize = ec_slave[0].Obytes;
+    inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
     outputBuf = new char [outputSize];
     inputBuf = new char[inputSize];
     memset(outputBuf,0, outputSize);
     memset(inputBuf,0, inputSize);
 
     int offSetInput = 0, offSetOutput = 0;
-
     for(int i = 0; i < m_drivers.size();i++)
     {
         m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
@@ -133,14 +162,7 @@ bool EcMaster::configure() throw(EcError)
         throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
     
     std::cout << "SAFE-OPERATIONAL state reached"<< std::endl;
-    if (m_useDC)
-    {
-        for (int i = 0; i <  m_drivers.size(); i++)
-            m_drivers[i] -> setDC(true, m_cycleTime, 0);
-    }
-    rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
-    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-    rt_task_start (&task, &rt_thread, NULL);
+
     
     if(EcatError)
         throw(EcError(EcError::ECAT_ERROR));
@@ -150,7 +172,17 @@ bool EcMaster::configure() throw(EcError)
     if (!success)
 	    throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
     std::cout << "OPERATIONAL state reached" << std::endl;
+
+    if(!SGDVconnected)
+    {
+        rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
+        rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
+        rt_task_start (&task, &rt_thread, NULL);
+    }
+    usleep(200000);
+
     std::cout<<"Master configured!!!"<<std::endl;
+
 	
     return true;
 }
