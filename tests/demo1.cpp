@@ -16,7 +16,7 @@ int main ()
 {
   /*Intancied the EcMaster with a pediod of PDO comunication of 1 ms, without using Distributed Clocks and 
    *printing the slave information in the SlaveInfo.txt*/
-  cpp4ec::EcMaster master(1000000,false,true);
+  cpp4ec::EcMaster master("rteth0",1000000,false,true);
   
   try
   {

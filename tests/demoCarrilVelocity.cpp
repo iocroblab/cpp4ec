@@ -15,7 +15,7 @@
 
 int main ()
 {
-  cpp4ec::EcMaster master(1000000,true);	// 1ms and with DC
+  cpp4ec::EcMaster master("rteth1",1000000,true);	// 1ms and with DC
   std::vector<cpp4ec::EcSlave*> drivers;
   int status,position,velocity;
    

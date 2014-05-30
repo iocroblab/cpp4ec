@@ -55,7 +55,7 @@ public:
      * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information.
      *    
      */
-    EcMaster(unsigned long cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
+    EcMaster(std::string ecPort = "rteth0", unsigned long cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
 
     /**
      *  \brief Destructor
@@ -139,7 +139,7 @@ private:
     
      //Master variables
     std::string ethPort;
-    char * ecPort;
+    char * m_ecPort;
     char m_IOmap[4096];
     unsigned long m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
     bool m_useDC;

@@ -23,7 +23,7 @@ int main ()
 {
   /*Intancied the defauld EcMaster: with a pediod of PDO comunication of 1 ms, without using Distributed Clocks and 
    without slave information*/
-  cpp4ec::EcMaster master(1000000,true,false);
+  cpp4ec::EcMaster master("rteth0",1000000,true,false);
 
   std::vector<cpp4ec::EcSlave*> drivers;
   int32_t velocity;

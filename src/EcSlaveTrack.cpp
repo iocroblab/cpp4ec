@@ -1,9 +1,8 @@
 #include "EcSlaveTrack.h"
 #include "EcUtil.h"
-
-#include <sys/mman.h>
-#include "EcSlaveTrack.h"
 #include "EcSlaveFactory.h"
+#include <sys/mman.h>
+
 
 #include <pugixml.hpp>
 #include <stdint.h>

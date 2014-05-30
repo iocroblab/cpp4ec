@@ -29,7 +29,7 @@ namespace cpp4ec
   
 
 
-EcMaster::EcMaster(unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), 
+EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
     inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false)
 
 {
@@ -59,12 +59,12 @@ bool EcMaster::preconfigure() throw(EcError)
 {
     bool success;
     int size = ethPort.size();
-    ecPort = new char[size];
-    strcpy (ecPort, ethPort.c_str());
+    m_ecPort = new char[size];
+    strcpy (m_ecPort, ethPort.c_str());
 
    
    // initialise SOEM, bind socket to ifname
-    if (!(ec_init(ecPort) > 0))
+    if (!(ec_init(m_ecPort) > 0))
         throw(EcError(EcError::FAIL_EC_INIT));
     
     std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
@@ -84,7 +84,6 @@ bool EcMaster::preconfigure() throw(EcError)
     std::cout << "PRE-OPERATIONAL state reached"<< std::endl;
     for (int i = 1; i <= ec_slavecount; i++)
     {
-
         EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
         if (!driver)
             std::cout<<"Error: Failed creating driver"<<std::endl;
@@ -106,6 +105,9 @@ bool EcMaster::preconfigure() throw(EcError)
 
     for (int i = 0; i < m_drivers.size(); i++)
         m_drivers[i]-> updateMaster.connect(boost::bind(&EcMaster::update,this));
+
+    std::cout<<"Master preconfigured!!!"<<std::endl;
+
 }
 
 bool EcMaster::configure() throw(EcError)
@@ -320,7 +322,7 @@ bool EcMaster::reset() throw(EcError)
    
    delete[] outputBuf;
    delete[] inputBuf;
-   delete[] ecPort;
+   delete[] m_ecPort;
    
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
