@@ -24,9 +24,8 @@ extern "C"
 
 namespace cpp4ec
 {
-   RT_TASK task;
+   RT_TASK *task;
    RT_TASK master;
-  
 
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
@@ -61,6 +60,7 @@ bool EcMaster::preconfigure() throw(EcError)
     int size = ethPort.size();
     m_ecPort = new char[size];
     strcpy (m_ecPort, ethPort.c_str());
+    task = new RT_TASK;
 
    
    // initialise SOEM, bind socket to ifname
@@ -68,7 +68,6 @@ bool EcMaster::preconfigure() throw(EcError)
         throw(EcError(EcError::FAIL_EC_INIT));
     
     std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
-
 
 
     if (!(ec_config_init(FALSE) > 0))
@@ -130,12 +129,13 @@ bool EcMaster::configure() throw(EcError)
     /* The SGDV slave need to activate the cyclic communication
      * just after of activating the distributed clocks
      */
+    taskFinished = false;
     if(SGDVconnected)
     {
 
-        rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
-        rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-        rt_task_start (&task, &rt_thread, NULL);
+        rt_task_create (task, "PDO rt_task", 8192, 99, 0);
+        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
+        rt_task_start (task, &rt_thread, NULL);
     }
 
     if(EcatError)
@@ -149,13 +149,7 @@ bool EcMaster::configure() throw(EcError)
     outputBuf = new char [outputSize];
     inputBuf = new char[inputSize];
     memset(outputBuf,0, outputSize);
-    //memcpy(outputBuf,ec_slave[0].outputs,outputSize);
     memset(inputBuf,0, inputSize);
-    /*for ( i = 1; i<=ec_slavecount; i++)
-    {
-       memcpy (ec_slave[i].outputs, rtoutputbuf + offSet, ec_slave[i].Obytes);
-       offSet = offSet + ec_slave[i].Obytes;
-    }*/
 
     int offSetInput = 0, offSetOutput = 0;
     for(int i = 0; i < m_drivers.size();i++)
@@ -165,6 +159,7 @@ bool EcMaster::configure() throw(EcError)
         if(i < (m_drivers.size()-1))
         {
             offSetOutput += ec_slave[i+1].Obytes;
+            offSetInput += ec_slave[i+1].Ibytes + timestampSize;
 
         }
     }
@@ -188,9 +183,9 @@ bool EcMaster::configure() throw(EcError)
 
     if(!SGDVconnected)
     {
-        rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
-        rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-        rt_task_start (&task, &rt_thread, NULL);
+        rt_task_create (task, "PDO rt_task", 8192, 99, 0);
+        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
+        rt_task_start (task, &rt_thread, NULL);
     }
     usleep(200000);
 
@@ -309,9 +304,8 @@ bool EcMaster::reset() throw(EcError)
       for (int i = 0; i <  m_drivers.size(); i++)
           m_drivers[i] -> setDC(false, m_cycleTime, 0);
    }
-   // delete the periodic task
-   rt_task_delete(&task);
-   
+   taskFinished = true;
+   usleep(5000);
    bool success = switchState (EC_STATE_INIT);
    if (!success)
       throw(EcError(EcError::FAIL_SWITCHING_STATE_INIT));
@@ -323,6 +317,10 @@ bool EcMaster::reset() throw(EcError)
    delete[] outputBuf;
    delete[] inputBuf;
    delete[] m_ecPort;
+   // delete the periodic task
+   rt_task_delete(task);
+   delete task;
+   
    
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;

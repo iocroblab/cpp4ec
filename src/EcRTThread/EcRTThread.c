@@ -37,7 +37,6 @@ void rt_thread(void *unused)
    memset(rtoutputbuf,0, outputSize);
    memset(rtinputbuf,0, inputSize);
 
-
    /*need to put a lot of stuff to create
     * two sockets: one to receive data from nonrt part
     * and another to send data to the nonrt part
@@ -114,7 +113,7 @@ void rt_thread(void *unused)
     if (ret_in)
         perror("bind");
 
-       for (;;)
+       while(!taskFinished)
        {
 
           /* Get packets relayed by the regular thread */
@@ -152,8 +151,11 @@ void rt_thread(void *unused)
           {
                // perror("sendto");
           }
-
           rt_task_wait_period(NULL);
        }
-
+     free(rtinputbuf);
+     free(rtoutputbuf);
+     rt_dev_close(s_output);
+     rt_dev_close(s_input);
+     
 }
