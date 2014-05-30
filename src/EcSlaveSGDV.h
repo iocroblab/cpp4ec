@@ -350,7 +350,7 @@ private:
     std::mutex slaveInMutex;
     std::mutex slaveOutMutex;
 
-    std::vector <parameter> m_params;
+    std::vector <CoEparameter> m_params;
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
     

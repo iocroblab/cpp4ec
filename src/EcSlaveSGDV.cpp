@@ -240,7 +240,7 @@ bool EcSlaveSGDV::readTorque (int16_t &torque)
 
 bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
 {
-  parameter temp;  
+  CoEparameter temp;
   std::string xml_name = "configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
   pugi::xml_document doc;
   pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
@@ -422,7 +422,7 @@ bool EcSlaveSGDV::enableSpecificFunctions ()
 
 void EcSlaveSGDV::loadDefaultPDO()
 {
-   parameter temp;
+   CoEparameter temp;
    
    //1.Disable the assignment of the Sync manager and PDO
    temp.description = "Disable";
@@ -603,7 +603,7 @@ void EcSlaveSGDV::loadDefaultPDO()
 
 void EcSlaveSGDV::loadParameters()
 {
-   parameter temp;
+   CoEparameter temp;
    //setting parameters 
    temp.description = "Modes of Operation";
    temp.index = 0x6060;

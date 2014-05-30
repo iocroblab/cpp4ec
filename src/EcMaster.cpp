@@ -1,5 +1,4 @@
 #include "EcMaster.h"
-#include "EcSlaveSGDV.h"
 #include "EcUtil.h"
 extern "C"
 {
@@ -29,8 +28,10 @@ namespace cpp4ec
    RT_TASK master;
   
 
+
 EcMaster::EcMaster(unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), 
     inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false)
+
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -59,18 +60,20 @@ bool EcMaster::preconfigure() throw(EcError)
     bool success;
     int size = ethPort.size();
     ecPort = new char[size];
-    strcpy (ecPort, ethPort.c_str());  
+    strcpy (ecPort, ethPort.c_str());
 
-    // initialise SOEM, bind socket to ifname
+   
+   // initialise SOEM, bind socket to ifname
     if (!(ec_init(ecPort) > 0))
         throw(EcError(EcError::FAIL_EC_INIT));
     
     std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
-    
-    //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
+
+
+
     if (!(ec_config_init(FALSE) > 0))
         throw(EcError(EcError::FAIL_EC_CONFIG_INIT));
-  
+
     std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
     std::cout << "Request PRE-OPERATIONAL state for all slaves"<< std::endl;
 
@@ -79,10 +82,9 @@ bool EcMaster::preconfigure() throw(EcError)
         throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
     
     std::cout << "PRE-OPERATIONAL state reached"<< std::endl;
-
-
     for (int i = 1; i <= ec_slavecount; i++)
     {
+
         EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
         if (!driver)
             std::cout<<"Error: Failed creating driver"<<std::endl;
@@ -137,35 +139,44 @@ bool EcMaster::configure() throw(EcError)
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
 
+
     //Create master buffers
     outputSize = ec_slave[0].Obytes;
     inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
+
     outputBuf = new char [outputSize];
     inputBuf = new char[inputSize];
     memset(outputBuf,0, outputSize);
+    //memcpy(outputBuf,ec_slave[0].outputs,outputSize);
     memset(inputBuf,0, inputSize);
+    /*for ( i = 1; i<=ec_slavecount; i++)
+    {
+       memcpy (ec_slave[i].outputs, rtoutputbuf + offSet, ec_slave[i].Obytes);
+       offSet = offSet + ec_slave[i].Obytes;
+    }*/
 
     int offSetInput = 0, offSetOutput = 0;
     for(int i = 0; i < m_drivers.size();i++)
     {
+
         m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
         if(i < (m_drivers.size()-1))
         {
             offSetOutput += ec_slave[i+1].Obytes;
-            offSetInput  += ec_slave[i+1].Ibytes  + timestampSize;
+
         }
     }
-    
+
     std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
     success = switchState (EC_STATE_SAFE_OP);
     if (!success)
         throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
     
     std::cout << "SAFE-OPERATIONAL state reached"<< std::endl;
-
     
     if(EcatError)
         throw(EcError(EcError::ECAT_ERROR));
+
 
     std::cout << "Request OPERATIONAL state for all slaves" << std::endl;
     success = switchState(EC_STATE_OPERATIONAL);
@@ -234,6 +245,7 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     
     while (!threadFinished) 
     {
+
         /* Get the next message from realtime_thread */
         ret = read(fdInput, inputBuf, inputSize);
         if (ret <= 0)
@@ -269,6 +281,7 @@ std::vector<EcSlave*> EcMaster::getSlaves()
 bool EcMaster::stop() throw(EcError)
 {
 
+
   rt_task_set_priority(&master,20);
 
   //Stops slaves
@@ -280,9 +293,9 @@ bool EcMaster::stop() throw(EcError)
   updateThread.join();
   threadFinished = false; 
   
+
   close(fdInput);
   close(fdOutput);
-
   std::cout<<"Master stoped!"<<std::endl;
   return true;
 }

@@ -7,6 +7,7 @@ set(CPP4EC_HDRS
       EcSlaveFactory.h
       EcSlave.h
       EcSlaveSGDV.h
+      EcSlaveTrack.h
       EcUtil.h
 )
 
@@ -18,6 +19,7 @@ set(CPP4EC_SRC
       EcSlave.cpp
       EcSlaveFactory.cpp
       EcSlaveSGDV.cpp
+      EcSlaveTrack.cpp
    
 
 )

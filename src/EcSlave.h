@@ -30,7 +30,17 @@ typedef struct
    int      param;
    std::string   name;
    std::string   description;
-} parameter;
+} CoEparameter;
+
+typedef struct
+{
+   uint16_t   idn;
+   uint8_t    elementflags;
+   uint8_t    size;
+   int        param;
+   std::string   name;
+   std::string   description;
+} SoEparameter;
 
 
 namespace cpp4ec

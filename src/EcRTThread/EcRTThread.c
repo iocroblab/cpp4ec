@@ -22,6 +22,7 @@ void rt_thread(void *unused)
 
    struct rtipc_port_label plabel_in, plabel_out;
    struct sockaddr_ipc saddr_in, saddr_out;
+
    unsigned long timestamp;
    int ret_in, ret_out, s_input, s_output, nRet;
    int inputSize = 0, outputSize = 0;
@@ -137,7 +138,6 @@ void rt_thread(void *unused)
               rt_printf("Recieve failed");
 
           timestamp = rt_timer_read();
-
 
           int offSet = 0;
           for (i = 1; i <= ec_slavecount; i++)

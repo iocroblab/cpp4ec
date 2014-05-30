@@ -14,6 +14,7 @@ extern "C"
 #include <soem/ethercatconfig.h>
 #include <soem/ethercatdc.h>
 #include <soem/ethercatcoe.h>
+#include <soem/ethercatsoe.h>
 #include <soem/ethercatprint.h>
 #include <soem/nicdrv.h>
 }
@@ -61,6 +62,14 @@ public:
      */
     ~EcMaster();
 
+    /**
+     *  \brief Preconfiguration
+     *
+     * Preconfigures the master and slaves. In this functions is set to Preoperational the EtherCAT State Machine.
+     *
+     */
+    bool preconfigure() throw(EcError);
+
 
     /**
      *  \brief Configuration
@@ -68,7 +77,6 @@ public:
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
      *
      */
-    bool preconfigure() throw(EcError);
 
     bool configure() throw(EcError);
 
