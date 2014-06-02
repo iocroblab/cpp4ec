@@ -37,6 +37,9 @@ target_link_libraries(demoDialboxPos cpp4ec_dynamic ${Boost_LIBRARIES})
 add_executable(demoDialboxPos2 demoDialboxPos2.cpp /srv/robotica/carril/dialbox/src/dialbox.cpp)
 target_link_libraries(demoDialboxPos2 cpp4ec_dynamic ${Boost_LIBRARIES})
 
+add_executable(demoDialboxPos3 demoDialboxPos3.cpp /srv/robotica/carril/dialbox/src/dialbox.cpp)
+target_link_libraries(demoDialboxPos3 cpp4ec_dynamic ${Boost_LIBRARIES})
+
 add_executable(demoInteractive demoInteractive.cpp /srv/robotica/carril/dialbox/src/dialbox.cpp)
 target_link_libraries(demoInteractive cpp4ec_dynamic ${Boost_LIBRARIES})
 
