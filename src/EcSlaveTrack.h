@@ -417,6 +417,7 @@ private:
     
     int minPosition;
     int maxPosition;
+    int initPosition;
     int m_mutex;
     
     int outputSize;

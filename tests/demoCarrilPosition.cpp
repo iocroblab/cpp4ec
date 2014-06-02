@@ -12,9 +12,9 @@
 #include <iostream>
 #include <vector>
 
-#define MAXPOSITION 1300 //mm
-#define MINPOSITION  600 //mm
-#define CYCLECOUNT 1
+#define MAXPOSITION 1800 //mm
+#define MINPOSITION  200 //mm
+#define CYCLECOUNT 3
 #define VELOCITY 300 //mm/s
 
 using namespace std;
@@ -33,11 +33,9 @@ int main ()
       master.preconfigure();
       /* The slaves vector is get, in this demo, one EcSlave is conected in the net */
       drivers = master.getSlaves();
-      cout<<"Slave got"<<drivers.size()<<endl;
       ((cpp4ec::EcSlaveTrack*) drivers[0]) -> DefaultParameters();
       ((cpp4ec::EcSlaveTrack*) drivers[0]) -> modeSetUp(DRIVEINTERNALINTERPOLATION_CONTROL,0);
       ((cpp4ec::EcSlaveTrack*) drivers[0]) -> TelegramType(VZ7);
-      cout<<"slecting modes"<<drivers.size()<<endl;
 
       //Configuration of the MDT and AT
       std::vector<int> idnlistMDT={258,259,260};

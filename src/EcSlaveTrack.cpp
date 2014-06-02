@@ -142,6 +142,7 @@ bool EcSlaveTrack::configure() throw(EcErrorSGDV)
     int size=4;
     ec_SoEread(m_slave_nr, 0, 0x40, 49, &size, &maxPosition,EC_TIMEOUTRXM);
     ec_SoEread(m_slave_nr, 0, 0x40, 50, &size, &minPosition,EC_TIMEOUTRXM);
+    ec_SoEread(m_slave_nr, 0, 0x40, 51, &size, &initPosition,EC_TIMEOUTRXM);
 
 
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize +timestampSize;
@@ -160,11 +161,11 @@ bool EcSlaveTrack::configure() throw(EcErrorSGDV)
 	
 void EcSlaveTrack::start() throw(EcErrorSGDV)
 {
-    int position;
-    readAT(SECOND_ENTRY,position);
-
+    std::cout<<"Initial position: "<<initPosition/10000<<"mm"<<std::endl;
     int controlWord = 57344;
-    writeMDT(SECOND_ENTRY,position);
+    writeMDT(SECOND_ENTRY,initPosition);
+    updateMaster();
+
     writeMDT(FIRST_ENTRY,controlWord);
     updateMaster();
 }
