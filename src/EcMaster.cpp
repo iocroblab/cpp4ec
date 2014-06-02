@@ -305,7 +305,11 @@ bool EcMaster::reset() throw(EcError)
           m_drivers[i] -> setDC(false, m_cycleTime, 0);
    }
    taskFinished = true;
-   usleep(5000);
+   //Wait on the termination of task. 
+   rt_task_join (task);
+   // delete the periodic task
+   rt_task_delete(task);
+   
    bool success = switchState (EC_STATE_INIT);
    if (!success)
       throw(EcError(EcError::FAIL_SWITCHING_STATE_INIT));
@@ -317,8 +321,6 @@ bool EcMaster::reset() throw(EcError)
    delete[] outputBuf;
    delete[] inputBuf;
    delete[] m_ecPort;
-   // delete the periodic task
-   rt_task_delete(task);
    delete task;
    
    
