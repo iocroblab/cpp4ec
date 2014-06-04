@@ -133,7 +133,7 @@ bool EcMaster::configure() throw(EcError)
     if(SGDVconnected)
     {
 
-        rt_task_create (task, "PDO rt_task", 8192, 99, 0);
+        rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
         rt_task_set_periodic (task, TM_NOW, m_cycleTime);
         rt_task_start (task, &rt_thread, NULL);
     }
@@ -183,7 +183,7 @@ bool EcMaster::configure() throw(EcError)
 
     if(!SGDVconnected)
     {
-        rt_task_create (task, "PDO rt_task", 8192, 99, 0);
+        rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
         rt_task_set_periodic (task, TM_NOW, m_cycleTime);
         rt_task_start (task, &rt_thread, NULL);
     }
