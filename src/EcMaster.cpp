@@ -3,7 +3,9 @@
 extern "C"
 {
 #include "EcRTThread/EcRTThread.h"
+//#include "EcNRTThread/EcNRTThread.h"
 }
+#include "EcNRTThread/EcNRTThread.h"
 
 #include <sys/mman.h>
 #include <iostream>
@@ -11,10 +13,11 @@ extern "C"
 
 //socket header
 #include <rtdm/rtipc.h>
-#include <sched.h>
 #include <sys/types.h>
 #include <unistd.h>
-
+//#include <sched.h>
+//posix
+#include <pthread.h>
 //xenomai header
 #include <native/task.h>
 #define timestampSize 8 //8 bytes to represent the time
@@ -26,6 +29,7 @@ namespace cpp4ec
 {
    RT_TASK *task;
    RT_TASK master;
+   int NRTtaskFinished;
 
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
@@ -41,11 +45,15 @@ EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool
    sched_param param;
    param.sched_priority = 20;
    sched_getscheduler(pid);
-   sched_setscheduler(pid,SCHED_OTHER,&param);
 
+/* pthread_t pid =	pthread_self();
+   sched_param param;
+   param.sched_priority = 20;
+   pthread_setscheduler(pid,SCHED_FIFO,&param);
+*/
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
-   rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
+   //rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
    
 }
 
@@ -130,12 +138,13 @@ bool EcMaster::configure() throw(EcError)
      * just after of activating the distributed clocks
      */
     taskFinished = false;
+    NRTtaskFinished = false;
     if(SGDVconnected)
     {
 
         rt_task_create (task, "PDO rt_task", 8192, 99, 0);
-        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
-        rt_task_start (task, &rt_thread, NULL);
+     //   rt_task_set_periodic (task, TM_NOW, m_cycleTime);
+        rt_task_start (task, &nrt_thread, NULL);
     }
 
     if(EcatError)
@@ -185,7 +194,7 @@ bool EcMaster::configure() throw(EcError)
     {
         rt_task_create (task, "PDO rt_task", 8192, 99, 0);
         rt_task_set_periodic (task, TM_NOW, m_cycleTime);
-        rt_task_start (task, &rt_thread, NULL);
+        rt_task_start (task, &nrt_thread, NULL);
     }
     usleep(200000);
 
@@ -305,6 +314,7 @@ bool EcMaster::reset() throw(EcError)
           m_drivers[i] -> setDC(false, m_cycleTime, 0);
    }
    taskFinished = true;
+   NRTtaskFinished = true;
    //Wait on the termination of task. 
    rt_task_join (task);
    // delete the periodic task

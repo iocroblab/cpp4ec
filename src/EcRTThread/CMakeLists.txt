@@ -10,6 +10,7 @@ set(CPP4EC_RT_SRC
    
 
 )
+
 add_definitions(-fPIC)
 if(ENABLE_RT)
     add_library(cpp4ec_rt_static STATIC ${CPP4EC_RT_SRC})
