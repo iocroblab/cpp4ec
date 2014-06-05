@@ -53,7 +53,7 @@ EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool
 */
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
-   //rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
+   rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
    
 }
 
@@ -209,7 +209,7 @@ bool EcMaster::start() throw(EcError)
 {
    rt_task_set_priority(&master,0);
    
-   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
+/*   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
        throw(EcError(EcError::FAIL_OUTPUT_LABEL));
    
    fdOutput = open(devnameOutput, O_WRONLY);
@@ -235,7 +235,7 @@ bool EcMaster::start() throw(EcError)
    sch.sched_priority = 90;
    pthread_setschedparam(updateThread.native_handle(), SCHED_OTHER, &sch);
    updateThread = std::thread(&EcMaster::update_EcSlaves,this);
-   
+ */  
    for (int i = 0 ; i < m_drivers.size() ; i++)
        m_drivers[i] ->  start();
 

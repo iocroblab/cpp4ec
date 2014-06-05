@@ -170,7 +170,9 @@ bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
     if (!wControlWordCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
-    memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
+    //memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
+    //memcpy (m_datap -> outputs, &controlWord ,2);
+    memcpy (ec_slave[m_slave_nr].outputs, &controlWord ,2);
     slaveOutMutex.unlock();
 
 }
@@ -189,7 +191,10 @@ bool EcSlaveSGDV::writePosition (int32_t position)
     if (!wPositionCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
-    memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
+//    memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
+    memcpy (m_datap -> outputs + 2, &position ,4);
+//    memcpy (ec_slave[m_slave_nr].outputs, &position ,4);
+
     slaveOutMutex.unlock();
 
 }
@@ -208,7 +213,9 @@ bool EcSlaveSGDV::writeVelocity (int32_t velocity)
     if (!wVelocityCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
-    memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
+//    memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
+    memcpy (ec_slave[m_slave_nr].outputs + 6, &velocity ,4);
+
     slaveOutMutex.unlock();
 }
 

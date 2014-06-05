@@ -21,7 +21,7 @@ void nrt_thread(void *unused)
     boost::asio::io_service io;
     boost::asio::deadline_timer timer(io);
 
-    int period = 1000000;
+    int period = 1;
     timer.expires_from_now(boost::posix_time::milliseconds(period));
     while(!NRTtaskFinished)
     {
