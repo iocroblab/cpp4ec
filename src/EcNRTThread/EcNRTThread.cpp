@@ -15,14 +15,15 @@
 
 #define timestampSize 8
 int NRTtaskFinished = false;
-void nrt_thread(void *unused)
+void nrt_thread(int period)
 {
     int nRet;
     boost::asio::io_service io;
     boost::asio::deadline_timer timer(io);
 
-    int period = 1;
-    timer.expires_from_now(boost::posix_time::milliseconds(period));
+    //period is in nanoseconds
+    period /= 1000;
+    timer.expires_from_now(boost::posix_time::microseconds(period));
     while(!NRTtaskFinished)
     {
         nRet=ec_send_processdata();
@@ -33,7 +34,7 @@ void nrt_thread(void *unused)
         if(nRet == 0)
             printf("Recieve failed");
         timer.wait();
-        timer.expires_from_now(boost::posix_time::milliseconds(period));
+        timer.expires_from_now(boost::posix_time::microseconds(period));
 
     }
 }

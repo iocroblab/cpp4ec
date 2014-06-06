@@ -15,70 +15,44 @@ set(CPP4EC_HDRS
 set(CPP4EC_SRC
       EcError.cpp
       EcErrorSGDV.cpp
-      EcMaster.cpp
+#      EcMaster.cpp
       EcSlave.cpp
       EcSlaveFactory.cpp
       EcSlaveSGDV.cpp
-      EcSlaveTrack.cpp
-   
+      EcSlaveTrack.cpp   
 
 )
 
-include_directories(${XENO_NATIVE_INCLUDE_DIRS})
-include_directories(${SOEMRT_INCLUDE_DIRS})
-add_subdirectory(EcRTThread)
-set(BOOST_LIBS thread date_time system)
-find_package(Boost COMPONENTS ${BOOST_LIBS} REQUIRED)
-include_directories(${Boost_INCLUDE_DIRS})
-add_subdirectory(EcNRTThread)
+
+if(ENABLE_RT)
+    include_directories(${SOEMRT_INCLUDE_DIRS})
+    include_directories(${XENO_NATIVE_INCLUDE_DIRS})
+    set(CPP4EC_SRC ${CPP4EC_SRC} EcMaster.cpp)
+    add_subdirectory(EcRTThread)
+else(ENABLE_RT)
+    include_directories(${SOEM_INCLUDE_DIRS})
+    set(CPP4EC_SRC ${CPP4EC_SRC} EcNRTMaster.cpp)
+    add_subdirectory(EcNRTThread)
+endif(ENABLE_RT)
+
 ADD_DEFINITIONS(-std=c++11 )
 
 if(ENABLE_RT)
 
-#    add_library(cpp4ec_static STATIC ${CPP4EC_SRC})
-#    target_link_libraries(cpp4ec_static cpp4ec_rt_static ${SOEMRT_LIBRARIES} ${XENO_NATIVE_LIBRARIES} ${PUGI_XML_LIBRARIES} ${XENO_RTDM_LIBRARIES})
-#    set_target_properties(cpp4ec_static PROPERTIES
-#      OUTPUT_NAME cpp4ec
-#      COMPILE_FLAGS ${CPP4EC_CFLAGS}
-#      LINK_FLAGS ${CPP4EC_LDFLAGS}
-#      INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
-#      CLEAN_DIRECT_OUTPUT 1)
-
-#    install(TARGETS cpp4ec_static DESTINATION lib)
-
-  # Create dynamic library (.so) with all basic BMM functions
-#  add_library(cpp4ec_dynamic SHARED ${CPP4EC_SRC})
-#  target_link_libraries(cpp4ec_dynamic cpp4ec_rt_static ${SOEMRT_LIBRARIES} ${XENO_NATIVE_LIBRARIES} ${PUGI_XML_LIBRARIES} ${XENO_RTDM_LIBRARIES})
-#  set_target_properties( cpp4ec_dynamic PROPERTIES
-#    DEFINE_SYMBOL "CPP4EC_DLL_EXPORT"
-#    SOVERSION "${CPP4EC_VERSION_MAJOR}"
-#    VERSION "${CPP4EC_VERSION}"
-#    OUTPUT_NAME cpp4ec
-#    COMPILE_FLAGS ${CPP4EC_CFLAGS}
-#    LINK_FLAGS ${CPP4EC_LDFLAGS}
-#    INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
-#    CLEAN_DIRECT_OUTPUT 1)
-
-  # Defaul install
-#  install(TARGETS cpp4ec_dynamic DESTINATION lib)
-
-
-
-
   add_library(cpp4ec_static STATIC ${CPP4EC_SRC})
-  target_link_libraries(cpp4ec_static cpp4ec_nrt_static ${SOEMRT_LIBRARIES}  ${XENO_NATIVE_LIBRARIES} ${PUGI_XML_LIBRARIES} ${XENO_RTDM_LIBRARIES} ${Boost_LIBRARIES})
+  target_link_libraries(cpp4ec_static cpp4ec_rt_static ${SOEMRT_LIBRARIES} ${XENO_NATIVE_LIBRARIES} ${PUGI_XML_LIBRARIES} ${XENO_RTDM_LIBRARIES})
   set_target_properties(cpp4ec_static PROPERTIES
-      OUTPUT_NAME cpp4ec
-      COMPILE_FLAGS ${CPP4EC_CFLAGS}
-      LINK_FLAGS ${CPP4EC_LDFLAGS}
-      INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
-      CLEAN_DIRECT_OUTPUT 1)
+    OUTPUT_NAME cpp4ec
+    COMPILE_FLAGS ${CPP4EC_CFLAGS}
+    LINK_FLAGS ${CPP4EC_LDFLAGS}
+    INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
+    CLEAN_DIRECT_OUTPUT 1)
 
   install(TARGETS cpp4ec_static DESTINATION lib)
 
   # Create dynamic library (.so) with all basic BMM functions
   add_library(cpp4ec_dynamic SHARED ${CPP4EC_SRC})
-  target_link_libraries(cpp4ec_dynamic cpp4ec_nrt_static ${SOEMRT_LIBRARIES}  ${XENO_NATIVE_LIBRARIES} ${PUGI_XML_LIBRARIES} ${XENO_RTDM_LIBRARIES} ${Boost_LIBRARIES} )
+  target_link_libraries(cpp4ec_dynamic cpp4ec_rt_static ${SOEMRT_LIBRARIES} ${XENO_NATIVE_LIBRARIES} ${PUGI_XML_LIBRARIES} ${XENO_RTDM_LIBRARIES})
   set_target_properties( cpp4ec_dynamic PROPERTIES
     DEFINE_SYMBOL "CPP4EC_DLL_EXPORT"
     SOVERSION "${CPP4EC_VERSION_MAJOR}"
@@ -91,5 +65,38 @@ if(ENABLE_RT)
 
   # Defaul install
   install(TARGETS cpp4ec_dynamic DESTINATION lib)
+
+else(ENABLE_RT)
+
+  set(BOOST_LIBS thread date_time system)
+  find_package(Boost COMPONENTS ${BOOST_LIBS} REQUIRED)
+  include_directories(${Boost_INCLUDE_DIRS})
+
+  add_library(cpp4ec_static STATIC ${CPP4EC_SRC})
+  target_link_libraries(cpp4ec_static cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${POSIX_LIBRARIES} ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES})
+#  set_target_properties(cpp4ec_static PROPERTIES
+#      OUTPUT_NAME cpp4ec
+#      COMPILE_FLAGS ${CPP4EC_CFLAGS}
+#      LINK_FLAGS ${CPP4EC_LDFLAGS}
+#     INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
+#      CLEAN_DIRECT_OUTPUT 1)
+
+#  install(TARGETS cpp4ec_static DESTINATION lib)
+
+  # Create dynamic library (.so) with all basic BMM functions
+  add_library(cpp4ec_dynamic SHARED ${CPP4EC_SRC})
+  target_link_libraries(cpp4ec_dynamic cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${POSIX_LIBRARIES} ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES} )
+#  set_target_properties( cpp4ec_dynamic PROPERTIES
+#    DEFINE_SYMBOL "CPP4EC_DLL_EXPORT"
+#    SOVERSION "${CPP4EC_VERSION_MAJOR}"
+#    VERSION "${CPP4EC_VERSION}"
+#    OUTPUT_NAME cpp4ec
+#    COMPILE_FLAGS ${CPP4EC_CFLAGS}
+#    LINK_FLAGS ${CPP4EC_LDFLAGS}
+#    INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
+#    CLEAN_DIRECT_OUTPUT 1)
+
+  # Defaul install
+#  install(TARGETS cpp4ec_dynamic DESTINATION lib)
 endif(ENABLE_RT)
 

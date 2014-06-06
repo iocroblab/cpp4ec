@@ -12,7 +12,7 @@
 
 
 //int NRTtaskFinished;
-void nrt_thread(void *unused);
+void nrt_thread(int period);
 
 
 
