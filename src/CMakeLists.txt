@@ -23,7 +23,6 @@ set(CPP4EC_SRC
 
 )
 
-
 if(ENABLE_RT)
     include_directories(${SOEMRT_INCLUDE_DIRS})
     include_directories(${XENO_NATIVE_INCLUDE_DIRS})
@@ -73,7 +72,7 @@ else(ENABLE_RT)
   include_directories(${Boost_INCLUDE_DIRS})
 
   add_library(cpp4ec_static STATIC ${CPP4EC_SRC})
-  target_link_libraries(cpp4ec_static cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${POSIX_LIBRARIES} ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES})
+  target_link_libraries(cpp4ec_static cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES})
 #  set_target_properties(cpp4ec_static PROPERTIES
 #      OUTPUT_NAME cpp4ec
 #      COMPILE_FLAGS ${CPP4EC_CFLAGS}
@@ -85,7 +84,7 @@ else(ENABLE_RT)
 
   # Create dynamic library (.so) with all basic BMM functions
   add_library(cpp4ec_dynamic SHARED ${CPP4EC_SRC})
-  target_link_libraries(cpp4ec_dynamic cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${POSIX_LIBRARIES} ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES} )
+  target_link_libraries(cpp4ec_dynamic cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES} )
 #  set_target_properties( cpp4ec_dynamic PROPERTIES
 #    DEFINE_SYMBOL "CPP4EC_DLL_EXPORT"
 #    SOVERSION "${CPP4EC_VERSION_MAJOR}"
