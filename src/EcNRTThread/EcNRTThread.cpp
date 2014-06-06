@@ -14,7 +14,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #define timestampSize 8
-int NRTtaskFinished = false;
+//int NRTtaskFinished = false;
 void nrt_thread(int period)
 {
     int nRet;

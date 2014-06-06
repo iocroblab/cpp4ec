@@ -315,9 +315,13 @@ private:
     
     int outputSize;
     int inputSize;
-    
+#ifdef RTNET
     char* pBufferOut;
-    char* pBufferIn;  
+    char* pBufferIn;
+#else
+    uint8* pBufferOut;
+    uint8* pBufferIn;
+#endif
     char* inputBuf;
     
     bool readXML() throw(EcErrorSGDV);

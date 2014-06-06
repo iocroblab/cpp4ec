@@ -1,5 +1,5 @@
-#ifndef _nrealtimetask_
-#define _nrealtimetask_
+#ifndef _NRTtask_
+#define _NRTtask_
 
 #include <soem/ethercattype.h>
 #include <soem/nicdrv.h>
@@ -11,7 +11,7 @@
 #include <soem/ethercatprint.h>
 
 
-//int NRTtaskFinished;
+int NRTtaskFinished;
 void nrt_thread(int period);
 
 

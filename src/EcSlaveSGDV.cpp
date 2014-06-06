@@ -46,7 +46,7 @@ void EcSlaveSGDV::update()
     slaveInMutex.lock();
     memcpy(inputBuf,pBufferIn, inputSize);
     slaveInMutex.unlock();
-    
+
     unsigned long time;    
     uint16_t statusWord =0;
     int32_t position = 0;
@@ -85,7 +85,13 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     enableSpecificFunctions();
 
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
+#ifdef RTNET
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize + timestampSize;
+#else
+    inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
+    setPDOBuffer(NULL, NULL);
+#endif
+
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
 
@@ -99,16 +105,22 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
 
   writeControlWord(CW_SHUTDOWN);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
   
   writeControlWord(CW_SWITCH_ON);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
   
   // Enable movement
   writeControlWord(CW_ENABLE_OP);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
   
 }
@@ -120,19 +132,28 @@ void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0S
 
 void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
 {
-    pBufferIn=input;
-    pBufferOut=output;
+#ifdef RTNET
+    pBufferIn  = input;
+    pBufferOut = output;
+#else
+    pBufferIn  = m_datap -> inputs;
+    pBufferOut = m_datap -> outputs;
+#endif
 }
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
 
   writeControlWord(CW_SHUTDOWN);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
     
   writeControlWord(CW_QUICK_STOP);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
 }
 
@@ -170,9 +191,7 @@ bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
     if (!wControlWordCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
-    //memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
-    //memcpy (m_datap -> outputs, &controlWord ,2);
-    memcpy (ec_slave[m_slave_nr].outputs, &controlWord ,2);
+    memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
     slaveOutMutex.unlock();
 
 }
@@ -191,10 +210,7 @@ bool EcSlaveSGDV::writePosition (int32_t position)
     if (!wPositionCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
-//    memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
-    memcpy (m_datap -> outputs + 2, &position ,4);
-//    memcpy (ec_slave[m_slave_nr].outputs, &position ,4);
-
+    memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
     slaveOutMutex.unlock();
 
 }
@@ -213,9 +229,7 @@ bool EcSlaveSGDV::writeVelocity (int32_t velocity)
     if (!wVelocityCapable)
 	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
-//    memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
-    memcpy (ec_slave[m_slave_nr].outputs + 6, &velocity ,4);
-
+    memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
     slaveOutMutex.unlock();
 }
 

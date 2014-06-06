@@ -15,6 +15,8 @@
 #include <pthread.h>
 //boost
 #include <boost/thread.hpp>
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #define timestampSize 8 //8 bytes to represent the time
 
@@ -22,10 +24,11 @@ namespace cpp4ec
 {
 
    std::thread thread;
-   int NRTtaskFinished;
+//   int NRTtaskFinished;
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
-    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false)
+    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false),
+    NRTtaskFinished(false)
 
 {
    //reset del iomap memory
@@ -121,35 +124,11 @@ bool EcMaster::configure() throw(EcError)
      */
     NRTtaskFinished = false;
     if(SGDVconnected)
-    {
-       thread = std::thread(&nrt_thread,m_cycleTime);
-    }
+       thread = std::thread(&EcMaster::update_EcSlaves,this);
 
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
 
-
-    //Create master buffers
-    outputSize = ec_slave[0].Obytes;
-    inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
-
-    outputBuf = new char [outputSize];
-    inputBuf = new char[inputSize];
-    memset(outputBuf,0, outputSize);
-    memset(inputBuf,0, inputSize);
-
-    int offSetInput = 0, offSetOutput = 0;
-    for(int i = 0; i < m_drivers.size();i++)
-    {
-
-        m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
-        if(i < (m_drivers.size()-1))
-        {
-            offSetOutput += ec_slave[i+1].Obytes;
-            offSetInput += ec_slave[i+1].Ibytes + timestampSize;
-
-        }
-    }
 
     std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
     success = switchState (EC_STATE_SAFE_OP);
@@ -169,9 +148,8 @@ bool EcMaster::configure() throw(EcError)
     std::cout << "OPERATIONAL state reached" << std::endl;
 
     if(!SGDVconnected)
-    {
-       thread = std::thread(&nrt_thread,m_cycleTime);
-    }
+       thread = std::thread(&EcMaster::update_EcSlaves,this);
+
     usleep(200000);
 
     std::cout<<"Master configured!!!"<<std::endl;
@@ -207,7 +185,29 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
 /* This function uses the sockect createdx in the configure to send data to the realtime thread */
 void EcMaster::update(void) throw(EcError)
 {
+    int nRet;
+    boost::asio::io_service io;
+    boost::asio::deadline_timer timer(io);
 
+    //period is in nanoseconds
+    int period = m_cycleTime / 1000;
+    timer.expires_from_now(boost::posix_time::microseconds(period));
+    while(!NRTtaskFinished)
+    {
+        nRet=ec_send_processdata();
+        if(nRet == 0)
+            printf("Send failed");
+
+        nRet=ec_receive_processdata(EC_TIMEOUTRET);
+        if(nRet == 0)
+            printf("Recieve failed");
+
+        for(int i = 0; i < m_drivers.size();i++)
+            m_drivers[i] -> update();
+        timer.wait();
+        timer.expires_from_now(boost::posix_time::microseconds(period));
+
+    }
 }
 
 std::vector<EcSlave*> EcMaster::getSlaves()
@@ -241,7 +241,6 @@ bool EcMaster::reset() throw(EcError)
           m_drivers[i] -> setDC(false, m_cycleTime, 0);
    }
    NRTtaskFinished = true;
-
    
    bool success = switchState (EC_STATE_INIT);
    if (!success)
@@ -251,11 +250,8 @@ bool EcMaster::reset() throw(EcError)
        delete m_drivers[i];
    m_drivers.resize(0);      
    
-   delete[] outputBuf;
-   delete[] inputBuf;
    delete[] m_ecPort;
-   
-   
+      
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
 

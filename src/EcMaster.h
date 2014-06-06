@@ -159,10 +159,9 @@ private:
     char * devnameInput;
     int fdOutput,fdInput;
     std::thread updateThread;
+    int NRTtaskFinished;
     void update_EcSlaves(void) throw(EcError);
     
-    int unusedVariable;
-
     //Ethercat slaveinfo stuff
     bool slaveInformation;
     FILE * pFile;
