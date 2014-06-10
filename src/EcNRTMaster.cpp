@@ -124,7 +124,7 @@ bool EcMaster::configure() throw(EcError)
      */
     NRTtaskFinished = false;
     if(SGDVconnected)
-       thread = std::thread(&EcMaster::update_EcSlaves,this);
+       thread = std::thread(&EcMaster::update,this);
 
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
@@ -140,7 +140,6 @@ bool EcMaster::configure() throw(EcError)
     if(EcatError)
         throw(EcError(EcError::ECAT_ERROR));
 
-
     std::cout << "Request OPERATIONAL state for all slaves" << std::endl;
     success = switchState(EC_STATE_OPERATIONAL);
     if (!success)
@@ -148,7 +147,7 @@ bool EcMaster::configure() throw(EcError)
     std::cout << "OPERATIONAL state reached" << std::endl;
 
     if(!SGDVconnected)
-       thread = std::thread(&EcMaster::update_EcSlaves,this);
+       thread = std::thread(&EcMaster::update,this);
 
     usleep(200000);
 
@@ -190,10 +189,11 @@ void EcMaster::update(void) throw(EcError)
     boost::asio::deadline_timer timer(io);
 
     //period is in nanoseconds
-    int period = m_cycleTime / 1000;
-    timer.expires_from_now(boost::posix_time::microseconds(period));
+    int period = 1;
+    timer.expires_from_now(boost::posix_time::milliseconds(period));
     while(!NRTtaskFinished)
     {
+        
         nRet=ec_send_processdata();
         if(nRet == 0)
             printf("Send failed");
@@ -202,10 +202,10 @@ void EcMaster::update(void) throw(EcError)
         if(nRet == 0)
             printf("Recieve failed");
 
-        for(int i = 0; i < m_drivers.size();i++)
-            m_drivers[i] -> update();
+//        for(int i = 0; i < m_drivers.size();i++)
+//            m_drivers[i] -> update();
         timer.wait();
-        timer.expires_from_now(boost::posix_time::microseconds(period));
+        timer.expires_from_now(boost::posix_time::milliseconds(period));
 
     }
 }
