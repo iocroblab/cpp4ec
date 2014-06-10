@@ -6,11 +6,6 @@
 #include <iostream>
 #include <fstream> //Just to verify the time
 
-//socket header
-//#include <rtdm/rtipc.h>
-//#include <sys/types.h>
-//#include <unistd.h>
-//#include <sched.h>
 //posix
 #include <pthread.h>
 //boost
@@ -26,8 +21,6 @@ namespace cpp4ec
    std::thread thread;
    extern std::mutex slaveOutMutex;
    std::mutex slaveOutMutex;
-
-//   int NRTtaskFinished;
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
     inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false),
@@ -171,11 +164,6 @@ bool EcMaster::configure() throw(EcError)
 bool EcMaster::start() throw(EcError)
 {
 
-/*   sched_param sch;
-   sch.sched_priority = 90;
-   pthread_setschedparam(updateThread.native_handle(), SCHED_OTHER, &sch);
-   updateThread = std::thread(&EcMaster::update_EcSlaves,this);
-*/
    for (int i = 0 ; i < m_drivers.size() ; i++)
        m_drivers[i] ->  start();
 
