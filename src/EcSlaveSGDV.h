@@ -315,9 +315,13 @@ private:
     
     int outputSize;
     int inputSize;
-    
+#ifdef RTNET
     char* pBufferOut;
-    char* pBufferIn;  
+    char* pBufferIn;
+#else
+    uint8* pBufferOut;
+    uint8* pBufferIn;
+#endif
     char* inputBuf;
     
     bool readXML() throw(EcErrorSGDV);
@@ -348,7 +352,9 @@ private:
     bool PDOmapping;
     
     std::mutex slaveInMutex;
-    std::mutex slaveOutMutex;
+#ifdef RTNET
+   std::mutex slaveOutMutex;
+#endif
 
     std::vector <CoEparameter> m_params;
     std::vector <PDOobject> inputObjects;

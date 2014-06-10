@@ -21,7 +21,6 @@ cmake_minimum_required (VERSION 2.6)
 
 project(CPP4EC)
 
-
 # BMM version. Defined here but not exported to header files, because it's already defined there
 set( CPP4EC_VERSION 0.0.1 )
 string( REGEX MATCHALL "[0-9]+" CPP4EC_VERSIONS ${CPP4EC_VERSION} )
@@ -35,7 +34,6 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake-modules)
 # http://stackoverflow.com/questions/1620918/cmake-and-libpthread
 find_package(Threads REQUIRED)
 include(FindPkgConfig)
-
 
 include_directories(${PROJECT_SOURCE_DIR})
 
@@ -90,33 +88,22 @@ if(ENABLE_RT)
    message("The complete cpp4ec LFLAGS : ${CPP4EC_LDFLAGS}" )
 
 else(ENABLE_RT)
-   message (SEND_ERROR "This package by now needs Xenomai RTOS")
+
+   pkg_check_modules(SOEM REQUIRED soem)
+   message("Found soem and its includes : ${SOEM_INCLUDE_DIRS}" )
+   message("--> with CFLAGS : ${SOEM_CFLAGS}" )
+   message("Found soem  and its libs : ${SOEM_LIBRARIES}" )
+   message("--> with LDFLAGS : ${SOEM_LDFLAGS}" )
+
+   list(APPEND CPP4EC_CFLAGS ${SOEM_CFLAGS})
+   message("The complete cpp4ec CFLAGS : ${CPP4EC_CFLAGS}" )
+
+   list(APPEND CPP4EC_LDFLAGS ${SOEM_LDFLAGS})
+   message("The complete cpp4ec LFLAGS : ${CPP4EC_LDFLAGS}" )
 endif(ENABLE_RT)
 
 #PUGI_XML
 find_package(PugiXML REQUIRED)
-# find_path(PUGI_XML_INCLUDE_DIRS pugixml.hpp
-#     PATHS /usr/include
-# 	  /user/local/include)
-#
-# if(PUGI_XML_INCLUDE_DIRS)
-#   message("Found PUGI_XML_INCLUDE_DIRS  on: ${PUGI_XML_INCLUDE_DIRS}")
-#   include_directories(${PUGI_XML_INCLUDE_DIRS})
-# else(PUGI_XML_INCLUDE_DIRS)
-#   message(SEND_ERROR "Not found PUGI_XML_INCLUDE_DIRS")
-# endif(PUGI_XML_INCLUDE_DIRS)
-#
-# find_library (PUGI_XML_LIBRARIES
-#                 NAMES pugixml libpugixml
-#                 PATHS /usr/lib
-# 		      /usr/local/lib
-#                       /user/local/lib)
-# if(PUGI_XML_LIBRARIES)
-#   message("Found PUGI_XML_LIBRARIES on:" ${PUGI_XML_LIBRARIES})
-# else(PUGI_XML_LIBRARIES)
-#   message(SEND_ERROR "Not found PUGI_XML_LIBRARIES")
-# endif(PUGI_XML_LIBRARIES)
-#
 
 add_subdirectory(src)
 add_subdirectory(tests)

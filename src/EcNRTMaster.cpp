@@ -1,35 +1,30 @@
 #include "EcMaster.h"
 #include "EcUtil.h"
-extern "C"
-{
-#include "EcRTThread/EcRTThread.h"
-}
+#include "EcNRTThread/EcNRTThread.h"
+
 #include <sys/mman.h>
 #include <iostream>
 #include <fstream> //Just to verify the time
 
-//socket header
-#include <rtdm/rtipc.h>
-#include <sys/types.h>
-#include <unistd.h>
-//#include <sched.h>
 //posix
 #include <pthread.h>
-//xenomai header
-#include <native/task.h>
 //boost
 #include <boost/thread.hpp>
+#include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #define timestampSize 8 //8 bytes to represent the time
 
 namespace cpp4ec
 {
-   RT_TASK *task;
-   RT_TASK master;
 
+   std::thread thread;
+   extern std::mutex slaveOutMutex;
+   std::mutex slaveOutMutex;
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
-    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false)
+    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false),
+    NRTtaskFinished(false)
 
 {
    //reset del iomap memory
@@ -41,15 +36,6 @@ EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool
    sched_param param;
    param.sched_priority = 20;
    sched_getscheduler(pid);
-
-/* pthread_t pid =	pthread_self();
-   sched_param param;
-   param.sched_priority = 20;
-   pthread_setscheduler(pid,SCHED_FIFO,&param);
-*/
-   //Realtime tasks
-   mlockall (MCL_CURRENT | MCL_FUTURE);
-   rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
    
 }
 
@@ -64,7 +50,6 @@ bool EcMaster::preconfigure() throw(EcError)
     int size = ethPort.size();
     m_ecPort = new char[size];
     strcpy (m_ecPort, ethPort.c_str());
-    task = new RT_TASK;
 
    
    // initialise SOEM, bind socket to ifname
@@ -133,40 +118,20 @@ bool EcMaster::configure() throw(EcError)
     /* The SGDV slave need to activate the cyclic communication
      * just after of activating the distributed clocks
      */
-    taskFinished = false;
+    for (int i = 0; i <  m_drivers.size(); i++)
+        m_drivers[i] -> setPDOBuffer(NULL,NULL);
+    
+    sched_param sch;
+    sch.sched_priority = 90;
+    pthread_setschedparam(thread.native_handle(), SCHED_OTHER, &sch);
+    
+    NRTtaskFinished = false;
     if(SGDVconnected)
-    {
-
-        rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
-        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
-        rt_task_start (task, &rt_thread, NULL);
-    }
+       thread = std::thread(&EcMaster::update_EcSlaves,this);
 
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
 
-
-    //Create master buffers
-    outputSize = ec_slave[0].Obytes;
-    inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
-
-    outputBuf = new char [outputSize];
-    inputBuf = new char[inputSize];
-    memset(outputBuf,0, outputSize);
-    memset(inputBuf,0, inputSize);
-
-    int offSetInput = 0, offSetOutput = 0;
-    for(int i = 0; i < m_drivers.size();i++)
-    {
-
-        m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
-        if(i < (m_drivers.size()-1))
-        {
-            offSetOutput += ec_slave[i+1].Obytes;
-            offSetInput += ec_slave[i+1].Ibytes + timestampSize;
-
-        }
-    }
 
     std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
     success = switchState (EC_STATE_SAFE_OP);
@@ -178,7 +143,6 @@ bool EcMaster::configure() throw(EcError)
     if(EcatError)
         throw(EcError(EcError::ECAT_ERROR));
 
-
     std::cout << "Request OPERATIONAL state for all slaves" << std::endl;
     success = switchState(EC_STATE_OPERATIONAL);
     if (!success)
@@ -186,11 +150,8 @@ bool EcMaster::configure() throw(EcError)
     std::cout << "OPERATIONAL state reached" << std::endl;
 
     if(!SGDVconnected)
-    {
-        rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
-        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
-        rt_task_start (task, &rt_thread, NULL);
-    }
+       thread = std::thread(&EcMaster::update_EcSlaves,this);
+
     usleep(200000);
 
     std::cout<<"Master configured!!!"<<std::endl;
@@ -202,34 +163,6 @@ bool EcMaster::configure() throw(EcError)
 
 bool EcMaster::start() throw(EcError)
 {
-   rt_task_set_priority(&master,0);
-   
-   if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
-       throw(EcError(EcError::FAIL_OUTPUT_LABEL));
-   
-   fdOutput = open(devnameOutput, O_WRONLY);
-   free(devnameOutput);
-   
-   if (fdOutput < 0)
-   {
-      perror("open");
-      throw(EcError(EcError::FAIL_OPENING_OUTPUT));
-   }
-   if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
-       throw(EcError(EcError::FAIL_INPUT_LABEL));
-              
-   fdInput = open(devnameInput, O_RDONLY);
-   free(devnameInput);
-       
-   if (fdInput < 0)
-   {
-     perror("open");
-     throw(EcError(EcError::FAIL_OPENING_INPUT));
-   }
-   sched_param sch;
-   sch.sched_priority = 90;
-   pthread_setschedparam(updateThread.native_handle(), SCHED_OTHER, &sch);
-   updateThread = std::thread(&EcMaster::update_EcSlaves,this);
 
    for (int i = 0 ; i < m_drivers.size() ; i++)
        m_drivers[i] ->  start();
@@ -240,38 +173,38 @@ bool EcMaster::start() throw(EcError)
 }
 
 /* This function waits the current state from the xddp port */  
-void EcMaster::update_EcSlaves(void) throw(EcError)
+void EcMaster::update(void) throw(EcError)
 {
-    int ret;
-    
-    while (!threadFinished) 
-    {
-
-        /* Get the next message from realtime_thread */
-        ret = read(fdInput, inputBuf, inputSize);
-        if (ret <= 0)
-        {
-            perror("read");
-            //throw(EcError(EcError::FAIL_READING));
-        }
-
-        for(int i = 0; i < m_drivers.size();i++)
-            m_drivers[i] -> update();
-	        
-    }
 }
    
 /* This function uses the sockect createdx in the configure to send data to the realtime thread */
-void EcMaster::update(void) throw(EcError)
+void EcMaster::update_EcSlaves(void) throw(EcError)
 {
-   int ret;   
-   /* Send a message to realtime_thread */
-   ret = write(fdOutput,outputBuf,outputSize);
-   if(ret<=0)
-   {
-       perror("write");
-       throw(EcError(EcError::FAIL_WRITING));
-   }
+    int nRet;
+    boost::asio::io_service io;
+    boost::asio::deadline_timer timer(io);
+
+    //period is in nanoseconds
+    int period = m_cycleTime /1000;
+    timer.expires_from_now(boost::posix_time::microseconds(period));
+    while(!NRTtaskFinished)
+    {
+        slaveOutMutex.lock();
+        nRet=ec_send_processdata();
+        if(nRet == 0)
+            printf("Send failed");
+
+        nRet=ec_receive_processdata(EC_TIMEOUTRET);
+        slaveOutMutex.unlock();
+        if(nRet == 0)
+            printf("Recieve failed");
+
+        for(int i = 0; i < m_drivers.size();i++)
+            m_drivers[i] -> update();
+        timer.wait();
+        timer.expires_from_now(boost::posix_time::microseconds(period));
+
+    }
 }
 
 std::vector<EcSlave*> EcMaster::getSlaves()
@@ -281,22 +214,12 @@ std::vector<EcSlave*> EcMaster::getSlaves()
 
 bool EcMaster::stop() throw(EcError)
 {
-
-
-  rt_task_set_priority(&master,20);
-
   //Stops slaves
   for (int i = 0 ; i < m_drivers.size() ; i++)
       m_drivers[i] ->  stop();
 
-  //Stops the NRT thread
-  threadFinished = true; 
-  updateThread.join();
-  threadFinished = false; 
-  
+  usleep(10000);
 
-  close(fdInput);
-  close(fdOutput);
   std::cout<<"Master stoped!"<<std::endl;
   return true;
 }
@@ -308,11 +231,8 @@ bool EcMaster::reset() throw(EcError)
       for (int i = 0; i <  m_drivers.size(); i++)
           m_drivers[i] -> setDC(false, m_cycleTime, 0);
    }
-   taskFinished = true;
-   //Wait on the termination of task. 
-   rt_task_join (task);
-   // delete the periodic task
-   rt_task_delete(task);
+   NRTtaskFinished = true;
+   thread.join();
    
    bool success = switchState (EC_STATE_INIT);
    if (!success)
@@ -322,12 +242,8 @@ bool EcMaster::reset() throw(EcError)
        delete m_drivers[i];
    m_drivers.resize(0);      
    
-   delete[] outputBuf;
-   delete[] inputBuf;
    delete[] m_ecPort;
-   delete task;
-   
-   
+      
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;
 

@@ -11,6 +11,9 @@
 
 namespace cpp4ec
 {
+#ifndef RTNET
+extern std::mutex slaveOutMutex;
+#endif
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     outputSize(0), inputSize(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
@@ -46,7 +49,7 @@ void EcSlaveSGDV::update()
     slaveInMutex.lock();
     memcpy(inputBuf,pBufferIn, inputSize);
     slaveInMutex.unlock();
-    
+
     unsigned long time;    
     uint16_t statusWord =0;
     int32_t position = 0;
@@ -85,7 +88,13 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     enableSpecificFunctions();
 
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
+#ifdef RTNET
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize + timestampSize;
+#else
+    inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
+    setPDOBuffer(NULL, NULL);
+#endif
+
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
 
@@ -99,16 +108,22 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
 
   writeControlWord(CW_SHUTDOWN);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
   
   writeControlWord(CW_SWITCH_ON);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
   
   // Enable movement
   writeControlWord(CW_ENABLE_OP);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
   
 }
@@ -120,19 +135,28 @@ void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0S
 
 void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
 {
-    pBufferIn=input;
-    pBufferOut=output;
+#ifdef RTNET
+    pBufferIn  = input;
+    pBufferOut = output;
+#else
+    pBufferIn  = m_datap -> inputs;
+    pBufferOut = m_datap -> outputs;
+#endif
 }
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
 
   writeControlWord(CW_SHUTDOWN);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
     
   writeControlWord(CW_QUICK_STOP);
+#ifdef RTNET
   updateMaster();
+#endif
   usleep(100000);
 }
 
