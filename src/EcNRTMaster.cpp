@@ -24,6 +24,9 @@ namespace cpp4ec
 {
 
    std::thread thread;
+   extern std::mutex slaveOutMutex;
+   std::mutex slaveOutMutex;
+
 //   int NRTtaskFinished;
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
@@ -193,12 +196,13 @@ void EcMaster::update(void) throw(EcError)
     timer.expires_from_now(boost::posix_time::milliseconds(period));
     while(!NRTtaskFinished)
     {
-        
+        slaveOutMutex.lock();
         nRet=ec_send_processdata();
         if(nRet == 0)
             printf("Send failed");
 
         nRet=ec_receive_processdata(EC_TIMEOUTRET);
+        slaveOutMutex.unlock();
         if(nRet == 0)
             printf("Recieve failed");
 

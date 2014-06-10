@@ -11,6 +11,8 @@
 
 namespace cpp4ec
 {
+extern std::mutex slaveOutMutex;
+
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     outputSize(0), inputSize(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
