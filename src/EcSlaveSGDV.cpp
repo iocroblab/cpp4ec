@@ -11,8 +11,9 @@
 
 namespace cpp4ec
 {
+#ifndef RTNET
 extern std::mutex slaveOutMutex;
-
+#endif
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     outputSize(0), inputSize(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),

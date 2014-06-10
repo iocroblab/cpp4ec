@@ -125,9 +125,11 @@ bool EcMaster::configure() throw(EcError)
     /* The SGDV slave need to activate the cyclic communication
      * just after of activating the distributed clocks
      */
+    for (int i = 0; i <  m_drivers.size(); i++)
+        m_drivers[i] -> setPDOBuffer(NULL,NULL);
     NRTtaskFinished = false;
     if(SGDVconnected)
-       thread = std::thread(&EcMaster::update,this);
+       thread = std::thread(&EcMaster::update_EcSlaves,this);
 
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
@@ -150,7 +152,7 @@ bool EcMaster::configure() throw(EcError)
     std::cout << "OPERATIONAL state reached" << std::endl;
 
     if(!SGDVconnected)
-       thread = std::thread(&EcMaster::update,this);
+       thread = std::thread(&EcMaster::update_EcSlaves,this);
 
     usleep(200000);
 
@@ -178,22 +180,20 @@ bool EcMaster::start() throw(EcError)
 }
 
 /* This function waits the current state from the xddp port */  
-void EcMaster::update_EcSlaves(void) throw(EcError)
+void EcMaster::update(void) throw(EcError)
 {
-    for(int i = 0; i < m_drivers.size();i++)
-        m_drivers[i] -> update();
 }
    
 /* This function uses the sockect createdx in the configure to send data to the realtime thread */
-void EcMaster::update(void) throw(EcError)
+void EcMaster::update_EcSlaves(void) throw(EcError)
 {
     int nRet;
     boost::asio::io_service io;
     boost::asio::deadline_timer timer(io);
 
     //period is in nanoseconds
-    int period = 1;
-    timer.expires_from_now(boost::posix_time::milliseconds(period));
+    int period = m_cycleTime /1000;
+    timer.expires_from_now(boost::posix_time::microseconds(period));
     while(!NRTtaskFinished)
     {
         slaveOutMutex.lock();
@@ -206,10 +206,10 @@ void EcMaster::update(void) throw(EcError)
         if(nRet == 0)
             printf("Recieve failed");
 
-//        for(int i = 0; i < m_drivers.size();i++)
-//            m_drivers[i] -> update();
+        for(int i = 0; i < m_drivers.size();i++)
+            m_drivers[i] -> update();
         timer.wait();
-        timer.expires_from_now(boost::posix_time::milliseconds(period));
+        timer.expires_from_now(boost::posix_time::microseconds(period));
 
     }
 }
@@ -225,14 +225,8 @@ bool EcMaster::stop() throw(EcError)
   for (int i = 0 ; i < m_drivers.size() ; i++)
       m_drivers[i] ->  stop();
 
-/*
-  threadFinished = true; 
-  updateThread.join();
-  threadFinished = false; 
-*/
+  usleep(10000);
 
-  close(fdInput);
-  close(fdOutput);
   std::cout<<"Master stoped!"<<std::endl;
   return true;
 }
@@ -245,6 +239,7 @@ bool EcMaster::reset() throw(EcError)
           m_drivers[i] -> setDC(false, m_cycleTime, 0);
    }
    NRTtaskFinished = true;
+   thread.join();
    
    bool success = switchState (EC_STATE_INIT);
    if (!success)

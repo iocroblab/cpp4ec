@@ -352,7 +352,9 @@ private:
     bool PDOmapping;
     
     std::mutex slaveInMutex;
-   // std::mutex slaveOutMutex;
+#ifdef RTNET
+   std::mutex slaveOutMutex;
+#endif
 
     std::vector <CoEparameter> m_params;
     std::vector <PDOobject> inputObjects;
