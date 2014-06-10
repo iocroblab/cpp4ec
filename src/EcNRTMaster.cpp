@@ -127,6 +127,11 @@ bool EcMaster::configure() throw(EcError)
      */
     for (int i = 0; i <  m_drivers.size(); i++)
         m_drivers[i] -> setPDOBuffer(NULL,NULL);
+    
+    sched_param sch;
+    sch.sched_priority = 90;
+    pthread_setschedparam(thread.native_handle(), SCHED_OTHER, &sch);
+    
     NRTtaskFinished = false;
     if(SGDVconnected)
        thread = std::thread(&EcMaster::update_EcSlaves,this);
