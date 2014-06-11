@@ -15,7 +15,6 @@ set(CPP4EC_HDRS
 set(CPP4EC_SRC
       EcError.cpp
       EcErrorSGDV.cpp
-#      EcMaster.cpp
       EcSlave.cpp
       EcSlaveFactory.cpp
       EcSlaveSGDV.cpp
@@ -26,7 +25,7 @@ set(CPP4EC_SRC
 if(ENABLE_RT)
     include_directories(${SOEMRT_INCLUDE_DIRS})
     include_directories(${XENO_NATIVE_INCLUDE_DIRS})
-    set(CPP4EC_SRC ${CPP4EC_SRC} EcMaster.cpp)
+    set(CPP4EC_SRC ${CPP4EC_SRC} EcRTMaster.cpp)
     add_subdirectory(EcRTThread)
 else(ENABLE_RT)
     include_directories(${SOEM_INCLUDE_DIRS})
