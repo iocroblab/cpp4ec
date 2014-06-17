@@ -77,31 +77,36 @@ else(ENABLE_RT)
   target_link_libraries(cpp4ec_static ${SOEM_LIBRARIES}  ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES})
 
 #  target_link_libraries(cpp4ec_static cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES})
-#  set_target_properties(cpp4ec_static PROPERTIES
-#      OUTPUT_NAME cpp4ec
+  set_target_properties(cpp4ec_static PROPERTIES
+      OUTPUT_NAME cpp4ec
 #      COMPILE_FLAGS ${CPP4EC_CFLAGS}
 #      LINK_FLAGS ${CPP4EC_LDFLAGS}
-#     INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
-#      CLEAN_DIRECT_OUTPUT 1)
+     INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
+      CLEAN_DIRECT_OUTPUT 1)
 
-#  install(TARGETS cpp4ec_static DESTINATION lib)
+  install(TARGETS cpp4ec_static DESTINATION lib)
 
   # Create dynamic library (.so) with all basic BMM functions
   add_library(cpp4ec_dynamic SHARED ${CPP4EC_SRC})
   target_link_libraries(cpp4ec_dynamic ${SOEM_LIBRARIES}  ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES} )
 
 #  target_link_libraries(cpp4ec_dynamic cpp4ec_nrt_static ${SOEM_LIBRARIES}  ${PUGI_XML_LIBRARIES} ${Boost_LIBRARIES} )
-#  set_target_properties( cpp4ec_dynamic PROPERTIES
-#    DEFINE_SYMBOL "CPP4EC_DLL_EXPORT"
-#    SOVERSION "${CPP4EC_VERSION_MAJOR}"
-#    VERSION "${CPP4EC_VERSION}"
-#    OUTPUT_NAME cpp4ec
+  set_target_properties( cpp4ec_dynamic PROPERTIES
+    DEFINE_SYMBOL "CPP4EC_DLL_EXPORT"
+    SOVERSION "${CPP4EC_VERSION_MAJOR}"
+    VERSION "${CPP4EC_VERSION}"
+    OUTPUT_NAME cpp4ec
 #    COMPILE_FLAGS ${CPP4EC_CFLAGS}
 #    LINK_FLAGS ${CPP4EC_LDFLAGS}
-#    INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
-#    CLEAN_DIRECT_OUTPUT 1)
+    INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib"
+    CLEAN_DIRECT_OUTPUT 1)
 
   # Defaul install
-#  install(TARGETS cpp4ec_dynamic DESTINATION lib)
+  install(TARGETS cpp4ec_dynamic DESTINATION lib)
+
+  # Headers install
+  install(FILES ${CPP4EC_HDRS}  DESTINATION include/ec4cpp)
+
+
 endif(ENABLE_RT)
 
