@@ -64,6 +64,9 @@ if(ENABLE_RT)
   # Defaul install
   install(TARGETS cpp4ec_dynamic DESTINATION lib)
 
+  # Headers install
+  install(FILES ${CPP4EC_HDRS}  DESTINATION include/ec4cpp)
+
 else(ENABLE_RT)
 
   set(BOOST_LIBS thread date_time system)
