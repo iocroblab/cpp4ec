@@ -1,6 +1,5 @@
 #include "EcMaster.h"
 #include "EcUtil.h"
-#include "EcNRTThread/EcNRTThread.h"
 
 #include <sys/mman.h>
 #include <iostream>
