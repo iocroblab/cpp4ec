@@ -54,7 +54,7 @@ if(ENABLE_RT)
 
   # Defaul install
   install(TARGETS cpp4ec_dynamic DESTINATION lib)
-
+  install(FILES ${CPP4EC_HDRS} DESTINATION include/cpp4ec)
 
 endif()
 
