@@ -19,6 +19,9 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
+#include <boost/signals2/signal.hpp>
+
+
 typedef struct
 {
    uint16_t   index;
@@ -27,7 +30,17 @@ typedef struct
    int      param;
    std::string   name;
    std::string   description;
-} parameter;
+} CoEparameter;
+
+typedef struct
+{
+   uint16_t   idn;
+   uint8_t    elementflags;
+   uint8_t    size;
+   int        param;
+   std::string   name;
+   std::string   description;
+} SoEparameter;
 
 
 namespace cpp4ec
@@ -62,7 +75,7 @@ public:
     * \brief Starts the slave
     *   
     */
-    virtual std::vector<char*> start();
+    virtual void start();
     
     /**
     * \brief Updates the slave
@@ -74,7 +87,7 @@ public:
     * \brief Stops the slave
     *   
     */
-    virtual std::vector<char*> stop();
+    virtual void stop();
 
     /**
     * \brief Requests the slave state
@@ -105,6 +118,13 @@ public:
     *   
     */
     virtual void setPDOBuffer(char * input, char * output);
+
+    /**
+    * \brief Update Master outputs
+    *
+    */
+    boost::signals2::signal<void ()> updateMaster;
+
 
 protected:
     EcSlave(ec_slavet* mem_loc);/**<  The constructor */

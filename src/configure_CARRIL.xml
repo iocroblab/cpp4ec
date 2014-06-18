@@ -1,0 +1,68 @@
+<parameter>
+  <structure>
+    <param type="string" name="description">NC cycle time (TNcyc)</param>
+    <param type="string" name="name">NCcycletime(TNcyc)</param>
+    <param type="integer" name="idn">1</param>
+    <param type="integer" name="elementflags">0x40</param>
+    <param type="integer" name="size">2</param>
+    <param type="string" name="editability">P2</param>
+    <param type="integer" name="value">1000</param>
+  </structure>
+  <structure>
+    <param type="string" name="description">SERCOS cycle time (TScyc)</param>
+    <param type="string" name="name">SERCOScycletime(TScyc)</param>
+    <param type="integer" name="idn">2</param>
+    <param type="integer" name="elementflags">0x40</param>
+    <param type="integer" name="size">2</param>
+    <param type="string" name="editability">P2</param>
+    <param type="integer" name="value">1000</param>
+  </structure>
+  <structure>
+    <param type="string" name="description">Positive limit value</param>
+    <param type="string" name="name">Positive limit value</param>
+    <param type="integer" name="idn">49</param>
+    <param type="integer" name="elementflags">0x40</param>
+    <param type="integer" name="size">4</param>
+    <param type="string" name="editability">P2</param>
+    <param type="integer" name="value">19000000</param>
+  </structure>
+  <structure>
+    <param type="string" name="description">Negative limit value</param>
+    <param type="string" name="name">Negative limit value</param>
+    <param type="integer" name="idn">50</param>
+    <param type="integer" name="elementflags">0x40</param>
+    <param type="integer" name="size">4</param>
+    <param type="string" name="editability">P2</param>
+    <param type="integer" name="value">1000000</param>
+  </structure>
+  <structure>
+    <param type="string" name="description">Max velocity</param>
+    <param type="string" name="name">Max velocity</param>
+    <param type="integer" name="idn">91</param>
+    <param type="integer" name="elementflags">0x40</param>
+    <param type="integer" name="size">4</param>
+    <param type="string" name="editability">P2</param>
+    <param type="integer" name="value">18000000</param>
+  </structure>
+  <structure>
+    <param type="string" name="description">Max acceleration</param>
+    <param type="string" name="name">Max acceleration</param>
+    <param type="integer" name="idn">138</param>
+    <param type="integer" name="elementflags">0x40</param>
+    <param type="integer" name="size">4</param>
+    <param type="string" name="editability">P2</param>
+    <param type="integer" name="value">2000000000</param>
+  </structure>
+  <structure>
+    <param type="string" name="description">Max desacceleration</param>
+    <param type="string" name="name">Max acceleration</param>
+    <param type="integer" name="idn">359</param>
+    <param type="integer" name="elementflags">0x40</param>
+    <param type="integer" name="size">4</param>
+    <param type="string" name="editability">P2</param>
+    <param type="integer" name="value">10000000</param>
+  </structure>
+  
+  
+  
+</parameter>

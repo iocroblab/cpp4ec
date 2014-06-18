@@ -1,5 +1,4 @@
 #include "EcMaster.h"
-#include "EcSlaveSGDV.h"
 #include "EcUtil.h"
 extern "C"
 {
@@ -8,23 +7,30 @@ extern "C"
 #include <sys/mman.h>
 #include <iostream>
 #include <fstream> //Just to verify the time
+
 //socket header
 #include <rtdm/rtipc.h>
-#include <sched.h>
 #include <sys/types.h>
 #include <unistd.h>
+//#include <sched.h>
+//posix
+#include <pthread.h>
 //xenomai header
 #include <native/task.h>
+//boost
+#include <boost/thread.hpp>
+
 #define timestampSize 8 //8 bytes to represent the time
 
 namespace cpp4ec
 {
-   RT_TASK task;
+   RT_TASK *task;
    RT_TASK master;
-  
 
-EcMaster::EcMaster(unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort ("rteth0"), m_cycleTime(cycleTime), m_useDC(useDC), 
-inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true)
+
+EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
+    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false)
+
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -35,8 +41,12 @@ inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo),
    sched_param param;
    param.sched_priority = 20;
    sched_getscheduler(pid);
-   sched_setscheduler(pid,SCHED_OTHER,&param);
 
+/* pthread_t pid =	pthread_self();
+   sched_param param;
+   param.sched_priority = 20;
+   pthread_setscheduler(pid,SCHED_FIFO,&param);
+*/
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
    rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
@@ -48,105 +58,143 @@ EcMaster::~EcMaster()
    //must clean memory and delete tasks
 }
 
-bool EcMaster::configure() throw(EcError)
+bool EcMaster::preconfigure() throw(EcError)
 {
     bool success;
     int size = ethPort.size();
-    ecPort = new char[size];
-    strcpy (ecPort, ethPort.c_str());  
+    m_ecPort = new char[size];
+    strcpy (m_ecPort, ethPort.c_str());
+    task = new RT_TASK;
 
-    // initialise SOEM, bind socket to ifname
-    if (!(ec_init(ecPort) > 0))
-	throw(EcError(EcError::FAIL_EC_INIT));
+   
+   // initialise SOEM, bind socket to ifname
+    if (!(ec_init(m_ecPort) > 0))
+        throw(EcError(EcError::FAIL_EC_INIT));
     
     std::cout << "ec_init on " << ethPort << " succeeded." << std::endl;
-    
-    //Initialise default configuration, using the default config table (see ethercatconfiglist.h)
+
+
     if (!(ec_config_init(FALSE) > 0))
-	throw(EcError(EcError::FAIL_EC_CONFIG_INIT));
-  
+        throw(EcError(EcError::FAIL_EC_CONFIG_INIT));
+
     std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
     std::cout << "Request PRE-OPERATIONAL state for all slaves"<< std::endl;
 
     success = switchState (EC_STATE_PRE_OP);
     if (!success)
-	throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
+        throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
     
     std::cout << "PRE-OPERATIONAL state reached"<< std::endl;
-
-
     for (int i = 1; i <= ec_slavecount; i++)
     {
-	EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
-	if (!driver)
-	    std::cout<<"Error: Failed creating driver"<<std::endl;
-	    	//throw(EcError(EcError::FAIL_CREATING_DRIVER));
+        EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
+        if (!driver)
+            std::cout<<"Error: Failed creating driver"<<std::endl;
+                //throw(EcError(EcError::FAIL_CREATING_DRIVER));
 
-	m_drivers.push_back(driver);
-	std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
-	driver -> configure();
+        m_drivers.push_back(driver);
+        std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
+        //driver -> configure();
     }
-    
+    //The SGDV slave works different from the standard soem sequence
+    //so it is detected to modify the structure
+    for (int i = 0; i < m_drivers.size(); i++)
+    {
+        std::string sgdvName = "SGDV";
+        std::string slaveName = m_drivers[i]-> getName();
+        if(slaveName.compare(0,4,sgdvName) == 0)
+            SGDVconnected = true;
+    }
+
+    for (int i = 0; i < m_drivers.size(); i++)
+        m_drivers[i]-> updateMaster.connect(boost::bind(&EcMaster::update,this));
+
+    std::cout<<"Master preconfigured!!!"<<std::endl;
+
+}
+
+bool EcMaster::configure() throw(EcError)
+{
+    bool success;
+    for (int i = 0; i < m_drivers.size(); i++)
+        m_drivers[i] -> configure();
+
     if(slaveInformation)
-	slaveInfo();
-    //Configure distributed clock
-    if(m_useDC)
-	ec_configdc();
+        slaveInfo();
     //Configure IOmap
     ec_config_map(&m_IOmap);
+    //Configure DC
+    if (m_useDC)
+    {
+        ec_configdc();
+        for (int i = 0; i <  m_drivers.size(); i++)
+            m_drivers[i] -> setDC(true, m_cycleTime, 0);
+    }
+    /* The SGDV slave need to activate the cyclic communication
+     * just after of activating the distributed clocks
+     */
+    taskFinished = false;
+    if(SGDVconnected)
+    {
+
+        rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
+        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
+        rt_task_start (task, &rt_thread, NULL);
+    }
 
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
 
-    //Calulating the buffers size
-    for(int i = 1; i <= ec_slavecount; i++)
-    {
-	inputSize += ec_slave[i].Ibytes + timestampSize;
-	outputSize += ec_slave[i].Obytes;
-    }
+
+    //Create master buffers
+    outputSize = ec_slave[0].Obytes;
+    inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
+
     outputBuf = new char [outputSize];
     inputBuf = new char[inputSize];
     memset(outputBuf,0, outputSize);
     memset(inputBuf,0, inputSize);
 
-    int offSetInput = 0;
-    offSetOutput = new int[ec_slavecount];
-
-    offSetOutput[0] = 0;
+    int offSetInput = 0, offSetOutput = 0;
     for(int i = 0; i < m_drivers.size();i++)
     {
-	m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput[i]);
-	if(i < (m_drivers.size()-1))
-	{
-	    offSetOutput[i+1] = offSetOutput[i] + ec_slave[i+1].Obytes;
-	    offSetInput  += ec_slave[i+1].Ibytes  + timestampSize;
-	}
+
+        m_drivers[i] -> setPDOBuffer(inputBuf + offSetInput, outputBuf + offSetOutput);
+        if(i < (m_drivers.size()-1))
+        {
+            offSetOutput += ec_slave[i+1].Obytes;
+            offSetInput += ec_slave[i+1].Ibytes + timestampSize;
+
+        }
     }
-    
+
     std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
     success = switchState (EC_STATE_SAFE_OP);
     if (!success)
-	throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
+        throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
     
     std::cout << "SAFE-OPERATIONAL state reached"<< std::endl;
-    if (m_useDC)
-    {
-	for (int i = 0; i <  m_drivers.size(); i++)
-	    m_drivers[i] -> setDC(true, m_cycleTime, 0);
-    }
-    rt_task_create (&task, "PDO rt_task", 8192, 99, 0);
-    rt_task_set_periodic (&task, TM_NOW, m_cycleTime);
-    rt_task_start (&task, &rt_thread, NULL);
     
     if(EcatError)
-	throw(EcError(EcError::ECAT_ERROR));
+        throw(EcError(EcError::ECAT_ERROR));
+
 
     std::cout << "Request OPERATIONAL state for all slaves" << std::endl;
     success = switchState(EC_STATE_OPERATIONAL);
     if (!success)
 	    throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
     std::cout << "OPERATIONAL state reached" << std::endl;
+
+    if(!SGDVconnected)
+    {
+        rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
+        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
+        rt_task_start (task, &rt_thread, NULL);
+    }
+    usleep(200000);
+
     std::cout<<"Master configured!!!"<<std::endl;
+
 	
     return true;
 }
@@ -182,19 +230,10 @@ bool EcMaster::start() throw(EcError)
    sch.sched_priority = 90;
    pthread_setschedparam(updateThread.native_handle(), SCHED_OTHER, &sch);
    updateThread = std::thread(&EcMaster::update_EcSlaves,this);
-   
-   std::vector<char*> commandList;
+
    for (int i = 0 ; i < m_drivers.size() ; i++)
-   {
-        commandList = m_drivers[i] ->  start();
-        for(int k = 0; k < commandList.size(); k ++)
-        {
-            memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i+1].Obytes);
-            update();
-        }
-        usleep (100000);  
-   }
-  
+       m_drivers[i] ->  start();
+
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
@@ -207,17 +246,17 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     
     while (!threadFinished) 
     {
-	/* Get the next message from realtime_thread */
-	ret = read(fdInput, inputBuf, inputSize);
-	if (ret <= 0)
-	{
-	    perror("read");
-//	    throw(EcError(EcError::FAIL_READING));
-	}
-	for(int i = 0; i < m_drivers.size();i++)
-	{
-	    m_drivers[i] -> update();
-	}
+
+        /* Get the next message from realtime_thread */
+        ret = read(fdInput, inputBuf, inputSize);
+        if (ret <= 0)
+        {
+            perror("read");
+            //throw(EcError(EcError::FAIL_READING));
+        }
+
+        for(int i = 0; i < m_drivers.size();i++)
+            m_drivers[i] -> update();
 	        
     }
 }
@@ -243,27 +282,21 @@ std::vector<EcSlave*> EcMaster::getSlaves()
 bool EcMaster::stop() throw(EcError)
 {
 
+
   rt_task_set_priority(&master,20);
 
-  std::vector<char*> commandList;  
   //Stops slaves
   for (int i = 0 ; i < m_drivers.size() ; i++)
-  {
-    commandList = m_drivers[i] ->  stop();
-    for(int k = 0; k < commandList.size(); k ++)
-    {
-      memcpy(outputBuf+offSetOutput[i],commandList[k],ec_slave[i+1].Obytes);
-      update();
-    }
-    usleep (100000);  
-  }
+      m_drivers[i] ->  stop();
+
   //Stops the NRT thread
   threadFinished = true; 
   updateThread.join();
+  threadFinished = false; 
+  
 
   close(fdInput);
   close(fdOutput);
-
   std::cout<<"Master stoped!"<<std::endl;
   return true;
 }
@@ -272,24 +305,28 @@ bool EcMaster::reset() throw(EcError)
 {
    if (m_useDC)
    {
-       for (int i = 0; i <  m_drivers.size(); i++)
-	  m_drivers[i] -> setDC(false, m_cycleTime, 0);
+      for (int i = 0; i <  m_drivers.size(); i++)
+          m_drivers[i] -> setDC(false, m_cycleTime, 0);
    }
+   taskFinished = true;
+   //Wait on the termination of task. 
+   rt_task_join (task);
    // delete the periodic task
-   rt_task_delete(&task);
+   rt_task_delete(task);
    
    bool success = switchState (EC_STATE_INIT);
    if (!success)
       throw(EcError(EcError::FAIL_SWITCHING_STATE_INIT));
 
    for (unsigned int i = 0; i < m_drivers.size(); i++)
-         delete m_drivers[i];
+       delete m_drivers[i];
    m_drivers.resize(0);      
    
    delete[] outputBuf;
    delete[] inputBuf;
-   delete[] offSetOutput;
-   delete[] ecPort;
+   delete[] m_ecPort;
+   delete task;
+   
    
    for (size_t i = 0; i < 4096; i++)
       m_IOmap[i] = 0;

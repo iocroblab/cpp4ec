@@ -16,7 +16,7 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
-#include <boost/signals2/signal.hpp>
+//#include <boost/signals2/signal.hpp>
 #include <vector>
 #include <mutex> 
 
@@ -24,8 +24,10 @@ extern "C"
 typedef struct
 {
     std::string name;
+    unsigned int index;
     unsigned int offset;
     unsigned int byteSize;
+    unsigned int entry;
     std::string type;
 }PDOobject;    
 
@@ -52,7 +54,7 @@ public:
 	FIFTH_ENTRY,
 	SIXTH_ENTRY,	
 	SEVENTH_ENTRY,	
-	EIGHTH_ENTRY,	
+    EIGHTH_ENTRY
     } EcPDOEntry;
     
      /**
@@ -132,7 +134,7 @@ public:
      * \return A vector with the secuence of buffer outputs that has to be sent to stop the servos
      * 
      */
-     std::vector<char*> start() throw(EcErrorSGDV);
+     void start() throw(EcErrorSGDV);
     
     /**
      * \brief Update the data
@@ -148,7 +150,7 @@ public:
      * \return A vector with the secuence of buffer outputs that has to be sent to stop the servos
      * 
      */
-     std::vector<char*> stop() throw(EcErrorSGDV);
+     void stop() throw(EcErrorSGDV);
      
      /**
      * \brief Set DC
@@ -313,17 +315,21 @@ private:
     
     int outputSize;
     int inputSize;
-    
-    int transmitEntry;
-    int recieveEntry;    
+#ifdef RTNET
     char* pBufferOut;
-    char* pBufferIn;  
+    char* pBufferIn;
+#else
+    uint8* pBufferOut;
+    uint8* pBufferIn;
+#endif
     char* inputBuf;
     
     bool readXML() throw(EcErrorSGDV);
-    bool addPDOobject(std::string PDOentry,int value, int subindex);
+    bool enableSpecificFunctions();
     void loadDefaultPDO();
     void loadParameters();
+    void si_PDOassign(uint16 slave, uint16 PDOassign);
+
     
     int controlWordEntry;
     int targetPositionEntry;
@@ -346,12 +352,13 @@ private:
     bool PDOmapping;
     
     std::mutex slaveInMutex;
-    std::mutex slaveOutMutex;
+#ifdef RTNET
+   std::mutex slaveOutMutex;
+#endif
 
-    std::vector <parameter> m_params;
+    std::vector <CoEparameter> m_params;
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
-    std::vector <char*> bufferList;
     
     //PDO objects
     typedef enum

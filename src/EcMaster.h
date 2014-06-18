@@ -14,6 +14,7 @@ extern "C"
 #include <soem/ethercatconfig.h>
 #include <soem/ethercatdc.h>
 #include <soem/ethercatcoe.h>
+#include <soem/ethercatsoe.h>
 #include <soem/ethercatprint.h>
 #include <soem/nicdrv.h>
 }
@@ -54,12 +55,20 @@ public:
      * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information.
      *    
      */
-    EcMaster(unsigned long cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
+    EcMaster(std::string ecPort = "rteth0", unsigned long cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
 
     /**
      *  \brief Destructor
      */
     ~EcMaster();
+
+    /**
+     *  \brief Preconfiguration
+     *
+     * Preconfigures the master and slaves. In this functions is set to Preoperational the EtherCAT State Machine.
+     *
+     */
+    bool preconfigure() throw(EcError);
 
 
     /**
@@ -68,6 +77,7 @@ public:
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
      *
      */
+
     bool configure() throw(EcError);
 
     /**
@@ -129,16 +139,16 @@ private:
     
      //Master variables
     std::string ethPort;
-    char * ecPort;
+    char * m_ecPort;
     char m_IOmap[4096];
     unsigned long m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
     bool m_useDC;
     std::vector<EcSlave*> m_drivers;
-    int* offSetOutput;
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
-    
+    bool SGDVconnected;
+
     
     //ethercat switchState function
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
@@ -149,10 +159,9 @@ private:
     char * devnameInput;
     int fdOutput,fdInput;
     std::thread updateThread;
+    int NRTtaskFinished;
     void update_EcSlaves(void) throw(EcError);
     
-    int unusedVariable;
-
     //Ethercat slaveinfo stuff
     bool slaveInformation;
     FILE * pFile;
