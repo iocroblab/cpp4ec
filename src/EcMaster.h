@@ -47,20 +47,55 @@ class EcMaster
 {
 
 public:
+
+    /**
+     * \brief Default Constructor
+     */
+    EcMaster();
+
     /**
      * \brief Constructor 
      *
-     * \param cycleTime The period of the RT task that send PDO.
+     * \param ecPort ethercat port
+     * \param cycleTime The period of the thread that sends PDO.
      * \param useDC if true the slaves use DC synchronization.
      * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information.
      *    
      */
-    EcMaster(std::string ecPort = "rteth0", unsigned long cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
+    EcMaster(std::string ecPort, unsigned long cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
 
     /**
      *  \brief Destructor
      */
     ~EcMaster();
+
+    /**
+     * \brief Set the ethercat port
+     *
+     * \param ecPort ethercat port
+     */
+    void setPort(std::string ecPort) {ethPort=ecPort;}
+
+    /**
+     * \brief Set the cycle time of the PDO thread
+     *
+     * \param cycleTime
+     */
+    void setCycleTime(unsigned long cycleTime) {m_cycleTime = cycleTime;}
+
+    /**
+     * \brief Set Distributed clocks
+     *
+     * \param useDC if true the slaves use DC synchronization.
+     */
+    void setDC( bool useDC) {m_useDC = useDC;}
+
+    /**
+     * \brief Set slave information
+     *
+     * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information.
+     */
+    void setSlaveInfo(bool slaveInfo) {slaveInformation = slaveInfo;}
 
     /**
      *  \brief Preconfiguration
@@ -70,14 +105,12 @@ public:
      */
     bool preconfigure() throw(EcError);
 
-
     /**
      *  \brief Configuration
      *
      * Configures the master and slaves. In this functions is setted to Operational the EtherCAT State Machine.
      *
      */
-
     bool configure() throw(EcError);
 
     /**
@@ -100,14 +133,13 @@ public:
      * The EtherCAT State Machine is taken to the initial state.
      */
     bool reset() throw(EcError);
-
     
     /**
      *  \brief Get slaves vector
      *
      *	\return the slaves vector.
      */
-    std::vector<EcSlave*> getSlaves();
+    std::vector<EcSlave*> getSlaves() {return m_drivers;}
     
     /**
      *  \brief Update the outputs

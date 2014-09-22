@@ -21,6 +21,10 @@ namespace cpp4ec
    extern std::mutex slaveOutMutex;
    std::mutex slaveOutMutex;
 
+EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(false),
+   inputSize(0),outputSize(0), threadFinished (false), slaveInformation(false), printSDO(true), printMAP(true),SGDVconnected(false),
+   NRTtaskFinished(false) {}
+
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
     inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false),
     NRTtaskFinished(false)
@@ -37,6 +41,7 @@ EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool
    sched_getscheduler(pid);
    
 }
+
 
 EcMaster::~EcMaster()
 {
@@ -206,10 +211,6 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
     }
 }
 
-std::vector<EcSlave*> EcMaster::getSlaves()
-{
-    return m_drivers;
-}
 
 bool EcMaster::stop() throw(EcError)
 {

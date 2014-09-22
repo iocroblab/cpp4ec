@@ -27,10 +27,13 @@ namespace cpp4ec
    RT_TASK *task;
    RT_TASK master;
 
+EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(false),
+      inputSize(0),outputSize(0), threadFinished (false), slaveInformation(false), printSDO(true), printMAP(true),SGDVconnected(false),
+      NRTtaskFinished(false) {}
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
-    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false)
-
+       inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false),
+       NRTtaskFinished(false)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -274,10 +277,6 @@ void EcMaster::update(void) throw(EcError)
    }
 }
 
-std::vector<EcSlave*> EcMaster::getSlaves()
-{
-    return m_drivers;
-}
 
 bool EcMaster::stop() throw(EcError)
 {
