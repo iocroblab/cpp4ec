@@ -23,7 +23,19 @@ namespace cpp4ec
 
 EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(false),
    inputSize(0),outputSize(0), threadFinished (false), slaveInformation(false), printSDO(true), printMAP(true),SGDVconnected(false),
-   NRTtaskFinished(false) {}
+   NRTtaskFinished(false)
+{
+   //reset del iomap memory
+   for (size_t i = 0; i < 4096; i++)
+      m_IOmap[i] = 0;
+
+   pid_t pid;
+   pid = getpid();
+   sched_param param;
+   param.sched_priority = 20;
+   sched_getscheduler(pid);
+
+}
 
 EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
     inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false),
