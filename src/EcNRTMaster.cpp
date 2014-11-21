@@ -182,6 +182,8 @@ bool EcMaster::start() throw(EcError)
 
    for (int i = 0 ; i < m_drivers.size() ; i++)
        m_drivers[i] ->  start();
+   //wait to start correctly drivers
+   usleep(50000);
 
    std::cout<<"Master started!!!"<<std::endl;
 
