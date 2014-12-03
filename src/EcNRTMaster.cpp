@@ -91,22 +91,25 @@ bool EcMaster::preconfigure() throw(EcError)
         EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
         if (!driver)
             std::cout<<"Error: Failed creating driver"<<std::endl;
-                //throw(EcError(EcError::FAIL_CREATING_DRIVER));
+                throw(EcError(EcError::FAIL_CREATING_DRIVER));
 
         m_drivers.push_back(driver);
         std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
-        //driver -> configure();
     }
     //The SGDV slave works different from the standard soem sequence
     //so it is detected to modify the structure
     for (int i = 0; i < m_drivers.size(); i++)
     {
-        std::string sgdvName = "SGDV";
+        std::string SGDVName = "SGDV";
         std::string slaveName = m_drivers[i]-> getName();
-        if(slaveName.compare(0,4,sgdvName) == 0)
+        if(slaveName.compare(0,4,SGDVName) == 0)
             SGDVconnected = true;
     }
 
+    /*
+     *Connecting a slaves' signal with the update master function.
+     *So the slave can call master to update the buffers.
+     */
     for (int i = 0; i < m_drivers.size(); i++)
         m_drivers[i]-> updateMaster.connect(boost::bind(&EcMaster::update,this));
 
@@ -134,21 +137,20 @@ bool EcMaster::configure() throw(EcError)
     /* The SGDV slave need to activate the cyclic communication
      * just after of activating the distributed clocks
      */
-    for (int i = 0; i <  m_drivers.size(); i++)
-        m_drivers[i] -> setPDOBuffer(NULL,NULL);
-    
     sched_param sch;
     sch.sched_priority = 90;
     pthread_setschedparam(thread.native_handle(), SCHED_OTHER, &sch);
-    
     NRTtaskFinished = false;
     if(SGDVconnected)
        thread = std::thread(&EcMaster::update_EcSlaves,this);
 
     if(EcatError)
-	throw(EcError(EcError::ECAT_ERROR));  
+        throw(EcError(EcError::ECAT_ERROR));
 
-
+    //Slave buffer pointers only points master buffer on realtime(cause of sockets communication)
+    for (int i = 0; i <  m_drivers.size(); i++)
+        m_drivers[i] -> setPDOBuffer(NULL,NULL);
+    
     std::cout << "Request SAFE-OPERATIONAL state for all slaves" << std::endl;
     success = switchState (EC_STATE_SAFE_OP);
     if (!success)
@@ -165,6 +167,7 @@ bool EcMaster::configure() throw(EcError)
 	    throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
     std::cout << "OPERATIONAL state reached" << std::endl;
 
+    //Starts the cyclic task (PDOs task) if no SGDV slaves connected.
     if(!SGDVconnected)
        thread = std::thread(&EcMaster::update_EcSlaves,this);
 
@@ -219,6 +222,7 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
 
         for(int i = 0; i < m_drivers.size();i++)
             m_drivers[i] -> update();
+
         timer.wait();
         timer.expires_from_now(boost::posix_time::microseconds(period));
 

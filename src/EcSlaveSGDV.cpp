@@ -46,6 +46,7 @@ EcSlaveSGDV::~EcSlaveSGDV()
     
 void EcSlaveSGDV::update()
 {
+    //Copy the slave data from the master buffer to slave buffer
     slaveInMutex.lock();
     memcpy(inputBuf,pBufferIn, inputSize);
     slaveInMutex.unlock();
@@ -64,7 +65,7 @@ void EcSlaveSGDV::update()
 	readVelocity (velocity);
     if(rTorqueCapable)
 	readTorque (torque);
-    //signal
+    //After reading the important slave information a signal is sended with that
     slaveValues(m_slave_nr,statusWord,position,velocity,torque,time);    
 }
 
@@ -75,12 +76,13 @@ const std::string& EcSlaveSGDV::getName() const
 
 bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 {
+    //Parameter are configured using SDO (acyclic communication)
     for (unsigned int i = 0; i < m_params.size(); i++)
     {
       ec_SDOwrite(m_slave_nr, m_params[i].index, m_params[i].subindex, FALSE,
 		  m_params[i].size,&(m_params[i].param),EC_TIMEOUTRXM);
       if(EcatError)
-	throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR,m_slave_nr,getName()));
+         throw(EcErrorSGDV(EcErrorSGDV::ECAT_ERROR,m_slave_nr,getName()));
 
     }
     si_PDOassign(m_slave_nr,0x1C12);//sync manager for outputs
@@ -98,7 +100,6 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
 
-
     std::cout << getName() << " configured !" <<std::endl;
     
     return true;
@@ -106,7 +107,10 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
 
 void EcSlaveSGDV::start() throw(EcErrorSGDV)
 {
-
+  /*The state Machine is controled throught controlWord.
+   *So the following sequence is necessary to enable
+   *the motor movement.
+   */
   writeControlWord(CW_SHUTDOWN);
 #ifdef RTNET
   updateMaster();
@@ -146,7 +150,7 @@ void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
 
 void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 {
-
+ //Taking state machine to inital state.
   writeControlWord(CW_SHUTDOWN);
 #ifdef RTNET
   updateMaster();

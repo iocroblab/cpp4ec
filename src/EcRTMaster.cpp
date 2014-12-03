@@ -41,11 +41,6 @@ EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(false),
     param.sched_priority = 20;
     sched_getscheduler(pid);
 
- /* pthread_t pid =	pthread_self();
-    sched_param param;
-    param.sched_priority = 20;
-    pthread_setscheduler(pid,SCHED_FIFO,&param);
- */
     //Realtime tasks
     mlockall (MCL_CURRENT | MCL_FUTURE);
     rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
@@ -66,11 +61,6 @@ EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool
    param.sched_priority = 20;
    sched_getscheduler(pid);
 
-/* pthread_t pid =	pthread_self();
-   sched_param param;
-   param.sched_priority = 20;
-   pthread_setscheduler(pid,SCHED_FIFO,&param);
-*/
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
    rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
@@ -114,22 +104,26 @@ bool EcMaster::preconfigure() throw(EcError)
         EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
         if (!driver)
             std::cout<<"Error: Failed creating driver"<<std::endl;
-                //throw(EcError(EcError::FAIL_CREATING_DRIVER));
+                throw(EcError(EcError::FAIL_CREATING_DRIVER));
 
         m_drivers.push_back(driver);
         std::cout << "Created driver for " << ec_slave[i].name<< ", with address " << ec_slave[i].configadr<< std::endl;
-        //driver -> configure();
     }
+
     //The SGDV slave works different from the standard soem sequence
     //so it is detected to modify the structure
     for (int i = 0; i < m_drivers.size(); i++)
     {
-        std::string sgdvName = "SGDV";
+        std::string SGDVName = "SGDV";
         std::string slaveName = m_drivers[i]-> getName();
-        if(slaveName.compare(0,4,sgdvName) == 0)
+        if(slaveName.compare(0,4,SGDVName) == 0)
             SGDVconnected = true;
     }
 
+    /*
+     *Connecting a slaves' signal with the update master function.
+     *So the slave can call master to update the buffers.
+     */
     for (int i = 0; i < m_drivers.size(); i++)
         m_drivers[i]-> updateMaster.connect(boost::bind(&EcMaster::update,this));
 
@@ -154,6 +148,7 @@ bool EcMaster::configure() throw(EcError)
         for (int i = 0; i <  m_drivers.size(); i++)
             m_drivers[i] -> setDC(true, m_cycleTime, 0);
     }
+
     /* The SGDV slave need to activate the cyclic communication
      * just after of activating the distributed clocks
      */
@@ -169,8 +164,7 @@ bool EcMaster::configure() throw(EcError)
     if(EcatError)
 	throw(EcError(EcError::ECAT_ERROR));  
 
-
-    //Create master buffers
+    //Create master buffers. Added timestamp space for each slave in input buffer
     outputSize = ec_slave[0].Obytes;
     inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
 
@@ -179,6 +173,10 @@ bool EcMaster::configure() throw(EcError)
     memset(outputBuf,0, outputSize);
     memset(inputBuf,0, inputSize);
 
+    /*
+     *Configuring the slave buffer pointers. Each slave have a pointer that points to their data location
+     *in the master Buffer.
+     */
     int offSetInput = 0, offSetOutput = 0;
     for(int i = 0; i < m_drivers.size();i++)
     {
@@ -209,6 +207,7 @@ bool EcMaster::configure() throw(EcError)
 	    throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
     std::cout << "OPERATIONAL state reached" << std::endl;
 
+    //Starts the cyclic task (PDOs task) if no SGDV slaves connected.
     if(!SGDVconnected)
     {
         rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
@@ -226,30 +225,34 @@ bool EcMaster::configure() throw(EcError)
 
 bool EcMaster::start() throw(EcError)
 {
+   //
    rt_task_set_priority(&master,0);
    
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
-       throw(EcError(EcError::FAIL_OUTPUT_LABEL));
-   
+       throw(EcError(EcError::FAIL_OUTPUT_LABEL));   
+   //open the socket for the outputs
    fdOutput = open(devnameOutput, O_WRONLY);
-   free(devnameOutput);
-   
+   free(devnameOutput);   
    if (fdOutput < 0)
    {
       perror("open");
       throw(EcError(EcError::FAIL_OPENING_OUTPUT));
    }
+
    if (asprintf(&devnameInput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_INPUT) < 0)
-       throw(EcError(EcError::FAIL_INPUT_LABEL));
-              
+       throw(EcError(EcError::FAIL_INPUT_LABEL));   
+   //open the socket for the inputs
    fdInput = open(devnameInput, O_RDONLY);
-   free(devnameInput);
-       
+   free(devnameInput);       
    if (fdInput < 0)
    {
      perror("open");
      throw(EcError(EcError::FAIL_OPENING_INPUT));
    }
+
+   /*
+    *Create a thread for update slave inputs periodically
+    */
    sched_param sch;
    sch.sched_priority = 90;
    pthread_setschedparam(updateThread.native_handle(), SCHED_OTHER, &sch);
