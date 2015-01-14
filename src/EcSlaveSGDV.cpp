@@ -51,7 +51,7 @@ void EcSlaveSGDV::update()
     memcpy(inputBuf,pBufferIn, inputSize);
     slaveInMutex.unlock();
 
-    unsigned long time;    
+    int64_t time;
     uint16_t statusWord =0;
     int32_t position = 0;
     int32_t velocity = 0;
@@ -164,7 +164,7 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
   usleep(100000);
 }
 
-bool EcSlaveSGDV::readTimestamp (unsigned long& time)
+bool EcSlaveSGDV::readTimestamp (int64 &time)
 {
     slaveInMutex.lock();
     memcpy (&time, inputBuf + inputSize - timestampSize, timestampSize);

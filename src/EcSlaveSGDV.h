@@ -273,7 +273,7 @@ public:
     * \param time return the value of the actual timestamp.
     * 
     */
-    bool readTimestamp (unsigned long& time);
+    bool readTimestamp (int64& time);
     /**
     * \brief Set an SGDV object
     * 
@@ -305,7 +305,7 @@ public:
     * can recieve the slavenumber, statusWord, Position, Velocity, Torque and timestamp of each slave.
     * 
     */
-    boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t, unsigned long)> slaveValues;
+    boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t, int64_t)> slaveValues;
     
    
 
