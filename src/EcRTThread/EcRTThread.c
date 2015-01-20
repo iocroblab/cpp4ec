@@ -15,7 +15,9 @@
 #include <native/timer.h>
 
 #define timestampSize 8
+void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime);
 
+int64 integral = 0;
 void rt_thread(void *unused)
 {
    mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -23,7 +25,7 @@ void rt_thread(void *unused)
    struct rtipc_port_label plabel_in, plabel_out;
    struct sockaddr_ipc saddr_in, saddr_out;
 
-   int64 timestamp=0,lastdctime=0,dctime=0;
+   int64 timestamp=0, lastdctime=0, dctime=0,toff = 0, cycletime = 1000000;
    int ret_in, ret_out, s_input, s_output, nRet;
    int inputSize = 0, outputSize = 0;
    int i;
@@ -113,54 +115,71 @@ void rt_thread(void *unused)
     if (ret_in)
         perror("bind");
 
-       while(!taskFinished)
+    RTIME date= rt_timer_read();
+    while(!taskFinished)
+    {
+       date = date + cycletime + toff;
+       rt_task_sleep_until (date);
+       date = rt_timer_read();
+
+       /* Get packets relayed by the regular thread */
+       ret_out = rt_dev_recvfrom(s_output, rtoutputbuf, outputSize, MSG_DONTWAIT, NULL, 0);
+       if (ret_out <= 0)
        {
-
-          /* Get packets relayed by the regular thread */
-          ret_out = rt_dev_recvfrom(s_output, rtoutputbuf, outputSize, MSG_DONTWAIT, NULL, 0);
-          if (ret_out <= 0)
-          {
-             //   rt_printf("r_out%i \n",ret_out);
-             // perror("recvfrom");
-             //nothing to do, no new data transferred
-          }else{
-              //received some data from the buffer
-              memcpy (ec_slave[0].outputs, rtoutputbuf , ec_slave[0].Obytes);
-          }
-
-          nRet=ec_send_processdata();
-          if(nRet == 0)
-              rt_printf("Send failed");
-
-          nRet=ec_receive_processdata(EC_TIMEOUTRET);
-          if(nRet == 0)
-              rt_printf("Recieve failed");
-
-          dctime = ec_DCtime;
-          if(dctime >= lastdctime)
-              timestamp = (timestamp & 0xFFFFFFFF00000000) + dctime;
-          else
-              timestamp = (timestamp & 0xFFFFFFFF00000000) + 0x0100000000 + dctime;
-          lastdctime = dctime;
-
-          int offSet = 0;
-          for (i = 1; i <= ec_slavecount; i++)
-          {
-            memcpy (rtinputbuf + offSet ,ec_slave[i].inputs, ec_slave[i].Ibytes);
-            memcpy (rtinputbuf + offSet + ec_slave[i].Ibytes, &timestamp, timestampSize);
-            offSet = offSet + ec_slave[i].Ibytes  + timestampSize;
-          }
-
-          ret_in = rt_dev_sendto(s_input, rtinputbuf, inputSize, 0, NULL, 0);
-          if(ret_in != inputSize)
-          {
-               // perror("sendto");
-          }
-          rt_task_wait_period(NULL);
+          //   rt_printf("r_out%i \n",ret_out);
+          // perror("recvfrom");
+          //nothing to do, no new data transferred
+       }else{
+           //received some data from the buffer
+           memcpy (ec_slave[0].outputs, rtoutputbuf , ec_slave[0].Obytes);
        }
-     free(rtinputbuf);
-     free(rtoutputbuf);
-     rt_dev_close(s_output);
-     rt_dev_close(s_input);
+       nRet=ec_send_processdata();
+       if(nRet == 0)
+           rt_printf("Send failed");
+
+       nRet=ec_receive_processdata(EC_TIMEOUTRET);
+       if(nRet == 0)
+           rt_printf("Recieve failed");
+
+       dctime = ec_DCtime;
+       if(dctime >= lastdctime)
+           timestamp = (timestamp & 0xFFFFFFFF00000000) + dctime;
+       else
+           timestamp = (timestamp & 0xFFFFFFFF00000000) + 0x0100000000 + dctime;
+       lastdctime = dctime;
+
+       int offSet = 0;
+       for (i = 1; i <= ec_slavecount; i++)
+       {
+         memcpy (rtinputbuf + offSet ,ec_slave[i].inputs, ec_slave[i].Ibytes);
+         memcpy (rtinputbuf + offSet + ec_slave[i].Ibytes, &timestamp, timestampSize);
+         offSet = offSet + ec_slave[i].Ibytes  + timestampSize;
+       }
+
+       ret_in = rt_dev_sendto(s_input, rtinputbuf, inputSize, 0, NULL, 0);
+       if(ret_in != inputSize)
+       {
+            // perror("sendto");
+       }
+       ec_sync(timestamp,cycletime,&toff);
+
+
+    }
+    free(rtinputbuf);
+    free(rtoutputbuf);
+    rt_dev_close(s_output);
+    rt_dev_close(s_input);
      
+}
+
+/* PI calculation to get linux time synced to DC time */
+void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime)
+{
+   int64 delta;
+   /* set linux sync point 50us later than DC sync, just as example */
+   delta = (reftime - 50000) % cycletime;//before +
+   if(delta> (cycletime /2)) { delta= delta - cycletime; }
+   if(delta>0){ integral++; }
+   if(delta<0){ integral--; }
+   *offsettime = -(delta / 100) - (integral /20);
 }

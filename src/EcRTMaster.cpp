@@ -1,5 +1,7 @@
 #include "EcMaster.h"
 #include "EcUtil.h"
+#include "EcSlaveSGDV.h"
+
 extern "C"
 {
 #include "EcRTThread/EcRTThread.h"
@@ -145,11 +147,7 @@ bool EcMaster::configure() throw(EcError)
     ec_config_map(&m_IOmap);
     //Configure DC
     if (m_useDC)
-    {
         ec_configdc();
-        for (int i = 0; i <  m_drivers.size(); i++)
-            m_drivers[i] -> setDC(true, m_cycleTime, 0);
-    }
 
     /* The SGDV slave need to activate the cyclic communication
      * just after of activating the distributed clocks
@@ -157,14 +155,19 @@ bool EcMaster::configure() throw(EcError)
     taskFinished = false;
     if(SGDVconnected)
     {
-
         rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
-        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
         rt_task_start (task, &rt_thread, NULL);
     }
 
+    if (m_useDC)
+    {
+        usleep(2000000);//wait for master to sync on DC
+        for (int i = 0; i <  m_drivers.size(); i++)
+            m_drivers[i] -> setDC(true, m_cycleTime, 0);
+    }
+
     if(EcatError)
-	throw(EcError(EcError::ECAT_ERROR));  
+        throw(EcError(EcError::ECAT_ERROR));
 
     //Create master buffers. Added timestamp space for each slave in input buffer
     outputSize = ec_slave[0].Obytes;
@@ -213,21 +216,17 @@ bool EcMaster::configure() throw(EcError)
     if(!SGDVconnected)
     {
         rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
-        rt_task_set_periodic (task, TM_NOW, m_cycleTime);
         rt_task_start (task, &rt_thread, NULL);
     }
     usleep(200000);
 
-    std::cout<<"Master configured!!!"<<std::endl;
-
-	
+    std::cout<<"Master configured!!!"<<std::endl;	
     return true;
 }
 
 
 bool EcMaster::start() throw(EcError)
 {
-   //
    rt_task_set_priority(&master,0);
    
    if (asprintf(&devnameOutput, "/proc/xenomai/registry/rtipc/xddp/%s", XDDP_PORT_OUTPUT) < 0)
@@ -266,7 +265,6 @@ bool EcMaster::start() throw(EcError)
    //wait to start correctly drivers
    usleep(50000);
 
-
    std::cout<<"Master started!!!"<<std::endl;
 
    return true;
@@ -275,8 +273,7 @@ bool EcMaster::start() throw(EcError)
 /* This function waits the current state from the xddp port */  
 void EcMaster::update_EcSlaves(void) throw(EcError)
 {
-    int ret;
-    
+    int ret;    
     while (!threadFinished) 
     {
 
@@ -289,8 +286,7 @@ void EcMaster::update_EcSlaves(void) throw(EcError)
         }
 
         for(int i = 0; i < m_drivers.size();i++)
-            m_drivers[i] -> update();
-	        
+            m_drivers[i] -> update();	        
     }
 }
    

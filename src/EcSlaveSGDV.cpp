@@ -21,7 +21,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
     rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false),
-    parameterSetting(false), PDOmapping(false)
+    parameterSetting(false), PDOmapping(false), inputShift(500000)
     
 {
    m_params.resize(0);
@@ -133,7 +133,8 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
 }
 
 void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV)
-{
+{   
+    setSGDVObject(0x1C33,0x03,4,&inputShift);
     ec_dcsync0(m_slave_nr, active, sync0Time, sync0Shift);
 }
 

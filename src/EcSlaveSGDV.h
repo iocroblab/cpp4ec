@@ -315,6 +315,8 @@ private:
     
     int outputSize;
     int inputSize;
+    int inputShift;
+
 #ifdef RTNET
     char* pBufferOut;
     char* pBufferIn;
