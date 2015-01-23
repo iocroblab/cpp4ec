@@ -133,20 +133,26 @@ void rt_thread(void *unused)
            //received some data from the buffer
            memcpy (ec_slave[0].outputs, rtoutputbuf , ec_slave[0].Obytes);
        }
+       nRet=ec_receive_processdata(EC_TIMEOUTRET);
+
        nRet=ec_send_processdata();
        if(nRet == 0)
            rt_printf("Send failed");
 
-       nRet=ec_receive_processdata(EC_TIMEOUTRET);
        if(nRet == 0)
            rt_printf("Recieve failed");
 
        dctime = ec_DCtime;
+       //int64 stime;
+       //int a=ec_FPRD (ec_slave[1].configadr, 0x0990, sizeof(stime), &stime, EC_TIMEOUTRET3);
        if(dctime >= lastdctime)
            timestamp = (timestamp & 0xFFFFFFFF00000000) + dctime;
        else
            timestamp = (timestamp & 0xFFFFFFFF00000000) + 0x0100000000 + dctime;
        lastdctime = dctime;
+
+       //if((stime-dctime)>cycletime || (stime-dctime)<-cycletime)
+       //    rt_printf("Sync0 %d DCtime %d \ns",stime,dctime);
 
        int offSet = 0;
        for (i = 1; i <= ec_slavecount; i++)

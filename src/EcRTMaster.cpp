@@ -161,7 +161,7 @@ bool EcMaster::configure() throw(EcError)
 
     if (m_useDC)
     {
-        usleep(2000000);//wait for master to sync on DC
+        usleep(100000);//wait for master to sync on DC
         for (int i = 0; i <  m_drivers.size(); i++)
             m_drivers[i] -> setDC(true, m_cycleTime, 0);
     }
