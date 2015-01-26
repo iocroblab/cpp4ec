@@ -29,7 +29,7 @@ namespace cpp4ec
    RT_TASK *task;
    RT_TASK master;
 
-EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(false),
+EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(true),
       inputSize(0),outputSize(0), threadFinished (false), slaveInformation(false), printSDO(true), printMAP(true),SGDVconnected(false),
       NRTtaskFinished(false)
 {
@@ -163,7 +163,7 @@ bool EcMaster::configure() throw(EcError)
     {
         usleep(100000);//wait for master to sync on DC
         for (int i = 0; i <  m_drivers.size(); i++)
-            m_drivers[i] -> setDC(true, m_cycleTime, 0);
+            m_drivers[i] -> setDC(true, m_cycleTime, 500000);
     }
 
     if(EcatError)

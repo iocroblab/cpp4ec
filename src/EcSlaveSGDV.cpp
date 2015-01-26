@@ -21,7 +21,7 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
     rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false),
-    parameterSetting(false), PDOmapping(false), inputShift(500000)
+    parameterSetting(false), PDOmapping(false), inputShift(0)
     
 {
    m_params.resize(0);
@@ -191,6 +191,18 @@ bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
     //read the desired position of the PDO
     slaveInMutex.lock();
     memcpy (&value, inputBuf + inputObjects[entry].offset, inputObjects[entry].byteSize);
+    slaveInMutex.unlock();
+}
+
+bool EcSlaveSGDV::readActualValue (ActualValue &value)
+{
+    if (!rPositionCapable || !rVelocityCapable ||!rTorqueCapable )
+    throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+    slaveInMutex.lock();
+    memcpy (&(value.position) ,inputBuf + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
+    memcpy (&(value.velocity) ,inputBuf + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
+    memcpy (&(value.torque) ,inputBuf + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
+    memcpy (&(value.timestamp), inputBuf + inputSize - timestampSize, timestampSize);
     slaveInMutex.unlock();
 }
 

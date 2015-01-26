@@ -31,6 +31,14 @@ typedef struct
     std::string type;
 }PDOobject;    
 
+typedef struct
+{
+    int32 position;
+    int32 velocity;
+    int16 torque;
+    int64 timestamp;
+}ActualValue;
+
 namespace cpp4ec
 {
 /**
@@ -194,6 +202,8 @@ public:
     */
     bool readPDO (EcPDOEntry entry, int &value);
     
+    bool readActualValue (ActualValue &value);
+
     /**
     * \brief Write on the Controlword object
     * 

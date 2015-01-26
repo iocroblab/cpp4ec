@@ -35,7 +35,7 @@ void rt_thread(void *unused)
 
    char * rtinputbuf = (char*) malloc(inputSize*(sizeof(char)));
    char * rtoutputbuf = (char*) malloc(outputSize*(sizeof(char)));
-
+//   char * buf = (char*) malloc(inputSize*(sizeof(char)));
    memset(rtoutputbuf,0, outputSize);
    memset(rtinputbuf,0, inputSize);
 
@@ -115,6 +115,8 @@ void rt_thread(void *unused)
     if (ret_in)
         perror("bind");
 
+    int32 pos=0,lastpos=0;
+
     RTIME date= rt_timer_read();
     while(!taskFinished)
     {
@@ -154,6 +156,11 @@ void rt_thread(void *unused)
        //if((stime-dctime)>cycletime || (stime-dctime)<-cycletime)
        //    rt_printf("Sync0 %d DCtime %d \ns",stime,dctime);
 
+ /*      memcpy (&pos, ec_slave[1].inputs + 2 ,4);
+       if((pos - lastpos) == 0)
+           rt_printf("igual buffer timestamp %8i pos %i lastpos %i \n",timestamp,pos,lastpos);
+       lastpos=pos;
+*/
        int offSet = 0;
        for (i = 1; i <= ec_slavecount; i++)
        {
@@ -183,7 +190,7 @@ void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime)
 {
    int64 delta;
    /* set linux sync point 50us later than DC sync, just as example */
-   delta = (reftime - 50000) % cycletime;//before +
+   delta = (reftime - 10000) % cycletime;//before +
    if(delta> (cycletime /2)) { delta= delta - cycletime; }
    if(delta>0){ integral++; }
    if(delta<0){ integral--; }
