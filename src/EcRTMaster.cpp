@@ -81,7 +81,6 @@ bool EcMaster::preconfigure() throw(EcError)
     m_ecPort = new char[size];
     strcpy (m_ecPort, ethPort.c_str());
     task = new RT_TASK;
-
    
    // initialise SOEM, bind socket to ifname
     if (!(ec_init(m_ecPort) > 0))
@@ -92,7 +91,6 @@ bool EcMaster::preconfigure() throw(EcError)
 
     if (!(ec_config_init(FALSE) > 0))
         throw(EcError(EcError::FAIL_EC_CONFIG_INIT));
-
     std::cout << ec_slavecount << " slaves found and configured."<< std::endl;
     std::cout << "Request PRE-OPERATIONAL state for all slaves"<< std::endl;
 
@@ -163,9 +161,8 @@ bool EcMaster::configure() throw(EcError)
     {
         usleep(100000);//wait for master to sync on DC
         for (int i = 0; i <  m_drivers.size(); i++)
-            m_drivers[i] -> setDC(true, m_cycleTime, 500000);
+            m_drivers[i] -> setDC(true, m_cycleTime, 500000);//the sync0 signal is shifted 500ms
     }
-
     if(EcatError)
         throw(EcError(EcError::ECAT_ERROR));
 
@@ -306,8 +303,6 @@ void EcMaster::update(void) throw(EcError)
 
 bool EcMaster::stop() throw(EcError)
 {
-
-
   rt_task_set_priority(&master,20);
 
   //Stops slaves

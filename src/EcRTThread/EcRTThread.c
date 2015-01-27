@@ -15,9 +15,10 @@
 #include <native/timer.h>
 
 #define timestampSize 8
-void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime);
 
+void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime);
 int64 integral = 0;
+
 void rt_thread(void *unused)
 {
    mlockall(MCL_CURRENT | MCL_FUTURE);
@@ -30,12 +31,12 @@ void rt_thread(void *unused)
    int inputSize = 0, outputSize = 0;
    int i;
 
+   //The input buffer have added space for include timestamp (the DCtime is a 64bits clock)
    inputSize = ec_slave[0].Ibytes + ec_slavecount * timestampSize;
    outputSize = ec_slave[0].Obytes;
 
    char * rtinputbuf = (char*) malloc(inputSize*(sizeof(char)));
    char * rtoutputbuf = (char*) malloc(outputSize*(sizeof(char)));
-//   char * buf = (char*) malloc(inputSize*(sizeof(char)));
    memset(rtoutputbuf,0, outputSize);
    memset(rtinputbuf,0, inputSize);
 
@@ -68,9 +69,7 @@ void rt_thread(void *unused)
     strcpy(plabel_out.label, XDDP_PORT_OUTPUT);
     ret_out = rt_dev_setsockopt(s_output, SOL_XDDP, XDDP_LABEL, &plabel_out, sizeof(plabel_out));
     if (ret_out)
-    {
-        //  perror("setsockopt");
-    }
+        perror("setsockopt");
 
     /*
      * Set a port label. This name will be used to find the peer
@@ -94,9 +93,7 @@ void rt_thread(void *unused)
      * passed, the XDDP driver will auto-select an idle port.
      */
 
-    /*
-     * Output socket from NRT to RT
-     */
+    /* Output socket from NRT to RT */
     memset(&saddr_out, 0, sizeof(saddr_out));
     saddr_out.sipc_family = AF_RTIPC;
     saddr_out.sipc_port = -1;
@@ -104,10 +101,8 @@ void rt_thread(void *unused)
     if (ret_out)
       perror("bind");
 
-    /*
-     * Input socket from RT to NRT
-     */
 
+    /*Input socket from RT to NRT*/
     memset(&saddr_in, 0, sizeof(saddr_in));
     saddr_in.sipc_family = AF_RTIPC;
     saddr_in.sipc_port = -1; /* Tell XDDP to search by label. */
@@ -115,52 +110,41 @@ void rt_thread(void *unused)
     if (ret_in)
         perror("bind");
 
-    int32 pos=0,lastpos=0;
-
     RTIME date= rt_timer_read();
     while(!taskFinished)
     {
+       //Calculate next time execution
        date = date + cycletime + toff;
+       //Sleep until time is reached
        rt_task_sleep_until (date);
        date = rt_timer_read();
 
-       /* Get packets relayed by the regular thread */
+       /* Get packets from NRT to RT */
        ret_out = rt_dev_recvfrom(s_output, rtoutputbuf, outputSize, MSG_DONTWAIT, NULL, 0);
        if (ret_out <= 0)
        {
-          //   rt_printf("r_out%i \n",ret_out);
-          // perror("recvfrom");
-          //nothing to do, no new data transferred
+           //perror("recvfrom");//nothing to do, no new data transferred
        }else{
            //received some data from the buffer
            memcpy (ec_slave[0].outputs, rtoutputbuf , ec_slave[0].Obytes);
        }
-       nRet=ec_receive_processdata(EC_TIMEOUTRET);
 
        nRet=ec_send_processdata();
        if(nRet == 0)
            rt_printf("Send failed");
 
+       nRet=ec_receive_processdata(EC_TIMEOUTRET);
        if(nRet == 0)
            rt_printf("Recieve failed");
 
+       //Convert 32 bit clock of Distributed clock to 64 bit
        dctime = ec_DCtime;
-       //int64 stime;
-       //int a=ec_FPRD (ec_slave[1].configadr, 0x0990, sizeof(stime), &stime, EC_TIMEOUTRET3);
        if(dctime >= lastdctime)
            timestamp = (timestamp & 0xFFFFFFFF00000000) + dctime;
        else
            timestamp = (timestamp & 0xFFFFFFFF00000000) + 0x0100000000 + dctime;
        lastdctime = dctime;
 
-       //if((stime-dctime)>cycletime || (stime-dctime)<-cycletime)
-       //    rt_printf("Sync0 %d DCtime %d \ns",stime,dctime);
-
- /*      memcpy (&pos, ec_slave[1].inputs + 2 ,4);
-       if((pos - lastpos) == 0)
-           rt_printf("igual buffer timestamp %8i pos %i lastpos %i \n",timestamp,pos,lastpos);
-       lastpos=pos;
-*/
        int offSet = 0;
        for (i = 1; i <= ec_slavecount; i++)
        {
@@ -169,28 +153,33 @@ void rt_thread(void *unused)
          offSet = offSet + ec_slave[i].Ibytes  + timestampSize;
        }
 
+       //Send packets from RT to NRT
        ret_in = rt_dev_sendto(s_input, rtinputbuf, inputSize, 0, NULL, 0);
        if(ret_in != inputSize)
-       {
-            // perror("sendto");
-       }
+           perror("sendto");
+
+       //Caculate the offset to get the task and Distributed Clock synced
        ec_sync(timestamp,cycletime,&toff);
 
 
     }
+    //Free memory buffer
     free(rtinputbuf);
     free(rtoutputbuf);
+    //Close sockets
     rt_dev_close(s_output);
     rt_dev_close(s_input);
      
 }
 
-/* PI calculation to get linux time synced to DC time */
+/* PI controller calculation to get linux time synced to DC time
+ * The controller and parameters ara obtained from ebox.c example from SOEM repository
+ **/
 void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime)
 {
    int64 delta;
-   /* set linux sync point 50us later than DC sync, just as example */
-   delta = (reftime - 10000) % cycletime;//before +
+   /* set linux sync point 10us later than DC sync */
+   delta = (reftime - 10000) % cycletime;
    if(delta> (cycletime /2)) { delta= delta - cycletime; }
    if(delta>0){ integral++; }
    if(delta<0){ integral--; }
