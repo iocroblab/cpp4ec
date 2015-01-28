@@ -174,6 +174,7 @@ private:
     char * m_ecPort;
     char m_IOmap[4096];
     unsigned long m_cycleTime;	//the periodicity of ethercatLoop ("PDOs period")
+    int sync0Shift;
     bool m_useDC;
     std::vector<EcSlave*> m_drivers;
     char * inputBuf;

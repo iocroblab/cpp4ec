@@ -178,8 +178,8 @@ void rt_thread(void *unused)
 void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime)
 {
    int64 delta;
-   /* set linux sync point 10us later than DC sync */
-   delta = (reftime - 10000) % cycletime;
+   /* set linux sync point 50us before than DC sync, Named Master user shift time in documentation */
+   delta = (reftime + 50000) % cycletime;
    if(delta> (cycletime /2)) { delta= delta - cycletime; }
    if(delta>0){ integral++; }
    if(delta<0){ integral--; }
