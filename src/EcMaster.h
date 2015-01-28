@@ -59,7 +59,6 @@ public:
      * \param ecPort ethercat port
      * \param cycleTime The period of the thread that sends PDO.
      * \param useDC if true the slaves use DC synchronization.
-     * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information.
      *    
      */
     EcMaster(std::string ecPort, unsigned long cycleTime = 1000000, bool useDC = false);
@@ -176,7 +175,7 @@ private:
      * This block contains the private attributes and methods
      */
     
-     //Master variables
+    //Master variables
     std::string ethPort;
     char * m_ecPort;
     char m_IOmap[4096];
@@ -188,7 +187,6 @@ private:
     char * outputBuf;
     int inputSize, outputSize;
     bool SGDVconnected;
-
     
     //ethercat switchState function
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached

@@ -32,9 +32,11 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
    
    bool xml = readXML();
 
+   //When there are no parameterSetting structure in the xml the default parameters are loaded
    if(!xml | !parameterSetting)
        loadParameters();
-   
+
+   //When there are no PDOmapping structure in the xml the default PDO is loaded
    if(!xml | !PDOmapping)
        loadDefaultPDO();
 
@@ -51,6 +53,7 @@ void EcSlaveSGDV::update()
     memcpy(inputBuf,pBufferIn, inputSize);
     slaveInMutex.unlock();
 
+
     int64_t time;
     uint16_t statusWord =0;
     int32_t position = 0;
@@ -58,14 +61,14 @@ void EcSlaveSGDV::update()
     int16_t torque = 0;
     readTimestamp(time);
     if(rStatusWordCapable)
-	readStatusWord(statusWord);
+        readStatusWord(statusWord);
     if(rPositionCapable)
-	readPosition (position);
+        readPosition (position);
     if(rVelocityCapable)
-	readVelocity (velocity);
+        readVelocity (velocity);
     if(rTorqueCapable)
-	readTorque (torque);
-    //After reading the important slave information a signal is sended with that
+        readTorque (torque);
+    //After reading the important slave information a signal is sent
     slaveValues(m_slave_nr,statusWord,position,velocity,torque,time);    
 }
 
@@ -134,6 +137,7 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
 
 void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0Shift) throw(EcErrorSGDV)
 {   
+    //Configure Sync0 event and input Shift respect this event
     setSGDVObject(0x1C33,0x03,4,&inputShift);
     ec_dcsync0(m_slave_nr, active, sync0Time, sync0Shift);
 }
@@ -175,8 +179,9 @@ bool EcSlaveSGDV::readTimestamp (int64 &time)
 
 bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 {
+    //If the PDO have less entries from the specified one (entry) an error is throwed
     if(entry < 0 || entry >= outputObjects.size())
-	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
     
     //write on the desired position of the PDO
     slaveOutMutex.lock();
@@ -187,17 +192,22 @@ bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
 bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
 {
     if(entry<0 || entry>=inputObjects.size())
-	throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
     //read the desired position of the PDO
     slaveInMutex.lock();
     memcpy (&value, inputBuf + inputObjects[entry].offset, inputObjects[entry].byteSize);
     slaveInMutex.unlock();
 }
 
+/*
+ * The position of the specific parameters is obtained using the xml
+ * or the know default loaded parameters.
+ * */
 bool EcSlaveSGDV::readActualValue (ActualValue &value)
 {
+    //If the PDO doesn't have mapped one of the essential parameters, an error is throwed
     if (!rPositionCapable || !rVelocityCapable ||!rTorqueCapable )
-    throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveInMutex.lock();
     memcpy (&(value.position) ,inputBuf + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
     memcpy (&(value.velocity) ,inputBuf + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
@@ -209,7 +219,7 @@ bool EcSlaveSGDV::readActualValue (ActualValue &value)
 bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
 {
     if (!wControlWordCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
     slaveOutMutex.unlock();
@@ -219,7 +229,7 @@ bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
 bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
 {
     if (!rStatusWordCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveInMutex.lock();
     memcpy (&statusWord ,inputBuf + inputObjects[statusWordEntry].offset, inputObjects[statusWordEntry].byteSize);
     slaveInMutex.unlock();    
@@ -228,7 +238,7 @@ bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
 bool EcSlaveSGDV::writePosition (int32_t position)
 {
     if (!wPositionCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
     slaveOutMutex.unlock();
@@ -238,7 +248,7 @@ bool EcSlaveSGDV::writePosition (int32_t position)
 bool EcSlaveSGDV::readPosition (int32_t &position)
 {
     if (!rPositionCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveInMutex.lock();
     memcpy (&position ,inputBuf + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
     slaveInMutex.unlock();
@@ -247,7 +257,7 @@ bool EcSlaveSGDV::readPosition (int32_t &position)
 bool EcSlaveSGDV::writeVelocity (int32_t velocity)
 {
     if (!wVelocityCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
     slaveOutMutex.unlock();
@@ -256,15 +266,16 @@ bool EcSlaveSGDV::writeVelocity (int32_t velocity)
 bool EcSlaveSGDV::readVelocity (int32_t &velocity)
 {
     if (!rVelocityCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveInMutex.lock();
     memcpy (&velocity ,inputBuf + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
     slaveInMutex.unlock();
 }
+
 bool EcSlaveSGDV::writeTorque (int16_t torque)
 {
     if (!wTorqueCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetTorqueEntry].offset, &torque ,outputObjects[targetTorqueEntry].byteSize);
     slaveOutMutex.unlock();
@@ -273,7 +284,7 @@ bool EcSlaveSGDV::writeTorque (int16_t torque)
 bool EcSlaveSGDV::readTorque (int16_t &torque)
 {
     if (!rTorqueCapable)
-	throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+        throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
     slaveInMutex.lock();
     memcpy (&torque ,inputBuf + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
     slaveInMutex.unlock();
@@ -294,88 +305,83 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
       std::string typeName = type.name();
       if( typeName == "parameterSetting")
       {
-	  parameterSetting = true;
-	  for(pugi::xml_node parameter = type.first_child(); parameter; parameter = parameter.next_sibling())
-	  {
-	      for(pugi::xml_node param = parameter.first_child(); param; param = param.next_sibling())
-	      {
-	      
-		  std::string name = param.name();
-		  if (name ==  "description")
-		  {
-		      temp.description = param.child_value();
-		  }else if (name ==  "name")
-		  {
-		      temp.name = param.child_value();
-		  }
-		  else if (name == "index")
-		  {
-			temp.index = (int16_t) strtol (param.child_value(),NULL,0);          
-		  }
-		  else if (name ==  "subindex")
-		  {
-		      temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
-		  }
-		  else if (name ==  "size")
-		  {
-		      temp.size = (int8_t) strtol (param.child_value(),NULL,0);
-		  }
-		  else if (name ==  "value")
-		  {
-		      temp.param = strtol (param.child_value(),NULL,0);
-		  }else{
-		      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
-		  }
-	      }
-	      m_params.push_back(temp);
-      }
+          parameterSetting = true;
+          for(pugi::xml_node parameter = type.first_child(); parameter; parameter = parameter.next_sibling())
+          {
+              for(pugi::xml_node param = parameter.first_child(); param; param = param.next_sibling())
+              {
+
+                  std::string name = param.name();
+                  if (name ==  "description")
+                  {
+                      temp.description = param.child_value();
+                  }else if (name ==  "name")
+                  {
+                      temp.name = param.child_value();
+                  }
+                  else if (name == "index")
+                  {
+                    temp.index = (int16_t) strtol (param.child_value(),NULL,0);
+                  }
+                  else if (name ==  "subindex")
+                  {
+                      temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
+                  }
+                  else if (name ==  "size")
+                  {
+                      temp.size = (int8_t) strtol (param.child_value(),NULL,0);
+                  }
+                  else if (name ==  "value")
+                  {
+                      temp.param = strtol (param.child_value(),NULL,0);
+                  }else{
+                      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
+                  }
+              }
+              m_params.push_back(temp);
+          }
       }else if(typeName == "PDOmapping")
       {
-	  PDOmapping = true;
-	  for(pugi::xml_node parameter = type.first_child(); parameter; parameter = parameter.next_sibling())
-	  {
-	      for(pugi::xml_node param = parameter.first_child(); param; param = param.next_sibling())
-	      {
-		  std::string name = param.name();
-		  if (name ==  "description")
-		  {
-		      temp.description = param.child_value();
-		  }else if (name ==  "name")
-		  {
-		      temp.name = param.child_value();
-		  }
-		  else if (name == "index")
-		  {
-			temp.index = (int16_t) strtol (param.child_value(),NULL,0);          
-		  }
-		  else if (name ==  "subindex")
-		  {
-		      temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
-		  }
-		  else if (name ==  "size")
-		  {
-		      temp.size = (int8_t) strtol (param.child_value(),NULL,0);
-		  }
-		  else if (name ==  "value")
-		  {
+          PDOmapping = true;
+          for(pugi::xml_node parameter = type.first_child(); parameter; parameter = parameter.next_sibling())
+          {
+              for(pugi::xml_node param = parameter.first_child(); param; param = param.next_sibling())
+              {
+                  std::string name = param.name();
+                  if (name ==  "description")
+                  {
+                      temp.description = param.child_value();
+                  }else if (name ==  "name")
+                  {
+                      temp.name = param.child_value();
+                  }
+                  else if (name == "index")
+                  {
+                    temp.index = (int16_t) strtol (param.child_value(),NULL,0);
+                  }
+                  else if (name ==  "subindex")
+                  {
+                      temp.subindex = (int8_t) strtol (param.child_value(),NULL,0);
+                  }
+                  else if (name ==  "size")
+                  {
+                      temp.size = (int8_t) strtol (param.child_value(),NULL,0);
+                  }
+                  else if (name ==  "value")
+                  {
                       temp.param = strtol (param.child_value(),NULL,0);
-		  }else{
-		      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
-		  }
-	      }
-	      m_params.push_back(temp);
-      }
+                  }else{
+                      throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
+                  }
+              }
+              m_params.push_back(temp);
+          }
 
       }else{
 	  throw(EcErrorSGDV(EcErrorSGDV::XML_STRUCTURE_ERROR,m_slave_nr,getName()));
-      }
-      
-  }
-  
+      }      
+  }  
   return true;
-  
-
-
 }
 
 bool EcSlaveSGDV::enableSpecificFunctions ()
@@ -392,26 +398,21 @@ bool EcSlaveSGDV::enableSpecificFunctions ()
             case STATUS_WORD:
             statusWordEntry = i;
             rStatusWordCapable = true;
-            //std::cout<<"STATUS_WORD "<<i<<std::endl;
-
             break;
 
             case ACTUAL_POSITION:
             actualPositionEntry = i;
             rPositionCapable = true;
-            //std::cout<<"ACTUAL_POSITION "<<i<<std::endl;
             break;
 
             case ACTUAL_VELOCITY:
             actualVelocityEntry = i;
             rVelocityCapable = true;
-            //std::cout<<"ACTUAL_VELOCITY "<<i<<std::endl;
             break;
 
             case ACTUAL_TORQUE:
             actualTorqueEntry = i;
             rTorqueCapable = true;
-            //std::cout<<"ACTUAL_TORQUE "<<i<<std::endl;
             break;
 
             default:
@@ -426,29 +427,21 @@ bool EcSlaveSGDV::enableSpecificFunctions ()
             case CONTROL_WORD:
             controlWordEntry = i;
             wControlWordCapable = true;
-            //std::cout<<"CONTROL_WORD "<<i<<std::endl;
-
             break;
 
             case TARGET_POSITION:
             targetPositionEntry = i;
             wPositionCapable = true;
-            //std::cout<<"TARGET_POSITION "<<i<<std::endl;
-
             break;
 
             case TARGET_VELOCITY:
             targetVelocityEntry = i;
             wVelocityCapable = true;
-            //std::cout<<"TARGET_VELOCITY "<<i<<std::endl;
-
             break;
 
             case TARGET_TORQUE:
             targetTorqueEntry = i;
             wTorqueCapable = true;
-            //std::cout<<"TARGET_TORQUE "<<i<<std::endl;
-
             break;
 
             default:
@@ -456,9 +449,7 @@ bool EcSlaveSGDV::enableSpecificFunctions ()
 
         }
     }
-
-    return true;
-	
+    return true;	
 }
 
 void EcSlaveSGDV::loadDefaultPDO()

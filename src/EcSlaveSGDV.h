@@ -16,10 +16,8 @@ extern "C"
 #include <soem/ethercatprint.h>
 }
 
-//#include <boost/signals2/signal.hpp>
 #include <vector>
 #include <mutex> 
-
 
 typedef struct
 {
@@ -138,7 +136,7 @@ public:
     /**
      * \brief Start motors
      * 
-     * Switch on the motors.
+     * Switch on motors.
      * \return A vector with the secuence of buffer outputs that has to be sent to stop the servos
      * 
      */
@@ -201,7 +199,14 @@ public:
     * 
     */
     bool readPDO (EcPDOEntry entry, int &value);
-    
+
+    /**
+    * \brief read Actual values structure
+    *
+    * This function read the important or essential parameter togheter and put it in actualValue structure
+    * \param ActualValue Contain position,velocity,torque and timestamp.
+    *
+    */
     bool readActualValue (ActualValue &value);
 
     /**
@@ -284,6 +289,7 @@ public:
     * 
     */
     bool readTimestamp (int64& time);
+
     /**
     * \brief Set an SGDV object
     * 
@@ -305,8 +311,7 @@ public:
     * \param psize the size of the param buffer.
     * \param param a pointer to the buffer with the returned value.
     */
-    void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param); 
-    
+    void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);     
     
      /**
     * \brief A signal to emit information
@@ -316,10 +321,6 @@ public:
     * 
     */
     boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t, int64_t)> slaveValues;
-    
-   
-
-
 
 private:
     
@@ -341,7 +342,6 @@ private:
     void loadDefaultPDO();
     void loadParameters();
     void si_PDOassign(uint16 slave, uint16 PDOassign);
-
     
     int controlWordEntry;
     int targetPositionEntry;
@@ -380,7 +380,6 @@ private:
 	TARGET_VELOCITY 	= 0x60FF,
 	TARGET_TORQUE 		= 0x6071,
     }EcRecieveObjects;
-
 
     typedef enum
     {
