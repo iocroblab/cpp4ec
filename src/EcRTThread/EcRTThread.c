@@ -19,14 +19,15 @@
 void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime);
 int64 integral = 0;
 
-void rt_thread(void *unused)
+void rt_thread(void *argument)
 {
    mlockall(MCL_CURRENT | MCL_FUTURE);
+   int cycletime = *((int64*)argument);
 
    struct rtipc_port_label plabel_in, plabel_out;
    struct sockaddr_ipc saddr_in, saddr_out;
 
-   int64 timestamp=0, lastdctime=0, dctime=0,toff = 0, cycletime = 1000000;
+   int64 timestamp=0, lastdctime=0, dctime=0,toff = 0;
    int ret_in, ret_out, s_input, s_output, nRet;
    int inputSize = 0, outputSize = 0;
    int i;

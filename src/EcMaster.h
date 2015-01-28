@@ -62,7 +62,7 @@ public:
      * \param slaveInfo if true prints on EtherCATsoemInfo.txt the slave information.
      *    
      */
-    EcMaster(std::string ecPort, unsigned long cycleTime = 1000000, bool useDC = false, bool slaveInfo = false);
+    EcMaster(std::string ecPort, unsigned long cycleTime = 1000000, bool useDC = false);
 
     /**
      *  \brief Destructor
@@ -89,6 +89,13 @@ public:
      * \param useDC if true the slaves use DC synchronization.
      */
     void setDC( bool useDC) {m_useDC = useDC;}
+
+    /**
+     * \brief Set Sync0 Shift
+     *
+     * \param Shift
+     */
+    void setSync0Shift( int Shift) {sync0Shift = Shift;}
 
     /**
      * \brief Set slave information

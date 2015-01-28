@@ -29,7 +29,7 @@ namespace cpp4ec
    RT_TASK *task;
    RT_TASK master;
 
-EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(true),sync0Shift(250000),
+EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(false),sync0Shift(250000),
       inputSize(0),outputSize(0), threadFinished (false), slaveInformation(false), printSDO(true), printMAP(true),SGDVconnected(false),
       NRTtaskFinished(false)
 {
@@ -49,9 +49,9 @@ EcMaster::EcMaster() : ethPort ("rteth0"), m_cycleTime(1000000), m_useDC(true),s
 
 }
 
-EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC, bool slaveInfo) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
-       inputSize(0),outputSize(0), threadFinished (false), slaveInformation(slaveInfo), printSDO(true), printMAP(true),SGDVconnected(false),
-       NRTtaskFinished(false)
+EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC) : ethPort (ecPort), m_cycleTime(cycleTime), m_useDC(useDC),
+       inputSize(0),outputSize(0), threadFinished (false), slaveInformation(false), printSDO(true), printMAP(true),SGDVconnected(false),
+       NRTtaskFinished(false),sync0Shift(250000)
 {
    //reset del iomap memory
    for (size_t i = 0; i < 4096; i++)
@@ -151,10 +151,11 @@ bool EcMaster::configure() throw(EcError)
      * just after of activating the distributed clocks
      */
     taskFinished = false;
+    void* period = &m_cycleTime;
     if(SGDVconnected)
     {
         rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
-        rt_task_start (task, &rt_thread, NULL);
+        rt_task_start (task, &rt_thread, period);
     }
 
     if (m_useDC)
@@ -213,7 +214,7 @@ bool EcMaster::configure() throw(EcError)
     if(!SGDVconnected)
     {
         rt_task_create (task, "PDO rt_task", 8192, 99, T_JOINABLE);
-        rt_task_start (task, &rt_thread, NULL);
+        rt_task_start (task, &rt_thread, period);
     }
     usleep(200000);
 

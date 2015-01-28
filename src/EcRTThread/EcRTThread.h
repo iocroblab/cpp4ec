@@ -14,7 +14,7 @@
 #define XDDP_PORT_OUTPUT "EcMaster-xddp-output"
 
 int taskFinished;
-void rt_thread(void *unused);
+void rt_thread(void *argument);
 
 
 
