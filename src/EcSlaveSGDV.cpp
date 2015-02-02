@@ -51,25 +51,17 @@ void EcSlaveSGDV::update()
     //Copy the slave data from the master buffer to slave buffer
     slaveInMutex.lock();
     memcpy(inputBuf,pBufferIn, inputSize);
-    slaveInMutex.unlock();
+    slaveInMutex.unlock();    
 
+    ActualValue value;
+    readActualValue(value);
 
-    int64_t time;
     uint16_t statusWord =0;
-    int32_t position = 0;
-    int32_t velocity = 0;
-    int16_t torque = 0;
-    readTimestamp(time);
     if(rStatusWordCapable)
         readStatusWord(statusWord);
-    if(rPositionCapable)
-        readPosition (position);
-    if(rVelocityCapable)
-        readVelocity (velocity);
-    if(rTorqueCapable)
-        readTorque (torque);
+
     //After reading the important slave information a signal is sent
-    slaveValues(m_slave_nr,statusWord,position,velocity,torque,time);    
+    slaveValues(m_slave_nr,statusWord,value.position,value.velocity,value.torque,value.timestamp);
 }
 
 const std::string& EcSlaveSGDV::getName() const
