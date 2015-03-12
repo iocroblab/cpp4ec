@@ -1,0 +1,238 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <!--  Set the parameters by SDO -->
+  <parameterSetting>
+    <parameter>
+      <description>Modes of operation </description>
+      <name>OpMode</name>
+      <index> 0x6060 </index>
+      <subindex> 0 </subindex>
+      <size> 1 </size>
+      <value> 1 </value>  
+    </parameter>  
+    <parameter>
+      <description>Max. Profile velocity [mdeg/s] </description>
+      <name> MaxVel</name>
+      <index> 0x607F </index>
+      <subindex> 0 </subindex>
+      <size> 4 </size>
+      <value> 150000 </value>  
+    </parameter>  
+    <parameter>
+      <description>Profile acceleration [mdeg/s2] </description>
+      <name>Pacc</name>
+      <index> 0x6083 </index>
+      <subindex> 0 </subindex>
+      <size> 4 </size>
+      <value> 150 </value>  
+    </parameter>  
+    <parameter>
+      <description>Profile deceleration [mdeg/s2] </description>
+      <name>Pdec</name>    
+      <index> 0x6084 </index>
+      <subindex> 0 </subindex>
+      <size> 4 </size>
+      <value> 150 </value>
+    </parameter>   
+    <parameter>
+      <description>Profile velocity [mdeg/s]</description>
+      <name> Pvel</name>
+      <index> 0x6081 </index>
+      <subindex> 0 </subindex>
+      <size> 4 </size>
+      <value> 150000 </value>  
+    </parameter>  
+    <parameter>
+      <description>Max Torque[0.1%]</description>
+      <name>MaxTorq</name>
+      <index> 0x6072 </index>
+      <subindex> 0 </subindex>
+      <size> 2 </size>
+      <value> 1000 </value>  
+    </parameter>  
+    <parameter>
+      <description>Slope Torque[0.1%]</description>
+      <name> SlopeTorq</name>
+      <index> 0x6087 </index>
+      <subindex> 0 </subindex>
+      <size> 4 </size>
+      <value> 100 </value>
+    </parameter>
+  </parameterSetting>
+  <!--  PDO Mapping-->
+  <PDOmapping>
+    <!--  1.Disable the assignment of the Sync manager and PDO   -->
+    <parameter>
+      <description>Disable</description>
+      <name>Sync Manager PDO Assignment </name>
+      <index> 0x1C12 </index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value> 0 </value>
+    </parameter> 
+    <parameter>
+      <description>Disable</description>
+      <name>Sync Manager PDO Assignment</name>
+      <index> 0x1C13 </index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value> 0 </value>
+    </parameter>  
+    <!--  2.Set all the mapping entry in PDO mapping objects-->
+    <parameter>
+      <description>Receive PDO Mapping</description>
+      <name>Number of objects</name>
+      <index> 0x1600</index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value> 0 </value>
+    </parameter>
+    <parameter>
+      <description>Receive PDO Mapping</description>
+      <name>Control Word</name>
+      <index> 0x1600</index>
+      <subindex> 0x01 </subindex>
+      <size> 4 </size>
+      <value> 0x60400010 </value>
+    </parameter>
+    <parameter>
+      <description>Receive PDO Mapping</description>
+      <name>Target Position</name>
+      <index> 0x1600</index>
+      <subindex> 0x02 </subindex>
+      <size> 4 </size>
+      <value> 0x607A0020 </value>
+    </parameter>
+    <parameter>
+      <description>Receive PDO Mapping</description>
+      <name>Target Velovity</name>
+      <index> 0x1600</index>
+      <subindex> 0x03 </subindex>
+      <size> 4 </size>
+      <value> 0x60FF0020 </value>
+    </parameter>
+    <parameter>
+      <description>Receive PDO Mapping</description>
+      <name>Target Torque</name>
+      <index> 0x1600</index>
+      <subindex> 0x04 </subindex>
+      <size> 4 </size>
+      <value>0x60710010</value>
+    </parameter>
+    <parameter>
+      <description>Receive PDO Mapping</description>
+      <name>Mode of Operation</name>
+      <index> 0x1600</index>
+      <subindex> 0x05 </subindex>
+      <size> 4 </size>
+      <value>0x60600008</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Number of objects</name>
+      <index> 0x1A00</index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value >0</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Status Word</name>
+      <index> 0x1A00</index>
+      <subindex> 0x01 </subindex>
+      <size> 4 </size>
+      <value>0x60410010</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Position Actual Value</name>
+      <index> 0x1A00</index>
+      <subindex> 0x02 </subindex>
+      <size> 4 </size>
+      <value>0x60640020</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Velocity Actual Value</name>
+      <index> 0x1A00</index>
+      <subindex> 0x03 </subindex>
+      <size> 4 </size>
+      <value>0x606C0020</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Torque Actual Value</name>
+      <index> 0x1A00</index>
+      <subindex> 0x04 </subindex>
+      <size> 4 </size>
+      <value>0x60770010</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Error Code</name>
+      <index> 0x1A00</index>
+      <subindex> 0x05 </subindex>
+      <size> 4 </size>
+      <value>0x603F0010</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Mode of Operation Display</name>
+      <index> 0x1A00</index>
+      <subindex> 0x06 </subindex>
+      <size> 4 </size>
+      <value>0x60610008</value>
+    </parameter>
+    <!--  3.Set the number of mapping entries in PDO mapping objects-->
+    <parameter>
+      <description>Recieve PDO Mapping</description>
+      <name>Number of objects</name>
+      <index> 0x1600</index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value>5</value>
+    </parameter>
+    <parameter>
+      <description>Transmit PDO Mapping</description>
+      <name>Number of objects</name>
+      <index> 0x1A00</index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value>6</value>
+    </parameter>
+    <!--  4.Set the assignment of the Sync manager and PDO-->
+    <parameter>
+      <description>Assing</description>
+      <name>Sync Manager PDO Assignment</name>
+      <index> 0x1C12</index>
+      <subindex> 0x01 </subindex>
+      <size> 2 </size>
+      <value>0x1600</value>
+    </parameter>
+    <parameter>
+      <description>Assing</description>
+      <name>Sync Manager PDO Assignment</name>
+      <index> 0x1C13</index>
+      <subindex> 0x01 </subindex>
+      <size> 2 </size>
+      <value>0x1A00</value>
+    </parameter>
+    <!--  5.Enable the assignment of the Sync manager and PDO.-->
+    <parameter>
+      <description>Enable</description>
+      <name>Sync Manager PDO Assignment</name>
+      <index> 0x1C12</index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value>1</value>
+    </parameter>
+    <parameter>
+      <description>Enable</description>
+      <name>Sync Manager PDO Assignment</name>
+      <index> 0x1C13</index>
+      <subindex> 0x00 </subindex>
+      <size> 1 </size>
+      <value>1</value>
+    </parameter>
+  </PDOmapping>
+</configuration>
