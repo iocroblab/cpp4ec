@@ -78,30 +78,30 @@ bool EcMaster::preconfigure() throw(EcError)
     if (!(ec_init(m_ecPort) > 0))
         throw(EcError(EcError::FAIL_EC_INIT));
     
-    rt_printf("ec_init on %s succeeded.",m_ecPort);
+    rt_printf("ec_init on %s succeeded. \n",m_ecPort);
 
 
     if (!(ec_config_init(FALSE) > 0))
         throw(EcError(EcError::FAIL_EC_CONFIG_INIT));
-    rt_printf("%d slaves found and configured.",ec_slavecount);
-    rt_printf("Request PRE-OPERATIONAL state for all slaves");
+    rt_printf("%d slaves found and configured. \n",ec_slavecount);
+    rt_printf("Request PRE-OPERATIONAL state for all slaves \n");
 
     success = switchState (EC_STATE_PRE_OP);
     if (!success)
         throw( EcError (EcError::FAIL_SWITCHING_STATE_PRE_OP));
     
-    rt_printf("PRE-OPERATIONAL state reached");
+    rt_printf("PRE-OPERATIONAL state reached \n");
     for (int i = 1; i <= ec_slavecount; i++)
     {
         EcSlave* driver = EcSlaveFactory::Instance().createDriver(&ec_slave[i]);
         if (!driver)
         {
-            rt_printf("Error: Failed creating driver");
+            rt_printf("Error: Failed creating driver \n");
             throw(EcError(EcError::FAIL_CREATING_DRIVER));
         }
 
         m_drivers.push_back(driver);
-        rt_printf("Created driver for %s, with address %d", ec_slave[i].name, ec_slave[i].configadr);
+        rt_printf("Created driver for %s, with address %d \n", ec_slave[i].name, ec_slave[i].configadr);
     }
 
     //The SGDV slave works different from the standard soem sequence
@@ -114,7 +114,7 @@ bool EcMaster::preconfigure() throw(EcError)
             SGDVconnected = true;
     }
 
-    rt_printf("Master preconfigured!!!");
+    rt_printf("Master preconfigured!!! \n");
 
 }
 
@@ -152,22 +152,22 @@ bool EcMaster::configure() throw(EcError)
     if(EcatError)
         throw(EcError(EcError::ECAT_ERROR));
 
-    rt_printf("Request SAFE-OPERATIONAL state for all slaves");
+    rt_printf("Request SAFE-OPERATIONAL state for all slaves \n");
     success = switchState (EC_STATE_SAFE_OP);
     if (!success)
         throw(EcError(EcError::FAIL_SWITCHING_STATE_SAFE_OP));
     
-    rt_printf("SAFE-OPERATIONAL state reached");
+    rt_printf("SAFE-OPERATIONAL state reached \n");
     
     if(EcatError)
         throw(EcError(EcError::ECAT_ERROR));
 
 
-    rt_printf("Request OPERATIONAL state for all slaves");
+    rt_printf("Request OPERATIONAL state for all slaves \n");
     success = switchState(EC_STATE_OPERATIONAL);
     if (!success)
 	    throw(EcError(EcError::FAIL_SWITCHING_STATE_OPERATIONAL));
-    std::cout << "OPERATIONAL state reached" << std::endl;
+    rt_printf("OPERATIONAL state reached \n" );
 
     //Starts the cyclic task (PDOs task) if no SGDV slaves connected.
     if(!SGDVconnected)
@@ -177,7 +177,7 @@ bool EcMaster::configure() throw(EcError)
     }
     usleep(200000);
 
-    rt_printf("Master configured!!!");
+    rt_printf("Master configured!!! \n");
     return true;
 }
 
@@ -190,7 +190,7 @@ bool EcMaster::start() throw(EcError)
    //wait to start correctly drivers
    usleep(50000);
 
-   rt_printf("Master started!!!");
+   rt_printf("Master started!!! \n");
 
    return true;
 }
@@ -207,7 +207,7 @@ bool EcMaster::stop() throw(EcError)
   for (int i = 0 ; i < m_drivers.size() ; i++)
       m_drivers[i] ->  stop();
 
-  rt_printf("Master stoped!");
+  rt_printf("Master stoped!!! \n");
   return true;
 }
 
@@ -240,7 +240,7 @@ bool EcMaster::reset() throw(EcError)
       m_IOmap[i] = 0;
 
    ec_close();   
-   std::cout<<"Master reseted!"<<std::endl;
+   rt_printf("Master reseted!!! \n");
 
    return true;
 }

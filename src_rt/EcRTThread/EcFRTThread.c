@@ -19,12 +19,15 @@
 void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime);
 int64 integral = 0;
 
+extern int64 timestamp;
+int64 timestamp=0;
+
 void rt_thread(void *argument)
 {
    RT_MUTEX mutex;
    int cycletime = *((int64*)argument);
 
-   int64 timestamp=0, lastdctime=0, dctime=0,toff = 0;
+   int64 lastdctime=0, dctime=0,toff = 0;
    int nRet;
    rt_mutex_create (&mutex, "master_mutex");
    RTIME date= rt_timer_read();

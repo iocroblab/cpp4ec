@@ -322,7 +322,8 @@ private:
     int inputShift;
     uint8* pBufferOut;
     uint8* pBufferIn;
-    
+    int64 inputTimestamp;
+
     bool readXML() throw(EcErrorSGDV);
     bool enableSpecificFunctions();
     void loadDefaultPDO();
