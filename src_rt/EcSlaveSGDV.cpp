@@ -13,6 +13,7 @@ extern int64 timestamp;
 
 namespace cpp4ec
 {
+RT_MUTEX mutex;
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
@@ -116,7 +117,7 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 bool EcSlaveSGDV::readTimestamp (int64 &time)
 {
     rt_mutex_acquire (&mutex,TM_INFINITE);
-    inputTimestamp = timestamp;
+    time = timestamp;
     rt_mutex_release (&mutex);
 }    
 
@@ -240,8 +241,13 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
   pugi::xml_document doc;
   pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
   if (!result)
-    return false;  
-  
+  {
+      xml_name = "/home/sergi.ruiz/configuration/configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
+      result = doc.load_file(xml_name.c_str());
+      if (!result)
+         return false;
+  }
+                                
   pugi::xml_node configuration = doc.first_child();
   for (pugi::xml_node type = configuration.first_child(); type; type = type.next_sibling())
   {

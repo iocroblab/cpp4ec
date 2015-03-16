@@ -289,8 +289,13 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
   pugi::xml_document doc;
   pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
   if (!result)
-    return false;  
-  
+  {
+      xml_name = "/home/sergi.ruiz/configuration/configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
+      result = doc.load_file(xml_name.c_str());
+      if (!result)
+          return false;
+  }
+                         
   pugi::xml_node configuration = doc.first_child();
   for (pugi::xml_node type = configuration.first_child(); type; type = type.next_sibling())
   {

@@ -322,7 +322,6 @@ private:
     int inputShift;
     uint8* pBufferOut;
     uint8* pBufferIn;
-    int64 inputTimestamp;
 
     bool readXML() throw(EcErrorSGDV);
     bool enableSpecificFunctions();
@@ -350,8 +349,6 @@ private:
     bool parameterSetting;
     bool PDOmapping;
     
-
-    RT_MUTEX mutex;
     std::vector <CoEparameter> m_params;
     std::vector <PDOobject> inputObjects;
     std::vector <PDOobject> outputObjects;
