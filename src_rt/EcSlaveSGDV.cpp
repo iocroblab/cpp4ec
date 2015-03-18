@@ -9,7 +9,7 @@
 
 #define timestampSize 8
 
-extern int64 timestamp;
+extern int64 EcTimeStamp;
 
 namespace cpp4ec
 {
@@ -117,7 +117,7 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 bool EcSlaveSGDV::readTimestamp (int64 &time)
 {
     rt_mutex_acquire (&mutex,TM_INFINITE);
-    time = timestamp;
+    time = EcTimeStamp;
     rt_mutex_release (&mutex);
 }    
 
@@ -156,7 +156,7 @@ bool EcSlaveSGDV::readActualValue (ActualValue &value)
     memcpy (&(value.position) ,m_datap -> inputs + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
     memcpy (&(value.velocity) ,m_datap -> inputs + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
     memcpy (&(value.torque) ,m_datap -> inputs + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
-    value.timestamp= timestamp;
+    value.timestamp= EcTimeStamp;
     rt_mutex_release (&mutex);
 }
 

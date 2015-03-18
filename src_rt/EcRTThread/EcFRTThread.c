@@ -19,8 +19,8 @@
 void ec_sync(int64 reftime, int64 cycletime , int64 *offsettime);
 int64 integral = 0;
 
-extern int64 timestamp;
-int64 timestamp=0;
+extern int64 EcTimeStamp;
+int64 EcTimeStamp=0;
 
 void rt_thread(void *argument)
 {
@@ -51,14 +51,14 @@ void rt_thread(void *argument)
        //Convert 32 bit clock of Distributed clock to 64 bit
        dctime = ec_DCtime;
        if(dctime >= lastdctime)
-           timestamp = (timestamp & 0xFFFFFFFF00000000) + dctime;
+           EcTimeStamp = (EcTimeStamp & 0xFFFFFFFF00000000) + dctime;
        else
-           timestamp = (timestamp & 0xFFFFFFFF00000000) + 0x0100000000 + dctime;
+           EcTimeStamp = (EcTimeStamp & 0xFFFFFFFF00000000) + 0x0100000000 + dctime;
        lastdctime = dctime;
        rt_mutex_release (&mutex);
 
        //Caculate the offset to get the task and Distributed Clock synced
-       ec_sync(timestamp,cycletime,&toff);
+       ec_sync(EcTimeStamp,cycletime,&toff);
    }
    rt_mutex_delete (&mutex);
 }
