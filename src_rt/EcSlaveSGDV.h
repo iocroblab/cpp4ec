@@ -311,8 +311,18 @@ public:
     * \param psize the size of the param buffer.
     * \param param a pointer to the buffer with the returned value.
     */
-    void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);     
-    
+    void getSGDVObject(uint16_t index, uint8_t subindex, int *psize, void *param);
+
+
+    /**
+   * \brief A signal to emit information
+   *
+   * Is a function designed to send the important data of the slave. Whatever component that is conected to this signal
+   * can recieve the slavenumber, statusWord, Position, Velocity, Torque and timestamp of each slave.
+   *
+   */
+   boost::signals2::signal<void (int, uint16_t, int32_t, int32_t, int16_t, int64_t)> slaveValues;
+
 
 
 private:
