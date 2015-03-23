@@ -30,6 +30,9 @@ else(ENABLE_RT)
     set(CPP4EC_SRC ${CPP4EC_SRC} EcNRTMaster.cpp)
 endif(ENABLE_RT)
 
+file(GLOB XML_FILES "*.xml")
+file(COPY ${XML_FILES} DESTINATION $ENV{HOME}/cpp4ec_config)
+
 ADD_DEFINITIONS(-std=c++11 )
 
 set(BOOST_LIBS thread date_time system)

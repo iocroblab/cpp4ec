@@ -6,6 +6,10 @@
 
 #include <pugixml.hpp>
 #include <rtdk.h> //rt print header
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
 
 #define timestampSize 8
 
@@ -240,9 +244,13 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
   std::string xml_name = "configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
   pugi::xml_document doc;
   pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
+  struct passwd *pw = getpwuid(getuid());
+  const char *homedir = pw->pw_dir;
+  std::string home(homedir);
+
   if (!result)
   {
-      xml_name = "/home/sergi.ruiz/configuration/configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
+      xml_name = home+"/cpp4ec_config/configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
       result = doc.load_file(xml_name.c_str());
       if (!result)
          return false;
