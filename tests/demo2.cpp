@@ -33,13 +33,16 @@ int main ()
     drivers.resize(0);
     /* The master and slaves are configured  */
     master.preconfigure();
+    drivers = master.getSlaves();
+    int mode = 3;
+    for (int j = 0; j < drivers.size(); j++)
+        ((cpp4ec::EcSlaveSGDV*) drivers[j]) -> setSGDVObject(0x6060,0, 1, &mode);
 
     master.configure();
     /* The slaves vector is get, in this demo, three EcSlaveSGDV are conected in the net */
-    drivers = master.getSlaves();
   
     master.start(); 
-    
+
     velocity = 50000;
     for (int j = 0; j < drivers.size(); j++)
     {

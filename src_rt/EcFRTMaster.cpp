@@ -113,6 +113,8 @@ bool EcMaster::preconfigure() throw(EcError)
         if(slaveName.compare(0,4,SGDVName) == 0)
             SGDVconnected = true;
     }
+    for (int i = 0; i < m_drivers.size(); i++)
+        m_drivers[i] -> configure();
 
     rt_printf("Master preconfigured!!! \n");
 
@@ -121,8 +123,8 @@ bool EcMaster::preconfigure() throw(EcError)
 bool EcMaster::configure() throw(EcError)
 {
     bool success;
-    for (int i = 0; i < m_drivers.size(); i++)
-        m_drivers[i] -> configure();
+
+
 
     if(slaveInformation)
         slaveInfo();
