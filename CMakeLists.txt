@@ -105,6 +105,6 @@ endif(ENABLE_RT)
 #PUGI_XML
 find_package(PugiXML REQUIRED)
 
-#add_subdirectory(src)
-add_subdirectory(src_rt)
+add_subdirectory(src)
+#add_subdirectory(src_rt)
 add_subdirectory(tests)

@@ -115,7 +115,7 @@ if(ENABLE_RT)
   # Headers install
   install(FILES ${CPP4EC_HDRS} DESTINATION include/cpp4ec)
 
-enif(ENABLE_RT)
+endif(ENABLE_RT)
 
 ##### Building cpp4ec #######
 # cpp4ec non realtime time. 
