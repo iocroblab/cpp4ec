@@ -5,30 +5,45 @@
 #include "EcSlaveFactory.h"
 
 #include <pugixml.hpp>
+#include <unistd.h>
+#include <sys/types.h>
+#include <pwd.h>
+
+#ifdef RT
+#include <rtdk.h> //rt print header
+#endif
 
 #define timestampSize 8
 
+#ifdef RT
+extern int64 EcTimeStamp;
+#endif
 
 namespace cpp4ec
 {
 #ifndef RTNET
-extern std::mutex slaveOutMutex;
+    extern std::mutex slaveOutMutex;
+#endif
+#ifdef RT
+    RT_MUTEX mutex;
 #endif
 
 EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
-    outputSize(0), inputSize(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL),
     controlWordEntry(0), targetPositionEntry(0), targetVelocityEntry(0), targetTorqueEntry(0),
     statusWordEntry(0), actualPositionEntry(0), actualVelocityEntry(0), actualTorqueEntry(0),
     wControlWordCapable(false), wPositionCapable(false), wVelocityCapable(false),wTorqueCapable(false),
     rStatusWordCapable(false), rPositionCapable(false), rVelocityCapable(false), rTorqueCapable(false),
     parameterSetting(false), PDOmapping(false), inputShift(125000)
-    
+
+#if defined(HRT) || !defined(RTNET)
+    ,outputSize(0), inputSize(0), pBufferOut(NULL),pBufferIn(NULL),inputBuf(NULL)
+#endif
+
 {
    m_params.resize(0);
    inputObjects.resize(0);
    outputObjects.resize(0);
-   m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);  
-   
+   m_name = "SGDV_" + to_string(m_datap->configadr & 0x0f,std::dec);
    
    bool xml = readXML();
 
@@ -43,11 +58,14 @@ EcSlaveSGDV::EcSlaveSGDV (ec_slavet* mem_loc) : EcSlave (mem_loc),
 }
 EcSlaveSGDV::~EcSlaveSGDV()
 {
+#if defined(HRT) || !defined(RTNET)
     delete[] inputBuf;    
+#endif
 }
     
 void EcSlaveSGDV::update()
 {
+#if defined(HRT) || !defined(RTNET)
     //Copy the slave data from the master buffer to slave buffer
     slaveInMutex.lock();
     memcpy(inputBuf,pBufferIn, inputSize);
@@ -62,6 +80,7 @@ void EcSlaveSGDV::update()
 
     //After reading the important slave information a signal is sent
     slaveValues(m_slave_nr,statusWord,value.position,value.velocity,value.torque,value.timestamp);
+#endif
 }
 
 const std::string& EcSlaveSGDV::getName() const
@@ -85,17 +104,22 @@ bool EcSlaveSGDV::configure() throw(EcErrorSGDV)
     enableSpecificFunctions();
 
     outputSize = outputObjects[outputObjects.size()-1].offset + outputObjects[outputObjects.size()-1].byteSize;
-#ifdef RTNET
+#ifdef HRT
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize + timestampSize;
-#else
+#endif
+#ifndef RTNET
     inputSize  = inputObjects[inputObjects.size()-1].offset + inputObjects[inputObjects.size()-1].byteSize;
     setPDOBuffer(NULL, NULL);
 #endif
-
+#if defined(HRT) || !defined(RTNET)
     inputBuf = new char[inputSize];
     memset(inputBuf,0, inputSize);
-
-    std::cout << getName() << " configured !" <<std::endl;
+#endif
+#if RT
+    rt_printf("%s configured ! \n",m_name.c_str());
+#else
+    std::cout<<m_name<<" configured !"<<std::endl;
+#endif
     
     return true;
 }
@@ -107,13 +131,13 @@ void EcSlaveSGDV::start() throw(EcErrorSGDV)
    *the motor movement.
    */
   writeControlWord(CW_SHUTDOWN);
-#ifdef RTNET
+#ifdef HRT
   updateMaster();
 #endif
   usleep(100000);
   
   writeControlWord(CW_SWITCH_ON);
-#ifdef RTNET
+#ifdef HRT
   updateMaster();
 #endif
   usleep(100000);
@@ -136,7 +160,7 @@ void EcSlaveSGDV::setDC(bool active, unsigned int sync0Time, unsigned int sync0S
 
 void EcSlaveSGDV::setPDOBuffer(char * input, char * output)
 {
-#ifdef RTNET
+#ifdef HRT
     pBufferIn  = input;
     pBufferOut = output;
 #else
@@ -163,9 +187,16 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
 
 bool EcSlaveSGDV::readTimestamp (int64 &time)
 {
+#ifdef HRT
     slaveInMutex.lock();
     memcpy (&time, inputBuf + inputSize - timestampSize, timestampSize);
     slaveInMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    time = EcTimeStamp;
+    rt_mutex_release (&mutex);
+#endif
 }
     
 
@@ -174,11 +205,19 @@ bool EcSlaveSGDV::writePDO (EcPDOEntry entry, int value)
     //If the PDO have less entries from the specified one (entry) an error is throwed
     if(entry < 0 || entry >= outputObjects.size())
         throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
-    
+
+#if defined(HRT) || !defined(RTNET)
     //write on the desired position of the PDO
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
     slaveOutMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (m_datap -> outputs + outputObjects[entry].offset, &value ,outputObjects[entry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
+
 }
 
 bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
@@ -186,9 +225,17 @@ bool EcSlaveSGDV::readPDO (EcPDOEntry entry, int& value)
     if(entry<0 || entry>=inputObjects.size())
         throw(EcErrorSGDV(EcErrorSGDV::WRONG_ENTRY_ERROR,m_slave_nr,getName()));
     //read the desired position of the PDO
+#if defined(HRT) || !defined(RTNET)
     slaveInMutex.lock();
     memcpy (&value, inputBuf + inputObjects[entry].offset, inputObjects[entry].byteSize);
     slaveInMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (&value, m_datap -> inputs + inputObjects[entry].offset, inputObjects[entry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
+
 }
 
 /*
@@ -200,21 +247,40 @@ bool EcSlaveSGDV::readActualValue (ActualValue &value)
     //If the PDO doesn't have mapped one of the essential parameters, an error is throwed
     if (!rPositionCapable || !rVelocityCapable ||!rTorqueCapable )
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveInMutex.lock();
     memcpy (&(value.position) ,inputBuf + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
     memcpy (&(value.velocity) ,inputBuf + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
     memcpy (&(value.torque) ,inputBuf + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
     memcpy (&(value.timestamp), inputBuf + inputSize - timestampSize, timestampSize);
     slaveInMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (&(value.position) ,m_datap -> inputs + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
+    memcpy (&(value.velocity) ,m_datap -> inputs + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
+    memcpy (&(value.torque) ,m_datap -> inputs + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
+    value.timestamp= EcTimeStamp;
+    rt_mutex_release (&mutex);
+#endif
+
+
 }
 
 bool EcSlaveSGDV::writeControlWord (uint16_t controlWord)
 {
     if (!wControlWordCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
     slaveOutMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (m_datap -> outputs + outputObjects[controlWordEntry].offset, &controlWord ,outputObjects[controlWordEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 
 }
 
@@ -222,18 +288,32 @@ bool EcSlaveSGDV::readStatusWord (uint16_t &statusWord)
 {
     if (!rStatusWordCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveInMutex.lock();
     memcpy (&statusWord ,inputBuf + inputObjects[statusWordEntry].offset, inputObjects[statusWordEntry].byteSize);
-    slaveInMutex.unlock();    
+    slaveInMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (&statusWord ,m_datap -> inputs + inputObjects[statusWordEntry].offset, inputObjects[statusWordEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 } 
 
 bool EcSlaveSGDV::writePosition (int32_t position)
 {
     if (!wPositionCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
     slaveOutMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (m_datap -> outputs + outputObjects[targetPositionEntry].offset, &position ,outputObjects[targetPositionEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 
 }
 
@@ -241,45 +321,80 @@ bool EcSlaveSGDV::readPosition (int32_t &position)
 {
     if (!rPositionCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveInMutex.lock();
     memcpy (&position ,inputBuf + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
     slaveInMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (&position ,m_datap -> inputs + inputObjects[actualPositionEntry].offset, inputObjects[actualPositionEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 }
 
 bool EcSlaveSGDV::writeVelocity (int32_t velocity)
 {
     if (!wVelocityCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
     slaveOutMutex.unlock();
+#endif
+#if RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (m_datap -> outputs + outputObjects[targetVelocityEntry].offset, &velocity ,outputObjects[targetVelocityEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 }
 
 bool EcSlaveSGDV::readVelocity (int32_t &velocity)
 {
     if (!rVelocityCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveInMutex.lock();
     memcpy (&velocity ,inputBuf + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
     slaveInMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (&velocity ,m_datap -> inputs + inputObjects[actualVelocityEntry].offset, inputObjects[actualVelocityEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 }
 
 bool EcSlaveSGDV::writeTorque (int16_t torque)
 {
     if (!wTorqueCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveOutMutex.lock();
     memcpy (pBufferOut + outputObjects[targetTorqueEntry].offset, &torque ,outputObjects[targetTorqueEntry].byteSize);
     slaveOutMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (m_datap -> outputs + outputObjects[targetTorqueEntry].offset, &torque ,outputObjects[targetTorqueEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 }
 
 bool EcSlaveSGDV::readTorque (int16_t &torque)
 {
     if (!rTorqueCapable)
         throw(EcErrorSGDV(EcErrorSGDV::FUNCTION_NOT_ALLOWED_ERROR,m_slave_nr,getName()));
+#if defined(HRT) || !defined(RTNET)
     slaveInMutex.lock();
     memcpy (&torque ,inputBuf + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
     slaveInMutex.unlock();
+#endif
+#ifdef RT
+    rt_mutex_acquire (&mutex,TM_INFINITE);
+    memcpy (&torque ,m_datap -> inputs + inputObjects[actualTorqueEntry].offset, inputObjects[actualTorqueEntry].byteSize);
+    rt_mutex_release (&mutex);
+#endif
 }
 
 bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
@@ -288,9 +403,13 @@ bool EcSlaveSGDV::readXML() throw(EcErrorSGDV)
   std::string xml_name = "configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
   pugi::xml_document doc;
   pugi::xml_parse_result result = doc.load_file(xml_name.c_str());
+  struct passwd *pw = getpwuid(getuid());
+  const char *homedir = pw->pw_dir;
+  std::string home(homedir);
+
   if (!result)
   {
-      xml_name = "/home/sergi.ruiz/configuration/configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
+      xml_name = home+"/cpp4ec_config/configure_SGDV_"+to_string(m_slave_nr,std::dec)+".xml";
       result = doc.load_file(xml_name.c_str());
       if (!result)
           return false;

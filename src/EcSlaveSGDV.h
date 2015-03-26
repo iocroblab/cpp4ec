@@ -328,14 +328,24 @@ private:
     int inputSize;
     int inputShift;
 
-#ifdef RTNET
+
+#ifdef HRT
     char* pBufferOut;
     char* pBufferIn;
-#else
+    char* inputBuf;
+#endif
+
+#ifdef RT
     uint8* pBufferOut;
     uint8* pBufferIn;
 #endif
+
+#ifndef RTNET
+    uint8* pBufferOut;
+    uint8* pBufferIn;
     char* inputBuf;
+#endif
+
     
     bool readXML() throw(EcErrorSGDV);
     bool enableSpecificFunctions();
@@ -363,9 +373,15 @@ private:
     bool parameterSetting;
     bool PDOmapping;
     
-    std::mutex slaveInMutex;
-#ifdef RTNET
+
+
+#ifdef HRT
    std::mutex slaveOutMutex;
+   std::mutex slaveInMutex;
+#endif
+
+#ifndef RTNET
+    std::mutex slaveInMutex;
 #endif
 
     std::vector <CoEparameter> m_params;

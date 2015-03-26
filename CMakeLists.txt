@@ -77,17 +77,17 @@ if(ENABLE_RT)
    message("Found soemrt (soem with realtime patch) and its libs : ${SOEMRT_LIBRARIES}" )
    message("--> with LDFLAGS : ${SOEMRT_LDFLAGS}" )
 
-   list(APPEND CPP4EC_CFLAGS ${SOEMRT_CFLAGS})
-   list(APPEND CPP4EC_CFLAGS ${XENO_NATIVE_CFLAGS})
-   list(APPEND CPP4EC_CFLAGS ${XENO_RTDM_CFLAGS})
-   message("The complete cpp4ec CFLAGS : ${CPP4EC_CFLAGS}" )
+   list(APPEND CPP4ECRT_CFLAGS ${SOEMRT_CFLAGS})
+   list(APPEND CPP4ECRT_CFLAGS ${XENO_NATIVE_CFLAGS})
+   list(APPEND CPP4ECRT_CFLAGS ${XENO_RTDM_CFLAGS})
+   message("The complete cpp4ec CFLAGS : ${CPP4ECRT_CFLAGS}" )
 
-   list(APPEND CPP4EC_LDFLAGS ${SOEMRT_LDFLAGS})
-   list(APPEND CPP4EC_LDFLAGS ${XENO_NATIVE_LDFLAGS})
-   list(APPEND CPP4EC_CFLAGS ${XENO_RTDM_CFLAGS})
-   message("The complete cpp4ec LFLAGS : ${CPP4EC_LDFLAGS}" )
+   list(APPEND CPP4ECRT_LDFLAGS ${SOEMRT_LDFLAGS})
+   list(APPEND CPP4ECRT_LDFLAGS ${XENO_NATIVE_LDFLAGS})
+   list(APPEND CPP4ECRT_CFLAGS ${XENO_RTDM_CFLAGS})
+   message("The complete cpp4ec LFLAGS : ${CPP4ECRT_LDFLAGS}" )
 
-else(ENABLE_RT)
+endif(ENABLE_RT)
 
    pkg_check_modules(SOEM REQUIRED soem)
    message("Found soem and its includes : ${SOEM_INCLUDE_DIRS}" )
@@ -100,7 +100,7 @@ else(ENABLE_RT)
 
    list(APPEND CPP4EC_LDFLAGS ${SOEM_LDFLAGS})
    message("The complete cpp4ec LFLAGS : ${CPP4EC_LDFLAGS}" )
-endif(ENABLE_RT)
+
 
 #PUGI_XML
 find_package(PugiXML REQUIRED)

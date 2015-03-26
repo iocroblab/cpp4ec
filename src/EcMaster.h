@@ -183,22 +183,28 @@ private:
     int sync0Shift;
     bool m_useDC;
     std::vector<EcSlave*> m_drivers;
+#if defined(HRT) || !defined(RTNET)
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
+#endif
     bool SGDVconnected;
     
     //ethercat switchState function
     bool switchState (ec_state state); //switch the state of state machine--returns true if the state is reached
-    
+
+#ifdef HRT
     //Sockect stuff    
-    bool threadFinished;
     char * devnameOutput;
     char * devnameInput;
     int fdOutput,fdInput;
+#endif
+#if defined(HRT) || !defined(RTNET)
+    bool threadFinished;
     std::thread updateThread;
     int NRTtaskFinished;
     void update_EcSlaves(void) throw(EcError);
+#endif
     
     //Ethercat slaveinfo stuff
     bool slaveInformation;
