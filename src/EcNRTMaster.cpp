@@ -115,6 +115,9 @@ bool EcMaster::preconfigure() throw(EcError)
     for (int i = 0; i < m_drivers.size(); i++)
         m_drivers[i]-> updateMaster.connect(boost::bind(&EcMaster::update,this));
 
+    for (int i = 0; i < m_drivers.size(); i++)
+        m_drivers[i] -> configure();
+
     std::cout<<"Master preconfigured!!!"<<std::endl;
 
 }
@@ -122,8 +125,6 @@ bool EcMaster::preconfigure() throw(EcError)
 bool EcMaster::configure() throw(EcError)
 {
     bool success;
-    for (int i = 0; i < m_drivers.size(); i++)
-        m_drivers[i] -> configure();
 
     if(slaveInformation)
         slaveInfo();

@@ -340,7 +340,7 @@ private:
     uint8* pBufferIn;
 #endif
 
-#ifndef RTNET
+#ifdef NRT
     uint8* pBufferOut;
     uint8* pBufferIn;
     char* inputBuf;

@@ -62,7 +62,8 @@ EcMaster::EcMaster(std::string ecPort, unsigned long cycleTime, bool useDC) : et
 
    //Realtime tasks
    mlockall (MCL_CURRENT | MCL_FUTURE);
-   rt_task_shadow (&master, "EcMaster",20, T_JOINABLE);
+   rt_task_shadow (&master, "EcMaster",98, T_JOINABLE);
+   rt_print_auto_init(1);
    
 }
 
