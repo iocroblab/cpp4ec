@@ -35,6 +35,9 @@ endif(ENABLE_RT)
 
 include_directories(${SOEM_INCLUDE_DIRS})
 
+file(GLOB XML_FILES "*.xml")
+file(COPY ${XML_FILES} DESTINATION $ENV{HOME}/cpp4ec_config)
+
 ADD_DEFINITIONS(-std=c++11 )
 
 set(BOOST_LIBS thread date_time system)
@@ -112,8 +115,7 @@ if(ENABLE_RT)
     COMPILE_DEFINITIONS "RT"
     CLEAN_DIRECT_OUTPUT 1)
 
-  # Headers install
-  install(FILES ${CPP4EC_HDRS} DESTINATION include/cpp4ec)
+    install(TARGETS cpp4ec_rt_dynamic DESTINATION lib)
 
 endif(ENABLE_RT)
 
