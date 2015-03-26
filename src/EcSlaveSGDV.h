@@ -380,7 +380,7 @@ private:
    std::mutex slaveInMutex;
 #endif
 
-#ifndef RTNET
+#ifdef NRT
     std::mutex slaveInMutex;
 #endif
 

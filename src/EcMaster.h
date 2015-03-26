@@ -183,7 +183,7 @@ private:
     int sync0Shift;
     bool m_useDC;
     std::vector<EcSlave*> m_drivers;
-#if defined(HRT) || !defined(RTNET)
+#if defined(HRT) || defined(NRT)
     char * inputBuf;
     char * outputBuf;
     int inputSize, outputSize;
@@ -199,7 +199,7 @@ private:
     char * devnameInput;
     int fdOutput,fdInput;
 #endif
-#if defined(HRT) || !defined(RTNET)
+#if defined(HRT) || defined(NRT)
     bool threadFinished;
     std::thread updateThread;
     int NRTtaskFinished;

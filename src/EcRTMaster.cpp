@@ -265,7 +265,7 @@ bool EcMaster::start() throw(EcError)
    //wait to start correctly drivers
    usleep(50000);
 
-   std::cout<<"Master started!!!"<<std::endl;
+   rt_printf("Master started!!! \n");
 
    return true;
 }
