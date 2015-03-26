@@ -187,6 +187,10 @@ void EcSlaveSGDV::stop() throw(EcErrorSGDV)
   updateMaster();
 #endif
   usleep(100000);
+
+#ifdef RT
+    rt_mutex_unbind (&mutex);
+#endif
 }
 
 bool EcSlaveSGDV::readTimestamp (int64 &time)
