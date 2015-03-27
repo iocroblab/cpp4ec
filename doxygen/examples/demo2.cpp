@@ -23,7 +23,8 @@ int main ()
 {
   /*Intancied the defauld EcMaster: with a pediod of PDO comunication of 1 ms, without using Distributed Clocks and 
    without slave information*/
-  cpp4ec::EcMaster master;	
+  cpp4ec::EcMaster master("rteth0",1000000,true);
+
   std::vector<cpp4ec::EcSlave*> drivers;
   int32_t velocity;
    
@@ -31,12 +32,17 @@ int main ()
   {
     drivers.resize(0);
     /* The master and slaves are configured  */
+    master.preconfigure();
+    drivers = master.getSlaves();
+    int mode = 3;
+    for (int j = 0; j < drivers.size(); j++)
+        ((cpp4ec::EcSlaveSGDV*) drivers[j]) -> setSGDVObject(0x6060,0, 1, &mode);
+
     master.configure();
     /* The slaves vector is get, in this demo, three EcSlaveSGDV are conected in the net */
-    drivers = master.getSlaves();
   
     master.start(); 
-    
+
     velocity = 50000;
     for (int j = 0; j < drivers.size(); j++)
     {
